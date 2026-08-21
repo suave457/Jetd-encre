@@ -200,4 +200,6 @@ test("forced desktop previews stay readable in narrow browser panels", () => {
   assert.match(prototypeCss, /data-prototype-presentation="desktop-scroll"/);
   assert.match(prototypeCss, /overflow:\s*auto/);
   assert.match(prototypeCss, /zoom:\s*var\(--prototype-scale\)/);
+  assert.match(runtimeSource, /activeFrameName !== lastRenderedFrameName/);
+  assert.match(runtimeSource, /scroller\.scrollLeft = 0/);
 });

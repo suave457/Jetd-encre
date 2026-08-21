@@ -73,6 +73,8 @@ Les références Pen et les rendus navigateur ont été contrôlés ensemble, à
 - Cas reproduit à 894 × 698 : la frame ordinateur était bien active, mais sa réduction à 62 % rendait les textes illisibles.
 - Le mode `device=desktop` conserve désormais la frame 1440 × 900, privilégie l’ajustement en hauteur et autorise un défilement horizontal explicite si la fenêtre est plus étroite.
 - À 894 × 698 : frame `W05_DIR_04_EnseignantsInvitations_D_1440x900`, zoom 0,7578, contenu 1091 × 682 ; la barre horizontale est réservée sans créer de second défilement vertical.
+- Chaque changement d’écran replace automatiquement le canevas à gauche pour ne jamais ouvrir une page sur une zone tronquée.
+- Le sélecteur de parcours reste compact sans fusionner ni tronquer les trois rôles.
 - À 1440 × 900 : zoom 1, aucun défilement, rendu Pen inchangé.
 - À 1024 × 768 avec `device=tablet` : frame tablette inchangée, zoom 1.
 - Contrat prototype après correction : 8/8 ; build et tests Sites : réussis.

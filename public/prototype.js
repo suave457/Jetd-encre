@@ -112,6 +112,7 @@
     directorQueries: { classes: "", teachers: "", students: "" },
     directorTab: "Vue d’ensemble",
   };
+  let lastRenderedFrameName = null;
 
   const STATUS_OPTIONS = ["Tous", "Brouillons", "En revue", "Planifiés", "Publiés", "Archivés"];
   const SORT_OPTIONS = ["Dernière modification", "Plus ancienne", "Titre A–Z", "Titre Z–A"];
@@ -457,8 +458,18 @@
       needsReadableDesktop && overflowsHorizontally ? "desktop-scroll" : "contain";
   }
 
+  function resetStageScroll() {
+    [document.scrollingElement, document.documentElement, document.body]
+      .filter(Boolean)
+      .forEach((scroller) => {
+        scroller.scrollLeft = 0;
+        scroller.scrollTop = 0;
+      });
+  }
+
   function renderFrame() {
     const activeFrame = getActiveFrame();
+    const activeFrameName = pencilName(activeFrame);
     configuredFrames().forEach((frame) => {
       const active = frame === activeFrame;
       frame.dataset.prototypeScreen = "true";
@@ -467,6 +478,10 @@
       frame.toggleAttribute("inert", !active);
     });
     resizeStage();
+    if (activeFrameName !== lastRenderedFrameName) {
+      resetStageScroll();
+      lastRenderedFrameName = activeFrameName;
+    }
     syncInputs();
     renderTabs();
     renderFilterControls();

@@ -66,12 +66,14 @@ body {
 
 .prototype-mode-switcher a {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   min-height: 44px;
   padding-inline: 12px;
   border-radius: 10px;
   color: #fdf8f3;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .prototype-mode-switcher a:hover {
