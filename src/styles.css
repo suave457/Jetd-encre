@@ -1,0 +1,40 @@
+:root {
+  color: #051223;
+  background: #efe7dc;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root,
+.prototype-shell,
+.prototype-frame {
+  width: 100%;
+}
+
+#root,
+.prototype-shell {
+  min-height: 100dvh;
+}
+
+.prototype-shell {
+  display: block;
+  height: 100dvh;
+  background: #efe7dc;
+}
+
+.prototype-frame {
+  display: block;
+  height: 100dvh;
+  border: 0;
+}
