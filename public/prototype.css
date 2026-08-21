@@ -41,6 +41,24 @@ body > div:first-child {
   width: var(--prototype-width) !important;
 }
 
+/*
+ * A forced desktop preview can be opened inside a browser panel that is much
+ * narrower than the 1440 px source frame. In that case, keep the desktop
+ * composition readable instead of shrinking it to tablet-sized typography.
+ * The canvas fills the available height and the viewport may pan horizontally.
+ */
+[data-prototype-presentation="desktop-scroll"] body {
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+[data-prototype-presentation="desktop-scroll"] body > div:first-child {
+  margin-inline: auto;
+  transform: none;
+  zoom: var(--prototype-scale);
+}
+
 [data-pencil-name^="W03_"],
 [data-pencil-name^="W04_"],
 [data-pencil-name^="W05_"],

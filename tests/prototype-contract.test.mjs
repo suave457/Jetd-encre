@@ -191,3 +191,13 @@ test("Student P0 controls and child-safe state contract are present", { skip: !s
     config.routes.find((route) => route.key === "student.reader").patterns.every((pattern) => !pattern.includes("^/eleve/lecons/")),
   );
 });
+
+test("forced desktop previews stay readable in narrow browser panels", () => {
+  assert.match(runtimeSource, /needsReadableDesktop/);
+  assert.match(runtimeSource, /desktopHeightBudget = Math\.max\(1, window\.innerHeight - 16\)/);
+  assert.match(runtimeSource, /Math\.max\(0\.75, desktopHeightBudget \/ height\)/);
+  assert.match(runtimeSource, /prototypePresentation/);
+  assert.match(prototypeCss, /data-prototype-presentation="desktop-scroll"/);
+  assert.match(prototypeCss, /overflow:\s*auto/);
+  assert.match(prototypeCss, /zoom:\s*var\(--prototype-scale\)/);
+});

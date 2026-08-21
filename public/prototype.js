@@ -436,10 +436,25 @@
     const device = getDevice();
     const width = device === "desktop" ? 1440 : 1024;
     const height = device === "desktop" ? 900 : 768;
-    const scale = Math.min(1, window.innerWidth / width, window.innerHeight / height);
+    const forcedDevice = new URLSearchParams(getHostWindow().location.search).get("device");
+    const containScale = Math.min(1, window.innerWidth / width, window.innerHeight / height);
+    const needsReadableDesktop =
+      device === "desktop" &&
+      forcedDevice === "desktop" &&
+      window.innerWidth < width;
+    const desktopHeightBudget = Math.max(1, window.innerHeight - 16);
+    const readableDesktopScale = Math.min(
+      1,
+      Math.max(0.75, desktopHeightBudget / height),
+    );
+    const scale = needsReadableDesktop ? readableDesktopScale : containScale;
+    const safeScale = Math.max(0.25, scale);
+    const overflowsHorizontally = width * safeScale > window.innerWidth + 1;
     document.documentElement.style.setProperty("--prototype-width", `${width}px`);
     document.documentElement.style.setProperty("--prototype-height", `${height}px`);
-    document.documentElement.style.setProperty("--prototype-scale", String(Math.max(0.25, scale)));
+    document.documentElement.style.setProperty("--prototype-scale", String(safeScale));
+    document.documentElement.dataset.prototypePresentation =
+      needsReadableDesktop && overflowsHorizontally ? "desktop-scroll" : "contain";
   }
 
   function renderFrame() {

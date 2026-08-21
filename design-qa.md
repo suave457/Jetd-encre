@@ -68,6 +68,15 @@ Les références Pen et les rendus navigateur ont été contrôlés ensemble, à
 - Routes profondes vérifiées dans le navigateur MCP : connexion, activation, onboarding, lecteur, résultat, remise, profil et page Élève inconnue.
 - Board d’architecture Pen `W06_ELV_14_FlowNavigation_11200x1000` : 25 paires, texte ≥ 12 px, CheckLayout 0.
 
+## Correctif d’affichage ordinateur dans une fenêtre étroite
+
+- Cas reproduit à 894 × 698 : la frame ordinateur était bien active, mais sa réduction à 62 % rendait les textes illisibles.
+- Le mode `device=desktop` conserve désormais la frame 1440 × 900, privilégie l’ajustement en hauteur et autorise un défilement horizontal explicite si la fenêtre est plus étroite.
+- À 894 × 698 : frame `W05_DIR_04_EnseignantsInvitations_D_1440x900`, zoom 0,7578, contenu 1091 × 682 ; la barre horizontale est réservée sans créer de second défilement vertical.
+- À 1440 × 900 : zoom 1, aucun défilement, rendu Pen inchangé.
+- À 1024 × 768 avec `device=tablet` : frame tablette inchangée, zoom 1.
+- Contrat prototype après correction : 8/8 ; build et tests Sites : réussis.
+
 ## Limite documentée
 
 Les données et médias restent fictifs. Les interactions simulent le produit sans backend, stockage permanent, micro réel ni données d’élèves réels. Les contrôles clavier, lecteur d’écran et zoom 200 % devront être repris sur l’application de production.
