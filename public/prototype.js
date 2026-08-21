@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const FRAME_NAMES = {
+  const LEGACY_FRAME_NAMES = {
     studio: {
       desktop: "W03_01_ADM_StudioContenus_D_1440x900",
       tablet: "W03_01_ADM_StudioContenus_T_1024x768",
@@ -12,10 +12,80 @@
     },
   };
 
+  const FALLBACK_CONFIG = {
+    storageKey: "jde.prototype.session.v2",
+    routes: [
+      {
+        key: "admin.library",
+        patterns: ["^/admin/?$", "^/admin/bibliotheque/?$", "^/bibliotheque/?$"],
+        frames: LEGACY_FRAME_NAMES.library,
+        title: "Bibliothèque de contenus — Jet d’Encre",
+      },
+      {
+        key: "admin.studio",
+        patterns: ["^/admin/contenus/nouveau/?$", "^/admin/contenus/([^/]+)/modifier/?$", "^/studio/?$"],
+        params: ["contentId"],
+        frames: LEGACY_FRAME_NAMES.studio,
+        title: "Studio de contenus — Jet d’Encre",
+      },
+    ],
+    actionRoutes: {},
+    defaultState: {
+      schemaVersion: 2,
+      activeRoute: "/admin/bibliotheque",
+      activeContentId: "POD-0018",
+      editorial: {
+        content: {
+          id: "POD-0018",
+          type: "Podcast",
+          title: "Les voix du Maroc · Épisode 01",
+          publicTitle: "Les voix du Maroc : la marche du quartier",
+          slug: "les-voix-du-maroc-la-marche-du-quartier",
+          status: "Brouillons",
+        },
+        review: { decision: "pending", comment: "" },
+        schedule: { date: "2026-08-27", time: "10:00", timezone: "Africa/Casablanca" },
+        publication: {
+          publishedAt: null,
+          publicPath: "/contenus/les-voix-du-maroc-la-marche-du-quartier",
+          systemState: null,
+        },
+        versions: [],
+      },
+      director: {
+        metrics: { activeClasses: 18, invitedTeachers: 3 },
+        classes: [],
+        filters: { schoolYear: "2026–2027", level: "Tous", classId: "Toutes", status: "Tous", period: "30 derniers jours" },
+        pendingInvitations: [],
+        assignments: {},
+        activationBatches: [],
+        supportTickets: [],
+      },
+    },
+  };
+
+  const CONFIG = window.JDE_PROTOTYPE_CONFIG || FALLBACK_CONFIG;
+  const ROUTES = CONFIG.routes || FALLBACK_CONFIG.routes;
+  const ACTION_ROUTES = CONFIG.actionRoutes || {};
+  const DEFAULT_SESSION_STATE = CONFIG.defaultState || FALLBACK_CONFIG.defaultState;
+  const STORAGE_KEY = CONFIG.storageKey || FALLBACK_CONFIG.storageKey;
+
   const RECORD_SELECTOR =
     '[data-pencil-name^="Ligne contenu"], [data-pencil-name^="Carte contenu tablette"]';
+  const DIRECTOR_RECORD_SELECTOR = [
+    '[data-pencil-name^="Ligne classe"]',
+    '[data-pencil-name^="Carte classe"]',
+    '[data-pencil-name^="Ligne enseignant"]',
+    '[data-pencil-name^="Carte enseignant"]',
+    '[data-pencil-name^="Ligne élève"]',
+    '[data-pencil-name^="Carte élève"]',
+  ].join(", ");
   const state = {
     view: "library",
+    routeKey: "admin.library",
+    routePath: "/admin/bibliotheque",
+    routeParams: {},
+    session: null,
     query: "",
     status: "Tous",
     filters: {
@@ -30,6 +100,8 @@
     copyCounter: 0,
     toastTimer: null,
     openPopover: null,
+    directorQueries: { classes: "", teachers: "", students: "" },
+    directorTab: "Vue d’ensemble",
   };
 
   const STATUS_OPTIONS = ["Tous", "Brouillons", "En revue", "Planifiés", "Publiés", "Archivés"];
@@ -45,6 +117,149 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const pencilName = (element) => element?.getAttribute("data-pencil-name") || "";
+
+  function cloneValue(value) {
+    if (typeof structuredClone === "function") return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function mergeState(defaults, saved) {
+    if (Array.isArray(defaults)) return Array.isArray(saved) ? cloneValue(saved) : cloneValue(defaults);
+    if (!defaults || typeof defaults !== "object") return saved === undefined ? defaults : saved;
+    const result = {};
+    const source = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    new Set([...Object.keys(defaults), ...Object.keys(source)]).forEach((key) => {
+      result[key] = key in defaults ? mergeState(defaults[key], source[key]) : cloneValue(source[key]);
+    });
+    return result;
+  }
+
+  function loadSessionState() {
+    const defaults = cloneValue(DEFAULT_SESSION_STATE);
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      if (!saved || saved.schemaVersion !== defaults.schemaVersion) return defaults;
+      return mergeState(defaults, saved);
+    } catch {
+      return defaults;
+    }
+  }
+
+  function persistSessionState() {
+    if (!state.session) return;
+    state.session.activeRoute = state.routePath;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state.session));
+    } catch {
+      // The prototype remains usable when storage is blocked.
+    }
+  }
+
+  function mutateSession(mutator) {
+    if (!state.session) state.session = loadSessionState();
+    mutator(state.session);
+    persistSessionState();
+    hydrateActiveFrame();
+  }
+
+  function getHostWindow() {
+    try {
+      if (window.parent !== window && window.parent.location.origin === window.location.origin) {
+        return window.parent;
+      }
+    } catch {
+      return window;
+    }
+    return window;
+  }
+
+  function normalizeRoutePath(value) {
+    let route = String(value || "").trim().replace(/^#/, "");
+    if (!route) return "/admin/bibliotheque";
+    if (!route.startsWith("/")) route = `/${route}`;
+    return route.replace(/\/{2,}/g, "/");
+  }
+
+  function routeFromHost() {
+    const host = getHostWindow();
+    if (host.location.hash) return normalizeRoutePath(host.location.hash);
+    if (window.location.hash) return normalizeRoutePath(window.location.hash);
+    return normalizeRoutePath(state.session?.activeRoute || "/admin/bibliotheque");
+  }
+
+  function matchRoute(routePath) {
+    const normalized = normalizeRoutePath(routePath);
+    for (const route of ROUTES) {
+      for (const source of route.patterns || []) {
+        const match = normalized.match(new RegExp(source, "i"));
+        if (!match) continue;
+        const params = {};
+        (route.params || []).forEach((name, index) => {
+          if (match[index + 1]) params[name] = decodeURIComponent(match[index + 1]);
+        });
+        return { definition: route, params, path: normalized };
+      }
+    }
+    return null;
+  }
+
+  function routeDefinition(key = state.routeKey) {
+    return ROUTES.find((route) => route.key === key) || ROUTES[0];
+  }
+
+  function routeForFrameName(frameName) {
+    return ROUTES.find((route) => Object.values(route.frames || {}).includes(frameName));
+  }
+
+  function writeHostRoute(routePath, replace = false) {
+    const host = getHostWindow();
+    const nextHash = `#${normalizeRoutePath(routePath)}`;
+    if (host.location.hash === nextHash) return;
+    const nextUrl = `${host.location.pathname}${host.location.search}${nextHash}`;
+    host.history[replace ? "replaceState" : "pushState"]({ jdePrototypeRoute: routePath }, "", nextUrl);
+  }
+
+  function setRoute(routePath, options = {}) {
+    const matched = matchRoute(routePath) || matchRoute("/admin/bibliotheque");
+    if (!matched) return;
+    state.routeKey = matched.definition.key;
+    state.routePath = matched.path;
+    state.routeParams = matched.params;
+    state.view = state.routeKey === "admin.library" ? "library" : state.routeKey === "admin.studio" ? "studio" : state.routeKey;
+    if (state.session) {
+      state.session.activeRoute = state.routePath;
+      if (matched.params.contentId) state.session.activeContentId = matched.params.contentId;
+    }
+    if (state.routeKey === "admin.studio") {
+      const content = state.session?.editorial?.content || {};
+      updateStudio({
+        mode: matched.params.contentId ? "edit" : "new",
+        title: content.title,
+        status: content.status,
+      });
+    }
+    renderFrame();
+    persistSessionState();
+    if (!options.fromHost) writeHostRoute(state.routePath, options.replace);
+  }
+
+  function navigate(routePath, options = {}) {
+    setRoute(routePath, options);
+  }
+
+  function syncRouteFromHost() {
+    const next = routeFromHost();
+    if (next !== state.routePath) setRoute(next, { fromHost: true });
+  }
+
+  function routeWithActiveContent(template) {
+    const content = state.session?.editorial?.content || {};
+    const contentId = state.session?.activeContentId || content.id || "POD-0018";
+    return String(template || "")
+      .replaceAll("POD-0018", contentId)
+      .replaceAll(":contentId", encodeURIComponent(contentId))
+      .replaceAll(":slug", encodeURIComponent(content.slug || "les-voix-du-maroc-la-marche-du-quartier"));
+  }
 
   function stripAccents(value) {
     return String(value || "")
@@ -166,7 +381,23 @@
   }
 
   function getFrame(view = state.view, device = getDevice()) {
-    return $(`[data-pencil-name="${FRAME_NAMES[view][device]}"]`);
+    if (LEGACY_FRAME_NAMES[view]) {
+      return $(`[data-pencil-name="${LEGACY_FRAME_NAMES[view][device]}"]`);
+    }
+    const matched = String(view).startsWith("/") ? matchRoute(view)?.definition : routeDefinition(view);
+    const frameName = matched?.frames?.[device];
+    return frameName ? $(`[data-pencil-name="${CSS.escape(frameName)}"]`) : null;
+  }
+
+  function getActiveFrame(device = getDevice()) {
+    return getFrame(state.routeKey, device);
+  }
+
+  function configuredFrames() {
+    const names = new Set(ROUTES.flatMap((route) => Object.values(route.frames || {})));
+    return Array.from(names)
+      .map((name) => $(`[data-pencil-name="${CSS.escape(name)}"]`))
+      .filter(Boolean);
   }
 
   function resizeStage() {
@@ -180,9 +411,13 @@
   }
 
   function renderFrame() {
-    $$('[data-pencil-name^="W03_"]').forEach((frame) => {
-      frame.classList.toggle("prototype-active", frame === getFrame());
-      frame.setAttribute("aria-hidden", frame === getFrame() ? "false" : "true");
+    const activeFrame = getActiveFrame();
+    configuredFrames().forEach((frame) => {
+      const active = frame === activeFrame;
+      frame.dataset.prototypeScreen = "true";
+      frame.classList.toggle("prototype-active", active);
+      frame.setAttribute("aria-hidden", active ? "false" : "true");
+      frame.toggleAttribute("inert", !active);
     });
     resizeStage();
     syncInputs();
@@ -190,17 +425,43 @@
     renderFilterControls();
     renderPagination();
     renderSelection();
-    document.title =
-      state.view === "library"
-        ? "Bibliothèque de contenus — Jet d’Encre"
-        : "Studio de contenus — Jet d’Encre";
+    hydrateActiveFrame();
+    const title = routeDefinition()?.title || "Administration — Jet d’Encre";
+    document.title = title;
+    let announcer = $("#prototype-route-announcer");
+    if (!announcer) {
+      announcer = document.createElement("div");
+      announcer.id = "prototype-route-announcer";
+      announcer.className = "prototype-visually-hidden";
+      announcer.setAttribute("role", "status");
+      announcer.setAttribute("aria-live", "polite");
+      document.body.appendChild(announcer);
+    }
+    announcer.dataset.routeKey = state.routeKey;
+    announcer.textContent = title;
   }
 
   function setView(view, editorContext = null) {
-    state.view = view;
-    if (view === "studio") updateStudio(editorContext || { mode: "new" });
-    renderFrame();
-    window.location.hash = view === "library" ? "bibliotheque" : "studio";
+    if (view === "library") {
+      navigate("/admin/bibliotheque");
+      return;
+    }
+    if (view === "studio") {
+      const context = editorContext || { mode: "new" };
+      if (context.mode !== "new") {
+        mutateSession((session) => {
+          if (context.id) {
+            session.activeContentId = context.id;
+            session.editorial.content.id = context.id;
+          }
+          if (context.title) session.editorial.content.title = context.title;
+          if (context.status) session.editorial.content.status = context.status;
+        });
+      }
+      updateStudio(context);
+      const contentId = context.id || state.session?.activeContentId || state.session?.editorial?.content?.id || "POD-0018";
+      navigate(context.mode === "new" ? "/admin/contenus/nouveau" : `/admin/contenus/${encodeURIComponent(contentId)}/modifier`);
+    }
   }
 
   function rememberOriginalText(element) {
@@ -245,6 +506,506 @@
         element.textContent = mode === "new" ? element.dataset.prototypeOriginalText : statusLabel;
       },
     );
+  }
+
+  function currentContent() {
+    return state.session?.editorial?.content || DEFAULT_SESSION_STATE.editorial.content;
+  }
+
+  function currentContentId() {
+    return state.session?.activeContentId || currentContent().id || "POD-0018";
+  }
+
+  function formatNowFrench() {
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Casablanca",
+    })
+      .format(new Date())
+      .replace(",", " ·");
+  }
+
+  function addEditorialVersion(session, status, summary) {
+    const versions = session.editorial.versions || (session.editorial.versions = []);
+    const nextNumber = versions.reduce((max, version) => {
+      const number = Number.parseInt(String(version.id || "").replace(/\D/g, ""), 10);
+      return Number.isFinite(number) ? Math.max(max, number) : max;
+    }, 0) + 1;
+    versions.unshift({
+      id: `v${nextNumber}`,
+      label: "Version actuelle",
+      status,
+      author: "Nadia El Fassi",
+      at: formatNowFrench(),
+      summary,
+    });
+    versions.slice(1).forEach((version) => {
+      version.label = "Version précédente";
+    });
+    session.editorial.selectedVersionId = versions[0].id;
+  }
+
+  function setNamedText(frame, names, value) {
+    if (!frame || value === undefined || value === null) return;
+    names.forEach((name) => {
+      $$(`[data-pencil-name="${CSS.escape(name)}"]`, frame).forEach((element) => {
+        if (element.childElementCount === 0) element.textContent = String(value);
+      });
+    });
+  }
+
+  function replaceExactLeafText(frame, replacements) {
+    if (!frame) return;
+    $$('*', frame).forEach((element) => {
+      if (element.childElementCount > 0) return;
+      const current = element.textContent.trim();
+      if (current in replacements) element.textContent = replacements[current];
+    });
+  }
+
+  function hydrateEditorialFrame(frame) {
+    const content = currentContent();
+    const editorial = state.session?.editorial;
+    if (!frame || !editorial) return;
+    const statusLabels = {
+      Brouillons: "BROUILLON",
+      "En revue": "EN REVUE",
+      Planifiés: "PLANIFIÉ",
+      Publiés: "PUBLIÉ",
+      Archivés: "ARCHIVÉ",
+    };
+    replaceExactLeafText(frame, {
+      "POD-0018": content.id,
+      "Les voix du Maroc · Épisode 01": content.title,
+      "Les voix du Maroc : la marche du quartier": content.publicTitle,
+    });
+    setNamedText(
+      frame,
+      ["Texte statut Brouillon", "Texte Brouillon tablette"],
+      statusLabels[content.status] || String(content.status || "BROUILLON").toUpperCase(),
+    );
+    setNamedText(frame, ["Valeur statut éditorial", "Libellé statut éditorial"], content.status);
+    setNamedText(frame, ["Valeur date planifiée", "Date de publication"], editorial.schedule?.date);
+    setNamedText(frame, ["Valeur heure planifiée", "Heure de publication"], editorial.schedule?.time);
+
+    $$('[data-pencil-name^="Onglet type "]', frame).filter((tab) => !isNamedDecorator(pencilName(tab))).forEach((tab) => {
+      const type = pencilName(tab).replace("Onglet type ", "");
+      const activeType = editorial.publicPreviewType || content.type;
+      const active = stripAccents(type) === stripAccents(activeType);
+      tab.classList.toggle("prototype-choice-active", active);
+      tab.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    $$('[data-pencil-name^="Carte état "]', frame).filter((card) => !isNamedDecorator(pencilName(card))).forEach((card) => {
+      const normalized = stripAccents(pencilName(card));
+      const systemState = editorial.publication?.systemState || "";
+      const active =
+        (systemState === "refused" && normalized.includes("refuse")) ||
+        (systemState === "forbidden" && normalized.includes("droits")) ||
+        (systemState === "failed" && normalized.includes("erreur"));
+      card.classList.toggle("prototype-choice-active", active);
+      card.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    $$('[data-pencil-name="CTA Écouter épisode"]', frame).forEach((button) => {
+      button.setAttribute("aria-pressed", editorial.isPlaying ? "true" : "false");
+      button.classList.toggle("prototype-choice-active", Boolean(editorial.isPlaying));
+    });
+    $$('[data-pencil-name^="Ligne version"]', frame).filter((row) => !isNamedDecorator(pencilName(row))).forEach((row) => {
+      const rowName = stripAccents(pencilName(row));
+      const version = rowName.includes("actuelle")
+        ? editorial.versions?.[0]
+        : rowName.includes("precedente")
+          ? editorial.versions?.[1]
+          : null;
+      if (!version) return;
+      row.dataset.prototypeVersionId = version.id;
+      const selected = editorial.selectedVersionId === version.id;
+      row.classList.toggle("prototype-choice-active", selected);
+      row.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+  }
+
+  function hydrateDirectorFrame(frame) {
+    const director = state.session?.director;
+    if (!frame || !director) return;
+    setNamedText(frame, ["Valeur KPI Classes", "KPI · Classes · Valeur"], director.metrics?.activeClasses);
+    setNamedText(frame, ["Valeur KPI Enseignants", "KPI · Enseignants · Valeur"], director.metrics?.teachers);
+    setNamedText(frame, ["Valeur KPI Élèves", "KPI · Élèves · Valeur"], director.metrics?.students);
+    setNamedText(frame, ["Valeur KPI Activité", "KPI · Activité · Valeur"], `${director.metrics?.weeklyActiveRate || 0} %`);
+    setNamedText(frame, ["Valeur santé établissement"], `${director.school?.healthScore || 0}/100`);
+    setNamedText(frame, ["Valeur synchronisation"], `${director.school?.syncRate || 0} %`);
+
+    if (state.routeKey === "director.classes") {
+      const selector = [
+        '[data-pencil-name^="Ligne classe · "]',
+        '[data-pencil-name^="Carte classe · "]',
+        '[data-pencil-name^="Carte classe tablette · "]',
+      ].join(", ");
+      const records = $$(selector, frame);
+      const template = records[0];
+      if (template) {
+        const existingIds = new Set(
+          records.map((record) => pencilName(record).split("·").pop().trim()).filter(Boolean),
+        );
+        const templateId = pencilName(template).split("·").pop().trim();
+        const templateData = director.classes?.find((item) => item.id === templateId);
+        (director.classes || []).forEach((item) => {
+          if (existingIds.has(item.id)) return;
+          const clone = template.cloneNode(true);
+          [clone, ...$$('[data-pencil-name]', clone)].forEach((element) => {
+            element.removeAttribute("id");
+            const name = pencilName(element);
+            if (name.includes(templateId)) {
+              element.setAttribute("data-pencil-name", name.replaceAll(templateId, item.id));
+            }
+          });
+          clone.dataset.prototypeGeneratedDirectorClass = item.id;
+          clone.classList.remove("prototype-director-filtered");
+          replaceExactLeafText(clone, {
+            [templateId]: item.id,
+            [templateData?.level || "A2"]: item.level,
+            [`${templateData?.students || 34} élèves`]: `${item.students} élèves`,
+            [templateData?.teacher || "Salma Idrissi"]: item.teacher || "Non affecté",
+            [`${templateData?.activation || 97} %`]: `${item.activation || 0} %`,
+            [`${templateData?.usage || 82} %`]: `${item.usage || 0} %`,
+          });
+          template.parentElement?.appendChild(clone);
+          existingIds.add(item.id);
+        });
+      }
+    }
+
+    $$('[data-pencil-name^="Onglet · "], [data-pencil-name^="Onglet tablette · "]', frame)
+      .filter((tab) => !isNamedDecorator(pencilName(tab)))
+      .forEach((tab) => {
+      const label = canonicalNamedControl(pencilName(tab)).replace("Onglet · ", "");
+      const active = label === state.directorTab;
+      tab.classList.toggle("prototype-choice-active", active);
+      tab.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    applyDirectorFilters(frame);
+  }
+
+  function hydrateActiveFrame() {
+    const frame = getActiveFrame();
+    if (!frame || !state.session) return;
+    if (state.routeKey.startsWith("admin.") || state.routeKey === "public.content") {
+      hydrateEditorialFrame(frame);
+    }
+    if (state.routeKey.startsWith("director.")) hydrateDirectorFrame(frame);
+  }
+
+  function updateEditorialStatus(status, decision, summary) {
+    mutateSession((session) => {
+      session.editorial.content.status = status;
+      if (decision) session.editorial.review.decision = decision;
+      addEditorialVersion(session, status.replace(/s$/, ""), summary);
+    });
+  }
+
+  function selectedVersion() {
+    const editorial = state.session?.editorial;
+    const versions = editorial?.versions || [];
+    return versions.find((version) => version.id === editorial.selectedVersionId) || versions[1] || versions[0];
+  }
+
+  function compareVersions() {
+    const editorial = state.session?.editorial;
+    const current = editorial?.versions?.[0];
+    const explicitlySelected = editorial?.versions?.find(
+      (version) => version.id === editorial.selectedVersionId,
+    );
+    const reference =
+      explicitlySelected && explicitlySelected.id !== current?.id
+        ? explicitlySelected
+        : editorial?.versions?.find((version) => version.id !== current?.id);
+    if (!current || !reference) {
+      showToast("Deux versions sont nécessaires pour lancer la comparaison.");
+      return;
+    }
+    mutateSession((session) => {
+      session.editorial.comparison = [current.id, reference.id];
+    });
+    showDialog({
+      title: `${current.id} comparée à ${reference.id}`,
+      message: `${current.summary}. Version comparée : ${reference.summary}.`,
+      confirmLabel: "Fermer la comparaison",
+      onConfirm: () => {},
+    });
+  }
+
+  function restoreSelectedVersion() {
+    const version = selectedVersion();
+    if (!version) return;
+    showDialog({
+      title: `Restaurer ${version.id} ?`,
+      message: "Cette restauration créera une nouvelle version Brouillon. Les versions existantes resteront dans l’historique.",
+      confirmLabel: "Restaurer comme brouillon",
+      onConfirm: () => {
+        mutateSession((session) => {
+          session.editorial.content.status = "Brouillons";
+          addEditorialVersion(session, "Brouillon", `Restauration de ${version.id} — ${version.summary}`);
+        });
+        navigate(`/admin/contenus/${encodeURIComponent(currentContentId())}/modifier`);
+        showToast(`${version.id} restaurée comme nouvelle version Brouillon.`);
+      },
+    });
+  }
+
+  function saveDirectorClass() {
+    mutateSession((session) => {
+      const classes = session.director.classes || (session.director.classes = []);
+      const requestedId = state.routeParams.classId;
+      const id = requestedId && requestedId !== "nouvelle" ? requestedId : "6D";
+      const existing = classes.find((item) => item.id === id);
+      if (existing) {
+        existing.level = existing.level || "B1";
+        existing.students = existing.students || 27;
+      } else {
+        classes.push({ id, level: "B1", students: 27, teacher: null, activation: 0, usage: 0 });
+        session.director.metrics.activeClasses = Number(session.director.metrics.activeClasses || 0) + 1;
+      }
+    });
+    navigate("/directeur/classes");
+    showToast("Classe enregistrée et ajoutée à la liste.");
+  }
+
+  function sendTeacherInvitation() {
+    mutateSession((session) => {
+      const invitations = session.director.pendingInvitations || (session.director.pendingInvitations = []);
+      const number = invitations.length + 1;
+      invitations.push({
+        id: `INV-${String(number).padStart(3, "0")}`,
+        name: "Khadija Alaoui",
+        email: "khadija.alaoui@example.com",
+        status: "En attente",
+        sentAt: new Date().toISOString(),
+      });
+      session.director.metrics.invitedTeachers = Number(session.director.metrics.invitedTeachers || 0) + 1;
+    });
+    showToast("Invitation envoyée. Le statut En attente est enregistré.");
+  }
+
+  function confirmDirectorAssignment() {
+    mutateSession((session) => {
+      session.director.assignments["6B"] = { teacher: "Khadija Alaoui", manual: "Cap sur le français · 6e AEP" };
+      const targetClass = session.director.classes.find((item) => item.id === "6B");
+      if (targetClass) targetClass.teacher = "Khadija Alaoui";
+    });
+    showToast("Affectation confirmée pour la classe 6B.");
+  }
+
+  function generateActivationCodes() {
+    mutateSession((session) => {
+      session.director.activationBatches.push({
+        id: `LOT-${Date.now().toString().slice(-6)}`,
+        classId: "6B",
+        count: 31,
+        createdAt: new Date().toISOString(),
+        status: "Prêt",
+      });
+    });
+    showToast("31 codes d’activation fictifs générés pour la classe 6B.");
+  }
+
+  function createSupportTicket() {
+    let ticketId = "";
+    mutateSession((session) => {
+      ticketId = `AST-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(session.director.supportTickets.length + 1).padStart(3, "0")}`;
+      session.director.supportTickets.push({ id: ticketId, status: "Envoyé", createdAt: new Date().toISOString() });
+    });
+    showToast(`Demande ${ticketId} envoyée à l’assistance.`);
+  }
+
+  function publicTypeFromName(name) {
+    return name.replace("Onglet type ", "").replace("Jeu vidéo", "Jeu vidéo");
+  }
+
+  function systemStateFromName(name) {
+    if (stripAccents(name).includes("refuse")) return "refused";
+    if (stripAccents(name).includes("droits")) return "forbidden";
+    return "failed";
+  }
+
+  function isNamedDecorator(name) {
+    return / · (icône|libellé|chevron|espace|indication)$/i.test(String(name || ""));
+  }
+
+  function canonicalNamedControl(name) {
+    let canonical = String(name || "")
+      .replace(/^Action tablette · /, "Action · ")
+      .replace(/^Bouton tablette · /, "Bouton · ")
+      .replace(/^Onglet tablette · /, "Onglet · ")
+      .replace(/^Filtre tablette · /, "Filtre · ");
+    if (canonical === "Action · Inviter enseignant") canonical = "Action · Inviter un enseignant";
+    return canonical;
+  }
+
+  function findKnownNamedElement(target) {
+    let element = target instanceof Element ? target.closest("[data-pencil-name]") : null;
+    while (element && element !== document.body) {
+      const name = pencilName(element);
+      if (isNamedDecorator(name)) {
+        element = element.parentElement?.closest("[data-pencil-name]") || null;
+        continue;
+      }
+      const canonicalName = canonicalNamedControl(name);
+      const isDirectorTabletControl =
+        state.routeKey.startsWith("director.") && /^(Filtre|Onglet) tablette · /.test(name);
+      if (
+        canonicalName in ACTION_ROUTES ||
+        canonicalName.startsWith("CTA ") ||
+        canonicalName.startsWith("Action · ") ||
+        canonicalName.startsWith("Bouton · ") ||
+        canonicalName.startsWith("Filtre · ") && !name.startsWith("Filtre tablette · ") ||
+        canonicalName.startsWith("Onglet · ") && !name.startsWith("Onglet tablette · ") ||
+        isDirectorTabletControl ||
+        canonicalName.startsWith("Onglet type ") ||
+        canonicalName.startsWith("Carte état ") ||
+        canonicalName.startsWith("Ligne version")
+      ) {
+        return element;
+      }
+      element = element.parentElement?.closest("[data-pencil-name]") || null;
+    }
+    return null;
+  }
+
+  function handleNamedAction(element) {
+    const name = canonicalNamedControl(pencilName(element));
+    const contentId = encodeURIComponent(currentContentId());
+
+    if (name === "Action Envoyer en revue" || name === "CTA Envoyer en revue") {
+      updateEditorialStatus("En revue", "pending", "Contenu envoyé en revue éditoriale");
+      navigate(`/admin/contenus/${contentId}/revue`);
+      showToast("Contenu envoyé en revue éditoriale.");
+      return true;
+    }
+    if (name === "CTA Demander corrections") {
+      updateEditorialStatus("Brouillons", "changes_requested", "Corrections demandées par la revue éditoriale");
+      navigate(`/admin/contenus/${contentId}/modifier`);
+      showToast("Corrections demandées. Le commentaire reste associé au Brouillon.");
+      return true;
+    }
+    if (name === "CTA Valider revue") {
+      mutateSession((session) => {
+        session.editorial.review.decision = "approved";
+        addEditorialVersion(session, "Validé", "Revue éditoriale validée");
+      });
+      navigate(`/admin/contenus/${contentId}/planification`);
+      showToast("Revue validée. Le contenu est prêt à être planifié.");
+      return true;
+    }
+    if (name === "CTA Planifier publication") {
+      updateEditorialStatus("Planifiés", "approved", "Publication planifiée");
+      navigate(`/admin/contenus/${contentId}/publication-reussie`);
+      showToast("Publication planifiée avec succès.");
+      return true;
+    }
+    if (name === "CTA Publier maintenant") {
+      mutateSession((session) => {
+        session.editorial.content.status = "Publiés";
+        session.editorial.publication.publishedAt = new Date().toISOString();
+        session.editorial.publication.systemState = null;
+        addEditorialVersion(session, "Publié", "Publication immédiate confirmée");
+      });
+      navigate(`/admin/contenus/${contentId}/publication-reussie`);
+      showToast("Contenu publié avec succès.");
+      return true;
+    }
+    if (name === "CTA Comparer versions") {
+      compareVersions();
+      return true;
+    }
+    if (name === "CTA Restaurer cette version") {
+      restoreSelectedVersion();
+      return true;
+    }
+    if (name === "CTA Réessayer publication") {
+      mutateSession((session) => {
+        session.editorial.publication.systemState = null;
+      });
+      navigate(`/admin/contenus/${contentId}/planification`);
+      showToast("L’erreur est levée. Vous pouvez relancer la publication.");
+      return true;
+    }
+    if (name === "CTA Écouter épisode") {
+      mutateSession((session) => {
+        session.editorial.isPlaying = !session.editorial.isPlaying;
+      });
+      showToast(state.session.editorial.isPlaying ? "Lecture de l’épisode démarrée." : "Lecture mise en pause.");
+      return true;
+    }
+    if (name === "CTA Lire transcription") {
+      showDialog({
+        title: "Transcription de l’épisode",
+        message: "Dans la médina, les voix du quartier racontent les gestes, les métiers et les souvenirs qui font vivre la ville.",
+        confirmLabel: "Fermer la transcription",
+        onConfirm: () => {},
+      });
+      return true;
+    }
+    if (name.startsWith("Onglet type ")) {
+      mutateSession((session) => {
+        session.editorial.publicPreviewType = publicTypeFromName(name);
+      });
+      showToast(`Aperçu ${publicTypeFromName(name)} affiché.`);
+      return true;
+    }
+    if (name.startsWith("Carte état ")) {
+      const systemState = systemStateFromName(name);
+      mutateSession((session) => {
+        session.editorial.publication.systemState = systemState;
+      });
+      navigate(`/admin/contenus/${contentId}/etat-systeme/${systemState}`, { replace: true });
+      return true;
+    }
+    if (name.startsWith("Ligne version")) {
+      const versionId = element.dataset.prototypeVersionId;
+      if (versionId) {
+        mutateSession((session) => {
+          session.editorial.selectedVersionId = versionId;
+        });
+      }
+      return true;
+    }
+    if (name.startsWith("Filtre · ")) {
+      openDirectorFilterPopover(element);
+      return true;
+    }
+    if (name === "Bouton · Enregistrer la classe") {
+      saveDirectorClass();
+      return true;
+    }
+    if (name === "Bouton · Envoyer l’invitation") {
+      sendTeacherInvitation();
+      return true;
+    }
+    if (name === "Bouton · Confirmer l’affectation") {
+      confirmDirectorAssignment();
+      return true;
+    }
+    if (name === "Bouton · Générer les codes") {
+      generateActivationCodes();
+      return true;
+    }
+    if (name === "Bouton · Contacter l’assistance") {
+      createSupportTicket();
+      return true;
+    }
+    if (name.startsWith("Onglet · ")) {
+      state.directorTab = name.replace("Onglet · ", "");
+      hydrateActiveFrame();
+      return true;
+    }
+    if (name in ACTION_ROUTES) {
+      navigate(routeWithActiveContent(ACTION_ROUTES[name]));
+      return true;
+    }
+    return false;
   }
 
   function makeInteractive(element, label, role = "button") {
@@ -296,7 +1057,17 @@
         );
       },
     );
-    $$('[data-pencil-name^="Filtre statut ·"], [data-pencil-name^="Filtre tablette ·"]').forEach(
+    $$('[data-pencil-name^="Filtre statut ·"], [data-pencil-name^="Filtre tablette ·"]').filter(
+      (element) => {
+        if (isNamedDecorator(pencilName(element))) return false;
+        if (pencilName(element).startsWith("Filtre statut ·")) return true;
+        return Boolean(
+          element.closest(
+            `[data-pencil-name="${CSS.escape(LEGACY_FRAME_NAMES.library.tablet)}"]`,
+          ),
+        );
+      },
+    ).forEach(
       (element) => {
         const status = pencilName(element).split("·").pop().trim();
         element.dataset.prototypeStatusFilter = status;
@@ -307,6 +1078,190 @@
       const suffix = pencilName(element).split(" ").pop();
       if (suffix !== "…") makeInteractive(element, `Aller à la page ${suffix}`);
     });
+  }
+
+  function directorQueryScope(name) {
+    if (name.includes("Classes")) return "classes";
+    if (name.includes("Enseignants")) return "teachers";
+    return "students";
+  }
+
+  function directorFilterKey(name) {
+    if (name.includes("Année")) return "schoolYear";
+    if (name.includes("Niveau")) return "level";
+    if (name.includes("Classe")) return "classId";
+    if (name.includes("Statut")) return "status";
+    return "period";
+  }
+
+  function directorFilterOptions(kind) {
+    if (kind === "schoolYear") return ["2026–2027", "2025–2026"];
+    if (kind === "level") return ["Tous", "A1", "A2", "B1"];
+    if (kind === "classId") return ["Toutes", "3A", "4C", "5A", "5B", "6B", "6C"];
+    if (kind === "status") return ["Tous", "Actif", "À activer", "Non ajouté"];
+    return ["7 derniers jours", "30 derniers jours", "Trimestre en cours"];
+  }
+
+  function applyDirectorFilters(frame = getActiveFrame()) {
+    if (!frame || !state.session?.director) return;
+    const filters = state.session.director.filters || {};
+    let scope = "classes";
+    if (state.routeKey === "director.teachers") scope = "teachers";
+    else if (state.routeKey === "director.activation" || state.directorTab === "Élèves") scope = "students";
+    const query = stripAccents(state.directorQueries[scope]);
+
+    $$(DIRECTOR_RECORD_SELECTOR, frame).forEach((record) => {
+      const text = stripAccents(record.textContent);
+      const matchesQuery = !query || text.includes(query);
+      const matchesLevel = !filters.level || filters.level === "Tous" || text.includes(stripAccents(filters.level));
+      const matchesClass = !filters.classId || filters.classId === "Toutes" || text.includes(stripAccents(filters.classId));
+      const matchesStatus = !filters.status || filters.status === "Tous" || text.includes(stripAccents(filters.status));
+      record.classList.toggle("prototype-director-filtered", !(matchesQuery && matchesLevel && matchesClass && matchesStatus));
+    });
+
+    if (state.routeKey === "director.classes") {
+      const visibleRecords = $$(DIRECTOR_RECORD_SELECTOR, frame).filter(
+        (record) => !record.classList.contains("prototype-director-filtered"),
+      );
+      $$('[data-pencil-name="État condensé · Aucune classe"]', frame).forEach((emptyState) => {
+        emptyState.classList.toggle("prototype-filtered", visibleRecords.length > 0);
+      });
+    }
+
+    $$('[data-pencil-name^="Filtre · "], [data-pencil-name^="Filtre tablette · "]', frame)
+      .filter((control) => !isNamedDecorator(pencilName(control)))
+      .forEach((control) => {
+      const kind = directorFilterKey(pencilName(control));
+      const value = filters[kind];
+      const isDefault = ["Tous", "Toutes", "2026–2027", "30 derniers jours"].includes(value);
+      control.classList.toggle("prototype-filter-control--active", !isDefault);
+      const label = canonicalNamedControl(pencilName(control)).replace("Filtre · ", "");
+      control.setAttribute("aria-label", `${label} : ${value}`);
+      control.setAttribute("title", `${label} : ${value}`);
+    });
+  }
+
+  function openDirectorFilterPopover(control) {
+    const kind = directorFilterKey(pencilName(control));
+    closeDesktopPopover();
+    const popover = document.createElement("div");
+    popover.className = "prototype-filter-popover";
+    popover.setAttribute("role", "listbox");
+    popover.setAttribute("aria-label", canonicalNamedControl(pencilName(control)).replace("Filtre · ", ""));
+    directorFilterOptions(kind).forEach((value) => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "prototype-filter-option";
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", state.session.director.filters[kind] === value ? "true" : "false");
+      option.textContent = value;
+      option.addEventListener("click", (event) => {
+        event.stopPropagation();
+        mutateSession((session) => {
+          session.director.filters[kind] = value;
+        });
+        closeDesktopPopover(true);
+        applyDirectorFilters();
+      });
+      popover.appendChild(option);
+    });
+    control.style.position = "relative";
+    control.appendChild(popover);
+    control.setAttribute("aria-expanded", "true");
+    state.openPopover = popover;
+    $("button", popover)?.focus();
+  }
+
+  function setupDirectorSearch() {
+    const searches = ["Recherche · Classes", "Recherche · Enseignants", "Recherche · Élèves"];
+    searches.forEach((name) => {
+      $$(`[data-pencil-name="${CSS.escape(name)}"], [data-pencil-name="${CSS.escape(`${name} tablette`)}"]`).forEach((container, index) => {
+        const scope = directorQueryScope(name);
+        container.setAttribute("role", "search");
+        container.classList.add("prototype-has-native-input");
+        let input = $(".prototype-director-search-input", container);
+        if (input) return;
+        input = document.createElement("input");
+        input.type = "search";
+        input.className = "prototype-search-input prototype-director-search-input";
+        input.placeholder = name.replace("Recherche · ", "Rechercher dans ").toLowerCase();
+        input.autocomplete = "off";
+        input.setAttribute("aria-label", name.replace("Recherche · ", "Rechercher : "));
+        input.id = `prototype-director-search-${scope}-${index}`;
+        input.addEventListener("input", () => {
+          state.directorQueries[scope] = input.value;
+          $$(".prototype-director-search-input").forEach((other) => {
+            if (other !== input && other.id.includes(`-${scope}-`)) other.value = input.value;
+          });
+          applyDirectorFilters();
+        });
+        container.appendChild(input);
+      });
+    });
+  }
+
+  function setupConfiguredControls() {
+    configuredFrames().forEach((frame) => {
+      const route = routeForFrameName(pencilName(frame));
+      if (route) frame.dataset.prototypeRouteKey = route.key;
+    });
+
+    const names = new Set([
+      ...Object.keys(ACTION_ROUTES),
+      "Action Envoyer en revue",
+      "CTA Demander corrections",
+      "CTA Comparer versions",
+      "CTA Restaurer cette version",
+      "CTA Réessayer publication",
+      "CTA Écouter épisode",
+      "CTA Lire transcription",
+      "Bouton · Enregistrer la classe",
+      "Bouton · Envoyer l’invitation",
+      "Bouton · Confirmer l’affectation",
+      "Bouton · Générer les codes",
+      "Bouton · Contacter l’assistance",
+      "Carte état Refusé",
+      "Carte état Droits insuffisants",
+      "Carte état Erreur publication",
+    ]);
+    names.forEach((name) => {
+      const variants = [name];
+      if (name.startsWith("Action · ")) variants.push(name.replace("Action · ", "Action tablette · "));
+      if (name.startsWith("Bouton · ")) variants.push(name.replace("Bouton · ", "Bouton tablette · "));
+      const selector = variants.map((variant) => `[data-pencil-name="${CSS.escape(variant)}"]`).join(", ");
+      $$(selector).forEach((element) => {
+        makeInteractive(element, name.replace(/^(CTA|Action|Bouton|Carte état)\s*(·)?\s*/, ""));
+      });
+    });
+    $$('[data-pencil-name^="Onglet type "], [data-pencil-name^="Onglet · "], [data-pencil-name^="Onglet tablette · "]')
+      .filter((element) => !isNamedDecorator(pencilName(element)))
+      .forEach((element) => {
+      makeInteractive(element, canonicalNamedControl(pencilName(element)), "button");
+      element.setAttribute("aria-pressed", "false");
+    });
+    $$('[data-pencil-name^="Ligne version"]')
+      .filter((element) => !isNamedDecorator(pencilName(element)))
+      .forEach((element) => {
+      makeInteractive(element, `Sélectionner ${pencilName(element).toLowerCase()}`, "option");
+      element.setAttribute("aria-selected", "false");
+    });
+    $$('[data-pencil-name^="Filtre · "]')
+      .filter((element) => !isNamedDecorator(pencilName(element)))
+      .forEach((element) => {
+      makeInteractive(element, pencilName(element));
+      element.setAttribute("aria-haspopup", "listbox");
+      element.setAttribute("aria-expanded", "false");
+    });
+    configuredFrames()
+      .filter((frame) => frame.dataset.prototypeRouteKey?.startsWith("director."))
+      .flatMap((frame) => $$('[data-pencil-name^="Filtre tablette · "]', frame))
+      .filter((element) => !isNamedDecorator(pencilName(element)))
+      .forEach((element) => {
+        makeInteractive(element, canonicalNamedControl(pencilName(element)));
+        element.setAttribute("aria-haspopup", "listbox");
+        element.setAttribute("aria-expanded", "false");
+      });
+    setupDirectorSearch();
   }
 
   function updateArchiveAction(record) {
@@ -563,6 +1518,8 @@
   function openFilterDrawer() {
     $(".prototype-filter-drawer-backdrop")?.remove();
     const previous = document.activeElement;
+    const activeFrame = getActiveFrame();
+    activeFrame?.setAttribute("inert", "");
     const backdrop = document.createElement("div");
     backdrop.className = "prototype-filter-drawer-backdrop";
     backdrop.innerHTML = `
@@ -596,6 +1553,7 @@
     };
     const close = () => {
       backdrop.remove();
+      if (activeFrame === getActiveFrame()) activeFrame.removeAttribute("inert");
       renderFilterControls();
       previous?.focus?.();
     };
@@ -908,7 +1866,10 @@
   }
 
   function showDialog({ title, message, confirmLabel, danger = false, onConfirm }) {
+    $(".prototype-dialog-backdrop")?.remove();
     const previous = document.activeElement;
+    const activeFrame = getActiveFrame();
+    activeFrame?.setAttribute("inert", "");
     const backdrop = document.createElement("div");
     backdrop.className = "prototype-dialog-backdrop";
     backdrop.innerHTML = `
@@ -928,6 +1889,7 @@
 
     const close = () => {
       backdrop.remove();
+      if (activeFrame === getActiveFrame()) activeFrame.removeAttribute("inert");
       previous?.focus?.();
     };
     $(".prototype-dialog__cancel", backdrop).addEventListener("click", close);
@@ -940,6 +1902,17 @@
     });
     backdrop.addEventListener("keydown", (event) => {
       if (event.key === "Escape") close();
+      if (event.key !== "Tab") return;
+      const focusable = $$('button:not([disabled]), input:not([disabled]), select:not([disabled])', backdrop);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     });
     document.body.appendChild(backdrop);
     $(".prototype-dialog__confirm", backdrop).focus();
@@ -1133,7 +2106,7 @@
         addDesktopCopy(sourceId, copyId, copyTitle);
         addTabletCopy(sourceId, copyId, copyTitle);
         applyFilters();
-        setView("studio", { mode: "duplicate", title: copyTitle, status: "Brouillons" });
+        setView("studio", { mode: "duplicate", id: copyId, title: copyTitle, status: "Brouillons" });
         showToast("Copie ajoutée aux Brouillons et ouverte dans le Studio.", {
           label: "Bibliothèque",
           run: () => setView("library"),
@@ -1164,6 +2137,13 @@
 
   function setupEvents(importInput) {
     document.addEventListener("click", (event) => {
+      const configuredAction = findKnownNamedElement(event.target);
+      if (configuredAction && handleNamedAction(configuredAction)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       const selectAll = event.target.closest('[data-pencil-name="Sélectionner tous les contenus"]');
       if (selectAll) {
         event.preventDefault();
@@ -1214,6 +2194,7 @@
         if (!record) return;
         setView("studio", {
           mode: "edit",
+          id: getRecordId(record),
           title: getRecordTitle(record),
           status: getRecordStatus(record),
         });
@@ -1264,18 +2245,24 @@
     });
 
     window.addEventListener("resize", renderFrame, { passive: true });
+    const host = getHostWindow();
+    host.addEventListener("hashchange", syncRouteFromHost);
+    host.addEventListener("popstate", syncRouteFromHost);
   }
 
   function init() {
+    state.session = loadSessionState();
     setupAccessibleControls();
     setupRecords();
     setupDesktopFilters();
     setupSearch();
+    setupConfiguredControls();
     ensureSelectionBar();
     const importInput = setupImport();
     setupEvents(importInput);
     applyFilters();
-    renderFrame();
+    const hostHasRoute = Boolean(getHostWindow().location.hash || window.location.hash);
+    setRoute(routeFromHost(), { fromHost: hostHasRoute, replace: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });

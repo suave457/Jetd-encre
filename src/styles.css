@@ -38,3 +38,53 @@ body {
   height: 100dvh;
   border: 0;
 }
+
+.prototype-mode-switcher {
+  position: fixed;
+  z-index: 20;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 5px;
+  border: 1px solid rgb(212 178 122 / 48%);
+  border-radius: 14px;
+  background: rgb(5 18 35 / 94%);
+  box-shadow: 0 10px 30px rgb(5 18 35 / 20%);
+  color: #fdf8f3;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.prototype-mode-switcher span {
+  padding-inline: 10px 8px;
+  color: #d4b27a;
+}
+
+.prototype-mode-switcher a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 12px;
+  border-radius: 10px;
+  color: #fdf8f3;
+  text-decoration: none;
+}
+
+.prototype-mode-switcher a:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+.prototype-mode-switcher a:focus-visible {
+  outline: 3px solid #345fc7;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .prototype-mode-switcher span {
+    display: none;
+  }
+}
