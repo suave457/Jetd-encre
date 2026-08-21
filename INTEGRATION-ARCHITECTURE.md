@@ -1,8 +1,45 @@
-# Architecture d’intégration — Vagues Admin éditoriale et Directeur
+# Architecture d’intégration — Admin, Directeur et Élève
 
 Date : 21 août 2026  
 Projet : `admin-navigation-prototype`  
-Principe : étendre le prototype existant sans réinitialiser React, l’iframe, le worker Sites ni les quatre écrans W03 déjà validés.
+Principe : étendre le prototype existant sans réinitialiser React, l’iframe, le worker Sites ni les écrans W01–W05 déjà validés.
+
+## Vague Élève W06
+
+Le parcours publié regroupe 25 paires ordinateur/tablette : 12 paires W01/W02 existantes raccordées sans modification et 13 nouvelles paires W06. Les anciennes maquettes restent intactes dans Pen.
+
+### Accès, activation et onboarding existants
+
+| Route canonique | Clé | Paire Pen |
+|---|---|---|
+| `/connexion` | `auth.profile-choice` | `W01_02_AUTH_ChoixProfil` |
+| `/connexion/eleve` | `auth.student-login` | `W01_03_AUTH_ConnexionEleve` |
+| `/mot-de-passe-oublie` | `auth.forgot-password` | `W01_07_AUTH_MotDePasseOublie` |
+| `/reinitialisation` | `auth.reset-password` | `W01_08_AUTH_Reinitialisation` |
+| `/session-expiree` | `auth.session-expired` | `W01_10_AUTH_SessionExpiree` |
+| `/activation` et ses quatre états | `activation.*` | `W01_11` à `W01_15` |
+| `/eleve/onboarding/profil` | `student.onboarding-profile` | `W02_01_ELV_CreationProfil` |
+| `/eleve/onboarding/classe` | `student.onboarding-class` | `W02_02_ELV_EcoleEtClasse` |
+
+### Espace authentifié W06
+
+| Route canonique | Clé | Paire Pen |
+|---|---|---|
+| `/eleve/tableau-de-bord` | `student.dashboard` | `W06_ELV_01_Dashboard` |
+| `/eleve/manuels` | `student.manuals` | `W06_ELV_02_MesManuels` |
+| `/eleve/manuels/:manualId/lecons/:lessonId` | `student.reader` | `W06_ELV_03_LecteurEnrichi` |
+| `/eleve/activites/:activityId` | `student.exercise` | `W06_ELV_04_ExerciceQuiz` |
+| `/eleve/devoirs` | `student.assignments` | `W06_ELV_05_MesDevoirs` |
+| `/eleve/devoirs/:assignmentId` | `student.assignment` | `W06_ELV_06_DetailDevoir` |
+| `/eleve/devoirs/:assignmentId/remise-confirmee` | `student.assignment-submitted` | `W06_ELV_07_ConfirmationRemise` |
+| `/eleve/progression` | `student.progress` | `W06_ELV_08_Progression` |
+| `/eleve/activites/:activityId/resultat` | `student.exercise-result` | `W06_ELV_09_ResultatExercice` |
+| `/eleve/mediatheque` | `student.media` | `W06_ELV_10_Mediatheque` |
+| `/eleve/recompenses` | `student.rewards` | `W06_ELV_11_Recompenses` |
+| `/eleve/profil` ou `/eleve/aide` | `student.profile` | `W06_ELV_12_ProfilAide` |
+| `/eleve/etat-systeme/:systemState?` | `student.system` | `W06_ELV_13_EtatsSysteme` |
+
+Le prototype conserve seulement un état pédagogique fictif et non sensible dans `sessionStorage`. Aucun nom complet, e-mail, date de naissance, code réel, fichier audio ou donnée d’un camarade n’est stocké. La déconnexion volontaire efface uniquement l’état d’authentification Élève et renvoie vers `/connexion/eleve`. Une route Élève inconnue ouvre l’état « page introuvable » Élève et ne retombe jamais sur Administration.
 
 ## Décision technique
 
@@ -45,7 +82,7 @@ Les boards `W04_ADM_00_FlowCycleEditorial` et les éventuels boards W05 restent 
 5. Ajouter `aria-hidden` et `inert` aux frames inactives.
 6. À l’initialisation, lire la route depuis la fenêtre parente si l’export est dans l’iframe ; sinon lire le hash de la page exportée.
 7. Dans l’iframe même origine, écrire la route propre dans `window.parent.history.pushState`. Écouter `popstate` sur la fenêtre parente pour que Précédent/Suivant fonctionne. En ouverture directe de `pencil-export.html`, utiliser `#/<route>` afin d’éviter de charger la coque dans l’iframe.
-8. Une route inconnue revient sur `/admin/bibliotheque` avec `replaceState`.
+8. Une route inconnue globale revient sur `/admin/bibliotheque`. Une route commençant par `/eleve` ouvre l’état système Élève « page introuvable ».
 
 ## Sélecteurs P0
 
@@ -115,7 +152,7 @@ Chaque requête DOM doit être limitée à la frame active : `$(selector, active
 
 ## Mutations et persistance `sessionStorage`
 
-Clé : `jde.prototype.session.v2`. Charger uniquement si `schemaVersion === 2`, puis fusionner avec `defaultState`. Sauvegarder après chaque mutation P0, pas après les changements de focus ou l’ouverture d’un simple menu.
+Clé : `jde.prototype.session.v4`. Charger le schéma courant, ou migrer et fusionner la session `v3` si elle existe afin de préserver les états Admin et Directeur. Sauvegarder après chaque mutation P0, pas après les changements de focus ou l’ouverture d’un simple menu.
 
 ### Admin
 
@@ -155,8 +192,8 @@ Un bouton de remise à zéro peut supprimer uniquement cette clé de session, ja
 
 ## Export Pen sans perdre l’injection
 
-1. Exporter uniquement les 34 frames écran W03/W04/W05 dans un fichier temporaire avec `includeLayerNames: true`. Exclure les boards de flux.
-2. Archiver le HTML brut sous `reference/pencil-export-source-v2.html` afin qu’il reste versionné sans être embarqué dans le site publié.
+1. Exporter uniquement les 84 frames écran du manifest W01–W06 avec `includeLayerNames: true`. Exclure les boards de flux.
+2. Archiver le HTML brut sous `reference/pencil-export-source-v3.html` afin qu’il reste versionné sans être embarqué dans le site publié.
 3. Copier ce brut vers `public/pencil-export.html`.
 4. Injecter de façon déterministe dans `<head>` : `<link rel="stylesheet" href="prototype.css">`.
 5. Injecter juste avant `</body>`, dans cet ordre : `<script src="prototype-config.js"></script>`, puis `<script src="prototype.js"></script>`.
@@ -180,7 +217,7 @@ Créer ensuite `scripts/inject-pencil-prototype.mjs` pour automatiser les étape
 
 ### Contrat export
 
-- 34 frames attendues, chacune exactement une fois.
+- 84 frames attendues, chacune exactement une fois.
 - `prototype-config.js`, puis `prototype.js`, chargés dans cet ordre.
 - Logo et autres actifs locaux retournent 200.
 - Aucune erreur JavaScript au chargement.

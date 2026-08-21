@@ -13,7 +13,7 @@
   };
 
   const FALLBACK_CONFIG = {
-    storageKey: "jde.prototype.session.v2",
+    storageKey: "jde.prototype.session.v4",
     routes: [
       {
         key: "admin.library",
@@ -31,7 +31,7 @@
     ],
     actionRoutes: {},
     defaultState: {
-      schemaVersion: 2,
+      schemaVersion: 4,
       activeRoute: "/admin/bibliotheque",
       activeContentId: "POD-0018",
       editorial: {
@@ -60,6 +60,15 @@
         assignments: {},
         activationBatches: [],
         supportTickets: [],
+      },
+      student: {
+        auth: { signedIn: true, onboardingComplete: true, activationState: "active" },
+        profile: { pseudonym: "Lina", level: "5e AEP", school: "École Al Manar", classId: "5A" },
+        learning: { progress: 68, weeklyStreak: 4, points: 1240, quizChoice: null, quizScore: 8, quizTotal: 10 },
+        assignments: { activeTab: "Tous", currentId: "protegeons-la-nature", submittedIds: [] },
+        media: { activeFilter: "Tous", playingType: null, transcriptOpen: false },
+        rewards: { unlocked: ["Exploratrice", "Écoute attentive", "Série de 4 jours"] },
+        systemState: null,
       },
     },
   };
@@ -137,9 +146,13 @@
   function loadSessionState() {
     const defaults = cloneValue(DEFAULT_SESSION_STATE);
     try {
-      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
-      if (!saved || saved.schemaVersion !== defaults.schemaVersion) return defaults;
-      return mergeState(defaults, saved);
+      const current = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+      if (current?.schemaVersion === defaults.schemaVersion) return mergeState(defaults, current);
+      const legacy = JSON.parse(sessionStorage.getItem("jde.prototype.session.v3") || "null");
+      if (!legacy) return defaults;
+      const migrated = mergeState(defaults, legacy);
+      migrated.schemaVersion = defaults.schemaVersion;
+      return migrated;
     } catch {
       return defaults;
     }
@@ -220,8 +233,22 @@
   }
 
   function setRoute(routePath, options = {}) {
-    const matched = matchRoute(routePath) || matchRoute("/admin/bibliotheque");
+    const requestedPath = normalizeRoutePath(routePath);
+    let matched = matchRoute(requestedPath);
+    if (!matched && /^\/eleve(?:\/|$)/i.test(requestedPath)) {
+      matched = matchRoute("/eleve/etat-systeme/page-introuvable");
+    }
+    matched ||= matchRoute("/admin/bibliotheque");
     if (!matched) return;
+    const studentKey = matched.definition.key;
+    const publicStudentRoute =
+      studentKey === "student.onboarding-profile" ||
+      studentKey === "student.onboarding-class" ||
+      studentKey === "student.system" ||
+      studentKey === "student.profile" && matched.path === "/eleve/aide";
+    if (studentKey.startsWith("student.") && !publicStudentRoute && state.session?.student?.auth?.signedIn === false) {
+      matched = matchRoute("/connexion/eleve");
+    }
     state.routeKey = matched.definition.key;
     state.routePath = matched.path;
     state.routeParams = matched.params;
@@ -229,6 +256,9 @@
     if (state.session) {
       state.session.activeRoute = state.routePath;
       if (matched.params.contentId) state.session.activeContentId = matched.params.contentId;
+      if (state.routeKey === "student.system") {
+        state.session.student.systemState = matched.params.systemState || "hors-connexion";
+      }
     }
     if (state.routeKey === "admin.studio") {
       const content = state.session?.editorial?.content || {};
@@ -377,6 +407,8 @@
   }
 
   function getDevice() {
+    const forced = new URLSearchParams(getHostWindow().location.search).get("device");
+    if (forced === "desktop" || forced === "tablet") return forced;
     return window.innerWidth >= 1200 ? "desktop" : "tablet";
   }
 
@@ -689,6 +721,101 @@
     applyDirectorFilters(frame);
   }
 
+  function studentSectionActive(label) {
+    const normalized = stripAccents(label);
+    if (normalized.includes("tableau de bord") || normalized.includes("accueil")) return state.routeKey === "student.dashboard";
+    if (normalized.includes("manuel")) {
+      return ["student.manuals", "student.reader", "student.exercise", "student.exercise-result"].includes(state.routeKey);
+    }
+    if (normalized.includes("devoir")) {
+      return ["student.assignments", "student.assignment", "student.assignment-submitted"].includes(state.routeKey);
+    }
+    if (normalized.includes("mediatheque")) return state.routeKey === "student.media";
+    if (normalized.includes("progression") || normalized.includes("progres")) return state.routeKey === "student.progress";
+    if (normalized.includes("recompense")) return state.routeKey === "student.rewards";
+    if (normalized.includes("profil")) return state.routeKey === "student.profile";
+    return false;
+  }
+
+  function applyStudentAssignmentTab(frame) {
+    const activeTab = state.session?.student?.assignments?.activeTab || "Tous";
+    $$('[data-pencil-name^="Carte devoir"], [data-pencil-name^="Devoir · "]', frame).forEach((card) => {
+      const text = stripAccents(card.textContent);
+      let visible = activeTab === "Tous";
+      if (activeTab === "À faire") visible = /a faire|commencer|reprendre|retard/.test(text);
+      if (activeTab === "Rendus") visible = /rendu|remis/.test(text);
+      if (activeTab === "Corrigés") visible = /corrige|resultat|note/.test(text);
+      card.classList.toggle("prototype-student-filtered", !visible);
+    });
+  }
+
+  function applyStudentMediaFilter(frame) {
+    const activeFilter = state.session?.student?.media?.activeFilter || "Tous";
+    $$('[data-pencil-name^="Carte média"], [data-pencil-name^="Carte Média"]', frame).forEach((card) => {
+      const text = stripAccents(`${pencilName(card)} ${card.textContent}`);
+      const needle = stripAccents(activeFilter).replace(/s$/, "");
+      const visible = activeFilter === "Tous" || text.includes(needle);
+      card.classList.toggle("prototype-student-filtered", !visible);
+    });
+  }
+
+  function hydrateStudentFrame(frame) {
+    const student = state.session?.student;
+    if (!frame || !student) return;
+    replaceExactLeafText(frame, {
+      "LINA-5A-2026": "CODE-DEMO-5A",
+      "1 240": new Intl.NumberFormat("fr-FR").format(student.learning?.points || 0),
+      "68 %": `${student.learning?.progress || 0} %`,
+      "8/10": `${student.learning?.quizScore || 0}/${student.learning?.quizTotal || 10}`,
+      "8 / 10": `${student.learning?.quizScore || 0} / ${student.learning?.quizTotal || 10}`,
+    });
+
+    $$('[data-pencil-name^="Nav Élève · "], [data-pencil-name^="Rail Élève · "], [data-pencil-name^="Navigation Élève · "]', frame)
+      .filter((item) => !isNamedDecorator(pencilName(item)))
+      .forEach((item) => {
+        const active = studentSectionActive(pencilName(item));
+        item.classList.toggle("prototype-choice-active", active);
+        if (active) item.setAttribute("aria-current", "page");
+        else item.removeAttribute("aria-current");
+      });
+
+    $$('[data-pencil-name^="Choix Quiz · "]', frame)
+      .filter((choice) => !isNamedDecorator(pencilName(choice)))
+      .forEach((choice) => {
+        const value = pencilName(choice).replace("Choix Quiz · ", "");
+        const active = stripAccents(value) === stripAccents(student.learning?.quizChoice || "");
+        choice.classList.toggle("prototype-choice-active", active);
+        choice.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+    $$('[data-pencil-name^="Onglet Devoirs · "]', frame)
+      .filter((tab) => !isNamedDecorator(pencilName(tab)))
+      .forEach((tab) => {
+        const value = pencilName(tab).replace("Onglet Devoirs · ", "");
+        const active = value === (student.assignments?.activeTab || "Tous");
+        tab.classList.toggle("prototype-choice-active", active);
+        tab.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+    $$('[data-pencil-name^="Filtre Média · "]', frame)
+      .filter((filter) => !isNamedDecorator(pencilName(filter)))
+      .forEach((filter) => {
+        const value = pencilName(filter).replace("Filtre Média · ", "");
+        const active = value === (student.media?.activeFilter || "Tous");
+        filter.classList.toggle("prototype-choice-active", active);
+        filter.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+
+    $$('[data-pencil-name="Action Élève · Lire média"], [data-pencil-name="Action Élève · Écouter média"]', frame).forEach((control) => {
+      const active = Boolean(student.media?.playingType);
+      control.classList.toggle("prototype-choice-active", active);
+      control.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    applyStudentAssignmentTab(frame);
+    applyStudentMediaFilter(frame);
+  }
+
   function hydrateActiveFrame() {
     const frame = getActiveFrame();
     if (!frame || !state.session) return;
@@ -696,6 +823,7 @@
       hydrateEditorialFrame(frame);
     }
     if (state.routeKey.startsWith("director.")) hydrateDirectorFrame(frame);
+    if (state.routeKey.startsWith("student.")) hydrateStudentFrame(frame);
   }
 
   function updateEditorialStatus(status, decision, summary) {
@@ -830,6 +958,184 @@
     return "failed";
   }
 
+  function handleStudentEntryAction(name) {
+    const routeKey = state.routeKey;
+    const isName = (...values) => values.includes(name);
+
+    if (routeKey === "auth.student-login") {
+      if (/^Action principale W01_03_AUTH_ConnexionEleve_/.test(name)) {
+        mutateSession((session) => {
+          session.student.auth.signedIn = true;
+          session.student.auth.onboardingComplete = true;
+          session.student.systemState = null;
+        });
+        navigate("/eleve/tableau-de-bord");
+        showToast("Bienvenue Lina. Ta progression est prête.");
+        return true;
+      }
+      if (/^Action secondaire W01_03_AUTH_ConnexionEleve_/.test(name)) {
+        navigate("/activation");
+        return true;
+      }
+    }
+
+    if (routeKey === "auth.forgot-password") {
+      if (/^Action principale W01_07_AUTH_MotDePasseOublie_/.test(name)) {
+        navigate("/reinitialisation");
+        showToast("Instructions simulées. Aucun message réel n’a été envoyé.");
+        return true;
+      }
+      if (/^Action secondaire W01_07_AUTH_MotDePasseOublie_/.test(name)) {
+        navigate("/activation/acces-deja-active");
+        return true;
+      }
+    }
+
+    if (routeKey === "auth.reset-password" && /^Action principale W01_08_AUTH_Reinitialisation_/.test(name)) {
+      navigate("/connexion/eleve");
+      showToast("Mot de passe de démonstration mis à jour.");
+      return true;
+    }
+
+    if (routeKey === "activation.entry" && isName("Activer mon manuel", "CTA · Activer mon manuel")) {
+      mutateSession((session) => {
+        session.student.auth.activationState = "active";
+      });
+      navigate("/activation/succes");
+      showToast("Manuel activé pour cette démonstration.");
+      return true;
+    }
+    if (routeKey === "activation.invalid" && isName("Réessayer", "CTA · Corriger mon code")) {
+      navigate("/activation");
+      return true;
+    }
+    if (routeKey === "activation.used" && isName("Retrouver compte", "CTA · Retrouver mon compte")) {
+      navigate("/connexion/eleve");
+      return true;
+    }
+    if (routeKey === "activation.expired" && isName("Contacter", "CTA · Contacter l’assistance")) {
+      navigate("/eleve/aide");
+      showToast("Aide ouverte. Aucun message public n’est envoyé.");
+      return true;
+    }
+    if (routeKey === "activation.success" && isName("Créer profil", "CTA · Créer mon profil")) {
+      navigate("/eleve/onboarding/profil");
+      return true;
+    }
+    if (routeKey === "student.onboarding-profile" && name === "Action principale · Continuer") {
+      navigate("/eleve/onboarding/classe");
+      return true;
+    }
+    if (routeKey === "student.onboarding-class" && name === "Action principale · Rejoindre ma classe") {
+      mutateSession((session) => {
+        session.student.auth.signedIn = true;
+        session.student.auth.onboardingComplete = true;
+      });
+      navigate("/eleve/tableau-de-bord");
+      showToast("Ta classe est prête. Tu peux commencer.");
+      return true;
+    }
+    return false;
+  }
+
+  function handleStudentAction(element, name) {
+    if (name.startsWith("Choix Quiz · ")) {
+      const choice = name.replace("Choix Quiz · ", "");
+      mutateSession((session) => {
+        session.student.learning.quizChoice = choice;
+      });
+      showToast(`Réponse « ${choice} » sélectionnée.`);
+      return true;
+    }
+    if (name === "Action Élève · Valider réponse") {
+      const choice = state.session?.student?.learning?.quizChoice;
+      if (!choice) {
+        showToast("Choisis une réponse avant de valider.");
+        return true;
+      }
+      mutateSession((session) => {
+        session.student.learning.quizScore = stripAccents(choice) === "recycler" ? 8 : 6;
+      });
+      navigate("/eleve/activites/les-mots-de-l-environnement/resultat");
+      showToast("Réponse enregistrée. Découvre la correction expliquée.");
+      return true;
+    }
+    if (name.startsWith("Onglet Devoirs · ")) {
+      const tab = name.replace("Onglet Devoirs · ", "");
+      mutateSession((session) => {
+        session.student.assignments.activeTab = tab;
+      });
+      return true;
+    }
+    if (name.startsWith("Filtre Média · ")) {
+      const filter = name.replace("Filtre Média · ", "");
+      mutateSession((session) => {
+        session.student.media.activeFilter = filter;
+      });
+      showToast(`Médiathèque filtrée : ${filter}.`);
+      return true;
+    }
+    if (name === "Action Élève · Rendre le devoir") {
+      mutateSession((session) => {
+        const submitted = session.student.assignments.submittedIds || (session.student.assignments.submittedIds = []);
+        if (!submitted.includes("protegeons-la-nature")) submitted.push("protegeons-la-nature");
+      });
+      navigate("/eleve/devoirs/protegeons-la-nature/remise-confirmee");
+      showToast("Bravo, ton devoir a bien été remis à ton enseignant.");
+      return true;
+    }
+    if (name === "Action Élève · Lire média" || name === "Action Élève · Écouter média") {
+      const mediaType = name.includes("Écouter") ? "audio" : "lecture";
+      mutateSession((session) => {
+        session.student.media.playingType = session.student.media.playingType === mediaType ? null : mediaType;
+      });
+      showToast(state.session.student.media.playingType ? "Lecture démarrée avec transcription disponible." : "Lecture mise en pause.");
+      return true;
+    }
+    if (name === "Action Élève · Copier code récupération") {
+      const code = "CODE-DEMO-5A";
+      navigator.clipboard?.writeText(code).catch(() => {});
+      showToast("Code de récupération copié. Garde-le dans un endroit sûr.");
+      return true;
+    }
+    if (name === "Action Élève · Modifier avatar") {
+      mutateSession((session) => {
+        session.student.profile.avatar = session.student.profile.avatar === "livre" ? "plume" : "livre";
+      });
+      showToast("Avatar mis à jour pour la démonstration.");
+      return true;
+    }
+    if (name === "Action Élève · Se déconnecter" || name === "Navigation Élève · Déconnexion") {
+      showDialog({
+        title: "Se déconnecter ?",
+        message: "Ta progression est enregistrée. Tu pourras reprendre exactement ici lors de ta prochaine connexion.",
+        confirmLabel: "Me déconnecter",
+        onConfirm: () => {
+          mutateSession((session) => {
+            session.student.auth.signedIn = false;
+            session.student.systemState = null;
+          });
+          navigate("/connexion/eleve");
+        },
+      });
+      return true;
+    }
+    if (name === "Action Élève · Réessayer") {
+      mutateSession((session) => {
+        session.student.systemState = null;
+      });
+      navigate("/eleve/tableau-de-bord");
+      showToast("Connexion rétablie. Tu peux continuer.");
+      return true;
+    }
+    if (name === "Action Élève · Contacter aide") {
+      navigate("/eleve/aide");
+      showToast("L’aide est ouverte. Aucun message public n’est envoyé.");
+      return true;
+    }
+    return false;
+  }
+
   function isNamedDecorator(name) {
     return / · (icône|libellé|chevron|espace|indication)$/i.test(String(name || ""));
   }
@@ -864,6 +1170,9 @@
         canonicalName.startsWith("Onglet · ") && !name.startsWith("Onglet tablette · ") ||
         isDirectorTabletControl ||
         canonicalName.startsWith("Onglet type ") ||
+        canonicalName.startsWith("Choix Quiz · ") ||
+        canonicalName.startsWith("Onglet Devoirs · ") ||
+        canonicalName.startsWith("Filtre Média · ") ||
         canonicalName.startsWith("Carte état ") ||
         canonicalName.startsWith("Ligne version")
       ) {
@@ -877,6 +1186,9 @@
   function handleNamedAction(element) {
     const name = canonicalNamedControl(pencilName(element));
     const contentId = encodeURIComponent(currentContentId());
+
+    if (handleStudentEntryAction(name)) return true;
+    if (state.routeKey.startsWith("student.") && handleStudentAction(element, name)) return true;
 
     if (name === "Action Envoyer en revue" || name === "CTA Envoyer en revue") {
       updateEditorialStatus("En revue", "pending", "Contenu envoyé en revue éditoriale");
@@ -1230,7 +1542,12 @@
       if (name.startsWith("Bouton · ")) variants.push(name.replace("Bouton · ", "Bouton tablette · "));
       const selector = variants.map((variant) => `[data-pencil-name="${CSS.escape(variant)}"]`).join(", ");
       $$(selector).forEach((element) => {
-        makeInteractive(element, name.replace(/^(CTA|Action|Bouton|Carte état)\s*(·)?\s*/, ""));
+        const navigation = /^(?:Nav|Rail|Navigation|Retour)\b/.test(name);
+        makeInteractive(
+          element,
+          name.replace(/^(CTA|Action|Bouton|Carte état)\s*(·)?\s*/, ""),
+          navigation ? "link" : "button",
+        );
       });
     });
     $$('[data-pencil-name^="Onglet type "], [data-pencil-name^="Onglet · "], [data-pencil-name^="Onglet tablette · "]')
@@ -1239,6 +1556,12 @@
       makeInteractive(element, canonicalNamedControl(pencilName(element)), "button");
       element.setAttribute("aria-pressed", "false");
     });
+    $$('[data-pencil-name^="Choix Quiz · "], [data-pencil-name^="Onglet Devoirs · "], [data-pencil-name^="Filtre Média · "]')
+      .filter((element) => !isNamedDecorator(pencilName(element)))
+      .forEach((element) => {
+        makeInteractive(element, pencilName(element), "button");
+        element.setAttribute("aria-pressed", "false");
+      });
     $$('[data-pencil-name^="Ligne version"]')
       .filter((element) => !isNamedDecorator(pencilName(element)))
       .forEach((element) => {

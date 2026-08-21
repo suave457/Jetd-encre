@@ -2,7 +2,8 @@ export function App() {
   return (
     <main className="prototype-shell">
       <nav className="prototype-mode-switcher" aria-label="Changer de parcours de démonstration">
-        <span>Mode prototype</span>
+        <span>Démonstration</span>
+        <a href="#/eleve/tableau-de-bord">Élève</a>
         <a href="#/admin/bibliotheque">Administration</a>
         <a href="#/directeur/tableau-de-bord">Direction</a>
       </nav>

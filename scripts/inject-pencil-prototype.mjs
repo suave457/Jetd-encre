@@ -5,7 +5,7 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const source = path.resolve(root, process.argv[2] || "reference/pencil-export-source-v2.html");
+const source = path.resolve(root, process.argv[2] || "reference/pencil-export-source-v3.html");
 const target = path.resolve(root, process.argv[3] || "public/pencil-export.html");
 const publicDir = path.join(root, "public");
 const configPath = path.join(publicDir, "prototype-config.js");
@@ -69,6 +69,41 @@ const requiredControls = [
   "Bouton · Confirmer l’affectation",
   "Bouton · Générer les codes",
   "Bouton · Contacter l’assistance",
+  "Action Élève W01_02_AUTH_ChoixProfil_D_1440x900",
+  "Action Élève W01_02_AUTH_ChoixProfil_T_1024x768",
+  "Action principale W01_03_AUTH_ConnexionEleve_D_1440x900",
+  "Action principale W01_03_AUTH_ConnexionEleve_T_1024x768",
+  "Activer mon manuel",
+  "CTA · Activer mon manuel",
+  "Action principale · Continuer",
+  "Action principale · Rejoindre ma classe",
+  "Nav Élève · Tableau de bord",
+  "Navigation Élève · Accueil",
+  "Nav Élève · Manuels",
+  "Navigation Élève · Mes manuels",
+  "Nav Élève · Devoirs",
+  "Navigation Élève · Mes devoirs",
+  "Nav Élève · Médiathèque",
+  "Navigation Élève · Médiathèque",
+  "Nav Élève · Progression",
+  "Navigation Élève · Mes progrès",
+  "Action Élève · Reprendre la leçon",
+  "Action Élève · Ouvrir mes manuels",
+  "Action Élève · Ouvrir manuel",
+  "Action Élève · Ouvrir leçon",
+  "Action Élève · Lancer activité",
+  "Choix Quiz · Recycler",
+  "Action Élève · Valider réponse",
+  "Onglet Devoirs · À faire",
+  "Action Élève · Rendre le devoir",
+  "Action Élève · Refaire activité",
+  "Action Élève · Continuer leçon",
+  "Action Élève · Lire média",
+  "Action Élève · Voir progression",
+  "Action Élève · Ouvrir aide",
+  "Action Élève · Se déconnecter",
+  "Action Élève · Réessayer",
+  "Action Élève · Contacter aide",
 ];
 
 const countName = (html, name) => html.split(`data-pencil-name="${name}"`).length - 1;

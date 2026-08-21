@@ -1,69 +1,76 @@
 # Design QA — Prototype Jet d’Encre
 
 Date : 21 août 2026
-Source visuelle : `reference/pencil-export-source-v2.html`
-Implémentation vérifiée : prototype local, puis version Sites de production
+
+Source visuelle : `reference/pencil-export-source-v3.html`
+
+Implémentation vérifiée : prototype local Sites-ready
 
 ## Périmètre vérifié
 
-- 34 écrans Pen intégrés sans modifier les anciennes versions : 4 écrans Bibliothèque/Studio, 14 écrans du cycle éditorial Admin et 16 écrans Directeur.
-- 17 routes de navigation couvrant les parcours Admin et Directeur.
+- 84 écrans Pen intégrés, chacun une seule fois : 34 écrans Admin/Directeur déjà validés et 50 écrans du parcours Élève complet.
+- 42 routes couvrant Administration, Direction, accès Élève, activation, onboarding et espace Élève authentifié.
 - Deux formats prioritaires : ordinateur 1440 × 900 et tablette 1024 × 768.
-- 43 contrôles P0 injectés : navigation, recherches, filtres, formulaires, états, validations et actions principales.
+- 78 contrôles P0 reconnus par l’injection : navigation, filtres, choix, actions, validations, formulaires et états.
+- Les anciennes versions W01/W02 et les vagues W03–W05 sont intactes dans Pen.
 
 ## Comparaison visuelle
 
-Chaque comparaison a été réalisée à état et dimensions identiques, avec la référence Pen et le prototype navigable réunis dans la même image.
+Les références Pen et les rendus navigateur ont été contrôlés ensemble, à la même route et dans le même format cible.
 
 | Vue | Ordinateur | Tablette | Résultat |
 |---|---:|---:|---|
 | Admin — Prévisualisation éditoriale | 1440 × 900 | 1024 × 768 | Conforme |
 | Directeur — Tableau de bord | 1440 × 900 | 1024 × 768 | Conforme |
+| Élève — Tableau de bord | 1440 × 900 | — | Conforme |
+| Élève — Médiathèque | — | 1024 × 768 | Conforme |
 
-- Structure, grille, proportions, typographie, rayons, bordures et hiérarchie visuelle conformes à Pen.
-- Charte respectée : bleu nuit/or/ivoire pour la marque et la confiance ; vert fonctionnel pour les actions et états utiles.
-- Aucun débordement, recadrage anormal, chevauchement ou contrôle hors écran observé.
+- Structure, grille, proportions, typographie, rayons, bordures et hiérarchie visuelle conformes aux frames Pen.
+- Charte respectée : bleu nuit/or/ivoire pour la marque ; vert/safran/terre cuite pour l’apprentissage et l’action.
+- Les écrans Élève gardent une tonalité accueillante et dynamique sans perdre la crédibilité éditoriale Jet d’Encre.
+- Aucun débordement, chevauchement, placeholder ou élément coupé détecté dans les 26 nouvelles frames W06.
 
-## Parcours Admin testés
+## Parcours Élève testés
 
-- Bibliothèque : recherche, onglets de statuts, filtres combinés, tri, pagination simulée et sélection multiple.
-- Actions de contenu : créer, modifier, dupliquer, archiver, annuler et restaurer.
-- Cycle éditorial complet : Studio → Prévisualisation → Revue → Planification → Publication réussie → Contenu public.
-- Historique : comparaison entre deux versions distinctes et restauration sans perte de l’historique.
-- Tablette : navigation compacte, actions Aperçu/Revue et filtres adaptés.
-- États métier : brouillon, en revue, planifié, publié, archivé, refusé, droits insuffisants et erreur de publication.
+- Accès : choix du profil → connexion Élève → tableau de bord.
+- Récupération : mot de passe oublié → réinitialisation → retour connexion ; session expirée distincte d’une déconnexion volontaire.
+- Activation : saisie, code invalide, accès déjà actif, code expiré et activation réussie.
+- Onboarding : création du profil → école/classe → tableau de bord.
+- Apprentissage : tableau de bord → manuels → lecteur enrichi → quiz → résultat → reprise de la leçon.
+- Devoirs : liste → détail/réalisation → remise confirmée → retour tableau de bord.
+- Médiathèque : filtres, lecture simulée et états visuels.
+- Progression et récompenses : navigation croisée et continuité vers l’apprentissage.
+- Profil/aide : avatar fictif, aide, copie d’un code de démonstration et déconnexion.
+- Route Élève inconnue : ouverture de l’état système Élève, sans bascule vers Administration.
 
-## Parcours Directeur testés
+## Parcours Admin et Directeur conservés
 
-- Tableau de bord et alertes opérationnelles.
-- Classes : recherche, filtres, création et apparition de la nouvelle classe dans la liste.
-- Enseignants : invitation et statut de confirmation.
-- Affectations : confirmation et conflit prévu.
-- Élèves : génération fictive de codes d’activation.
-- Suivi d’utilisation : filtres période/classe/enseignant et états de synchronisation.
-- Établissement et assistance : formulaire d’assistance et confirmation de ticket.
-- Navigation ordinateur et rail tablette vérifiés sur l’ensemble des sections.
+- Admin : Bibliothèque, Studio, cycle éditorial, historique, publication et états système.
+- Directeur : tableau de bord, classes, enseignants, affectations, activation, suivi d’utilisation et assistance.
+- Les tests de contrat existants confirment que les actions ordinateur/tablette et les actifs historiques restent présents.
 
-## Accessibilité et robustesse
+## Accessibilité et protection du mineur
 
-- Libellés accessibles pour les actions icônes, rôles des boutons, champs et sélections.
-- Cibles principales d’au moins 44 px, contrastes conformes à la charte et focus visibles.
-- États jamais signalés uniquement par la couleur.
-- Les écrans inactifs sont retirés de l’ordre de lecture et marqués `aria-hidden`.
-- Console navigateur sans erreur ni avertissement bloquant sur les parcours testés.
+- Textes W06 à 12 px minimum et cibles P0 à 44 × 44 px minimum dans les frames Pen.
+- Navigation exposée comme liens avec `aria-current`; mutations comme boutons; filtres et choix avec états accessibles.
+- Focus visible, annonce polie des changements de route, écrans inactifs `inert` et `aria-hidden`.
+- Aucun nom complet, e-mail, date de naissance, code réel, blob audio ou donnée d’un autre élève dans `sessionStorage`.
+- La déconnexion efface uniquement l’état d’authentification Élève et renvoie vers la connexion.
+- Le sélecteur de rôles est explicitement présenté comme une démonstration.
 
 ## Vérifications de livraison
 
-- Injection Pen : 34 frames et 43 contrôles P0 reconnus.
-- Contrat prototype : 6/6.
+- Export/injection Pen : 84 frames et 78 contrôles P0.
+- Contrat prototype : 7/7.
 - Build production : réussi.
 - Tests Sites : 4/4.
 - Actifs locaux référencés : présence vérifiée automatiquement.
-- Le sélecteur « Mode prototype » est un ajout volontaire permettant de passer entre Administration et Direction sans modifier les écrans Pen.
+- Routes profondes vérifiées dans le navigateur MCP : connexion, activation, onboarding, lecteur, résultat, remise, profil et page Élève inconnue.
+- Board d’architecture Pen `W06_ELV_14_FlowNavigation_11200x1000` : 25 paires, texte ≥ 12 px, CheckLayout 0.
 
 ## Limite documentée
 
-Les données restent fictives et persistent uniquement pendant la session de démonstration. La pagination et les mutations simulent le comportement produit sans backend ni base de données.
+Les données et médias restent fictifs. Les interactions simulent le produit sans backend, stockage permanent, micro réel ni données d’élèves réels. Les contrôles clavier, lecteur d’écran et zoom 200 % devront être repris sur l’application de production.
 
 ## Résultat
 
