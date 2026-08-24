@@ -143,4 +143,71 @@ Date : 24 août 2026
 
 Les données sont réalistes mais fictives et ne sont pas persistées. Les actions simulent l’expérience produit sans backend, comptes réels ni données d’élèves réels.
 
+historical result: passed
+
+---
+
+# Design QA — Parcours Blog public et administration
+
+Date : 24 août 2026
+
+## Vérité visuelle et captures comparées
+
+- Identité de marque : `C:/Users/mouat/OneDrive/Desktop/logo et identité visuelle.png` — 1254 × 1254 px, logo, ivoire, bleu nuit et or.
+- Référence landing existante : `qa/responsive-landing-1366x768.png` — capture 1351 × 759 px, viewport CSS 1366 × 768.
+- Référence Administration existante : `qa/responsive-admin-1366x768.png` — capture 1351 × 759 px, viewport CSS 1366 × 768.
+- Blog public ordinateur : `qa/blog-hub-1366x768.png` — capture 1351 × 759 px, viewport CSS 1366 × 768, DPR normalisé à 1.
+- Article ordinateur : `qa/blog-article-1366x768.png` — capture 1351 × 759 px, viewport CSS 1366 × 768.
+- Administration Blog ordinateur : `qa/admin-blog-1366x768.png` — capture 1351 × 759 px, viewport CSS 1366 × 768.
+- Blog, article et Administration tablette : `qa/blog-hub-1024x768.png`, `qa/blog-article-1024x768.png`, `qa/admin-blog-1024x768.png` — captures 1009 × 757 px, viewport CSS 1024 × 768.
+- La différence entre le viewport CSS et les pixels capturés correspond à la zone occupée par les barres du navigateur. Les comparaisons ordinateur ont été réalisées à la même densité et au même cadrage de contenu.
+
+Les références ne représentent pas le même écran métier que le Blog ; elles servent de vérité visuelle pour le système de marque, les proportions publiques et la coque Administration. Elles ont été ouvertes dans la même comparaison que les nouveaux écrans afin de juger les surfaces réellement communes.
+
+## Comparaison visuelle
+
+- Composition : le Blog reprend la largeur, le bandeau public, la texture zellige, la hiérarchie généreuse et les marges de la landing, sans transformer la page en interface adulte stricte.
+- Typographie : les titres publics conservent la grande sans-serif expressive de la landing ; les titres éditoriaux et Admin réutilisent la sérif premium déjà présente. Les textes UI restent compacts mais lisibles aux deux viewports.
+- Couleurs : bleu nuit, ivoire, vert pédagogique, or et corail sont mappés sur les tokens existants ; les états Publié, Planifié et Brouillon restent cohérents avec la bibliothèque Admin.
+- Images : les six visuels proviennent de la bibliothèque réelle du projet, avec recadrage `object-fit: cover`, coins et élévation cohérents. Aucun visuel factice en CSS ou emoji n’a été ajouté.
+- Icônes : la même famille Phosphor est utilisée dans la navigation, la recherche, les métadonnées, les actions Admin et l’éditeur.
+- Contenu : les sujets sont spécifiques au contexte marocain et au FLE — plurilinguisme darija/amazighe/français, culture de Fès, compréhension orale, confiance et tâche actionnelle.
+- Rythme et densité : la page publique alterne hero, recherche, mise à la une, grille et newsletter ; la page Admin conserve la densité du tableau existant tout en ajoutant des indicateurs éditoriaux.
+
+La comparaison ciblée s’est concentrée sur trois zones lisibles à taille réelle : en-tête et hero public, couverture de l’article, puis liste et actions Admin. Aucun autre zoom régional n’était nécessaire, les contrôles, textes, icônes et bordures étant lisibles dans les captures 1366 × 768.
+
+## Historique des itérations
+
+1. Première passe : [P2 — qualité d’image] le visuel initial de l’article principal affichait un damier intégré au fichier source dans la couverture de l’article. Impact : impression d’asset non finalisé dans une zone premium très visible.
+2. Correctif : remplacement par un visuel propre de la bibliothèque existante, mise à jour du texte alternatif, reconstruction et nouvelle capture au même viewport.
+3. Passe post-correctif : la couverture est nette, correctement recadrée et cohérente avec le traitement des cartes ; aucun P0, P1 ou P2 restant.
+
+## Parcours et interactions vérifiés
+
+- Landing : présence de la section « Le Mag Jet d’Encre », quatre cartes et navigation vers `/blog` par le menu et le CTA « Voir tous les articles ».
+- Blog : six cartes au repos, recherche « médina » ramenant exactement l’article de Fès, filtres Tous/Parents/Enseignants/Enfants et état vide prévu.
+- Article : route profonde, fil d’Ariane, trois sections, sommaire, encadré pédagogique, partage, articles associés et CTA d’activation.
+- Newsletter : formulaire et état de confirmation présents.
+- Administration : six articles, KPIs, filtres de statut, aperçu public, modification, duplication et archivage représentés.
+- Éditeur Admin : onglets Contenu, Ciblage et SEO & publication ; aperçu, enregistrement du brouillon et confirmation de publication.
+- Responsive : aucune largeur de document supérieure au viewport à 1366 × 768, 1280 × 720 ou 1024 × 768 ; le menu latéral Admin devient un panneau tablette et les tableaux restent contenus dans leur surface.
+- Images cassées : 0. Erreurs et avertissements console : 0.
+
+## Accessibilité et résilience
+
+- Navigation sémantique, labels de recherche et newsletter, textes alternatifs informatifs et fil d’Ariane nommé.
+- Onglets avec `role=tab` et `aria-selected`, filtres avec `aria-pressed`, focus visible et cibles principales d’au moins 42–46 px.
+- Respect de `prefers-reduced-motion` et absence de mise à l’échelle globale du canevas.
+- Les zones denses utilisent un débordement local seulement lorsqu’il devient nécessaire sous le breakpoint tablette.
+
+## Vérifications techniques
+
+- Build production : réussi.
+- Contrat historique du prototype : 8/8.
+- Tests de préparation Sites : 4/4.
+- Les versions, frames Pen et exports historiques restent intacts.
+- Le prototype reste local : aucune nouvelle publication Sites n’a été déclenchée.
+
+## Résultat
+
 final result: passed
