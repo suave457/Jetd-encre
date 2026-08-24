@@ -85,4 +85,62 @@ Les données et médias restent fictifs. Les interactions simulent le produit sa
 
 ## Résultat
 
+historical result: passed
+
+---
+
+# Design QA — Version responsive presque complète
+
+Date : 24 août 2026
+
+## Sources et captures comparées
+
+- Landing approuvée : `C:/Users/mouat/OneDrive/Documents/ChatGPT/Plateforme éducative/audit-captures-2026-08-18/01-landing-page.png/vEZpN.png` — source 1440 × 7530, état initial public.
+- Référence Élève : `C:/Users/mouat/OneDrive/Documents/ChatGPT/Plateforme éducative/figma-export/renders/studentDashboard.png` — 1440 × 1024, tableau de bord.
+- Référence Enseignant : `C:/Users/mouat/OneDrive/Documents/ChatGPT/Plateforme éducative/figma-export/renders/teacherDashboard.png` — 1440 × 1024, tableau de bord.
+- Référence Direction : `C:/Users/mouat/OneDrive/Documents/ChatGPT/Plateforme éducative/figma-export/renders/directorDashboard.png` — 1440 × 1024, vue d’ensemble.
+- Référence Administration : `C:/Users/mouat/OneDrive/Documents/ChatGPT/Plateforme éducative/figma-export/renders/adminDashboard.png` — 1440 × 1024, pilotage.
+- Capture d’implémentation landing : `qa/responsive-landing-1366x768.png` — viewport 1366 × 768, état initial.
+- Capture d’implémentation Admin : `qa/responsive-admin-1366x768.png` — viewport 1366 × 768, bibliothèque sans filtre.
+
+## Historique de comparaison
+
+1. La landing approuvée et l’implémentation ont été ouvertes ensemble. La composition, l’ordre des sections, l’énergie enfant-friendly, les motifs marocains, les surfaces ivoire, le vert pédagogique et les accents safran sont conservés. Le logo temporaire de la référence est remplacé par le logo officiel Jet d’Encre.
+2. Les tableaux de bord Élève, Enseignant, Direction et Admin ont été comparés aux rendus Pen. La coque bleu nuit, la hiérarchie des cartes, les états or/vert et la densité éditoriale restent cohérents, sans réduction globale du canevas.
+3. Premier contrôle à 1280 × 640 : la barre latérale possédait un défilement interne en plus du défilement de page. Correctif appliqué avec une variante de hauteur compacte ; contrôle suivant : `scrollHeight === clientHeight` pour la barre latérale et aucun défilement horizontal.
+4. Les écrans ont ensuite été contrôlés à 1366 × 768, 1366 × 650, 1280 × 640 et 1024 × 768. Résultat : aucun chevauchement, aucune découpe du bas et `scrollWidth <= clientWidth + 1` sur chaque route testée.
+
+## Parcours et interactions vérifiés
+
+- Landing : navigation de section, CTA activation, connexion, FAQ et pied de page.
+- Portail : quatre profils visibles et accessibles — Élève, Enseignant, Direction, Administration.
+- Connexion : formulaire et entrée dans chaque espace de démonstration.
+- Élève : accueil, manuel avec navigation de leçons, devoirs avec onglets, médiathèque, progrès et récompenses.
+- Enseignant : tableau de bord, classes, élèves, devoirs, création en quatre étapes, ressources et analyses.
+- Direction : vue d’ensemble, classes, enseignants, activations, utilisation et rapports.
+- Administration : pilotage, établissements, utilisateurs, licences, bibliothèque, filtres, studio drag-and-drop, support et sécurité.
+- 33 routes contrôlées dans le navigateur ; toutes affichent leur écran attendu, aucune ne produit l’état introuvable et aucune n’introduit de débordement horizontal.
+- Filtre « Publié » de la bibliothèque : 3 contenus attendus sur 6.
+- Console navigateur : 0 erreur, 0 avertissement.
+
+## Accessibilité et résilience
+
+- Liens et boutons sémantiques, états actifs avec `aria-current`, onglets avec `aria-selected`, accordéon avec `aria-expanded`.
+- Indicateurs de focus visibles, textes alternatifs sur les images informatives et respect de `prefers-reduced-motion`.
+- Cibles principales de 44 px minimum.
+- Mise en page à largeur fluide ; aucun `scale()` global.
+- Un seul défilement de page ; la barre latérale compacte ne défile plus sur les portables peu hauts.
+- Tableaux conservés dans leur panneau avec défilement local uniquement si nécessaire aux largeurs plus étroites.
+
+## Vérifications techniques
+
+- Build production : réussi.
+- Contrat du prototype Pen historique : 8/8.
+- Tests Sites : 4/4.
+- Les 84 frames historiques et `public/pencil-export.html` restent présents et intacts.
+
+## Limite du prototype
+
+Les données sont réalistes mais fictives et ne sont pas persistées. Les actions simulent l’expérience produit sans backend, comptes réels ni données d’élèves réels.
+
 final result: passed
