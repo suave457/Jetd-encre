@@ -27,6 +27,7 @@ export const ROLE_PAGES = Object.freeze({
   ]),
   enseignant: Object.freeze([
     "tableau-de-bord",
+    "actions",
     "classes",
     "eleves",
     "devoirs",
@@ -38,6 +39,7 @@ export const ROLE_PAGES = Object.freeze({
   ]),
   directeur: Object.freeze([
     "tableau-de-bord",
+    "actions",
     "classes",
     "enseignants",
     "activations",
@@ -51,6 +53,10 @@ export const ROLE_PAGES = Object.freeze({
   ]),
   admin: Object.freeze([
     "pilotage",
+    "analyses",
+    "imports",
+    "referentiels",
+    "medias",
     "etablissements",
     "utilisateurs",
     "licences",
@@ -124,7 +130,7 @@ const APP_SCREEN_ALIASES = Object.freeze({
   }),
   admin: Object.freeze({
     bibliotheque: "admin.library",
-    studio: "admin.studio",
+    studio: "admin.beta-studio",
   }),
 });
 

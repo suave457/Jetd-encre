@@ -5,8 +5,10 @@ import {
   CLASS_CHALLENGE_QUESTION_COUNT,
   isSafeClassPseudonym,
 } from "./features/games/class-challenges/classChallengeEngine.js";
+import { BETA_MEDIA_ASSETS } from "./features/beta-data/betaFixtures.js";
+import { AEP_LEVELS, LEARNING_COMPETENCIES, LEARNING_DOMAINS } from "./features/beta-data/learningTaxonomy.js";
 
-export const DEMO_SCHEMA_VERSION = 6;
+export const DEMO_SCHEMA_VERSION = 7;
 export const DEMO_STORAGE_KEY = "jde.demo.store.v3";
 export const DEMO_ROLES = Object.freeze(["eleve", "parent", "enseignant", "directeur", "admin"]);
 export const ACTIVATION_CODE_PATTERN = /^JDE-26-FR([1-6])-(\d{4})$/;
@@ -216,6 +218,48 @@ export function createInitialDemoState(now = new Date()) {
         archivedAt: null,
       },
     ],
+    establishments: [
+      { id: "etablissement-al-manar", name: "Groupe scolaire Al Manar", city: "Casablanca", region: "Casablanca-Settat", students: 654, teachers: 42, classes: 18, status: "Actif", updatedAt: timestamp },
+      { id: "etablissement-al-amal", name: "École Al Amal", city: "Rabat", region: "Rabat-Salé-Kénitra", students: 196, teachers: 12, classes: 9, status: "Actif", updatedAt: timestamp },
+      { id: "etablissement-ibn-battouta", name: "Institut Ibn Battouta", city: "Tanger", region: "Tanger-Tétouan-Al Hoceïma", students: 248, teachers: 15, classes: 11, status: "Actif", updatedAt: timestamp },
+      { id: "etablissement-les-orangers", name: "École Les Orangers", city: "Marrakech", region: "Marrakech-Safi", students: 174, teachers: 11, classes: 8, status: "À renouveler", updatedAt: timestamp },
+    ],
+    classes: [
+      { id: "classe-4a", establishmentId: "etablissement-al-manar", name: "4e AEP · Classe A", level: "4e AEP", students: 26, teacherId: "staff-omar", weeklyUsage: 72, activated: 24, updatedAt: timestamp },
+      { id: "classe-4b", establishmentId: "etablissement-al-manar", name: "4e AEP · Classe B", level: "4e AEP", students: 24, teacherId: "staff-nadia", weeklyUsage: 61, activated: 21, updatedAt: timestamp },
+      { id: "classe-5a", establishmentId: "etablissement-al-manar", name: "5e AEP · Classe A", level: "5e AEP", students: 29, teacherId: "user-enseignante-salma", weeklyUsage: 84, activated: 28, updatedAt: timestamp },
+      { id: "classe-5b", establishmentId: "etablissement-al-manar", name: "5e AEP · Classe B", level: "5e AEP", students: 28, teacherId: "user-enseignante-salma", weeklyUsage: 77, activated: 26, updatedAt: timestamp },
+      { id: "classe-6a", establishmentId: "etablissement-al-manar", name: "6e AEP · Classe A", level: "6e AEP", students: 30, teacherId: null, weeklyUsage: 34, activated: 22, updatedAt: timestamp },
+    ],
+    staff: [
+      { id: "user-enseignante-salma", establishmentId: "etablissement-al-manar", name: "Salma Benjelloun", role: "enseignant", discipline: "Français", classIds: ["classe-5a", "classe-5b"], status: "Très active", updatedAt: timestamp },
+      { id: "staff-omar", establishmentId: "etablissement-al-manar", name: "Omar El Idrissi", role: "enseignant", discipline: "Français", classIds: ["classe-4a"], status: "Actif", updatedAt: timestamp },
+      { id: "staff-nadia", establishmentId: "etablissement-al-manar", name: "Nadia Bakkali", role: "enseignant", discipline: "Français", classIds: ["classe-4b"], status: "Actif", updatedAt: timestamp },
+      { id: "staff-mehdi", establishmentId: "etablissement-al-manar", name: "Mehdi Amrani", role: "enseignant", discipline: "Français", classIds: [], status: "À accompagner", updatedAt: timestamp },
+    ],
+    licenseLots: [
+      { id: "lot-fr5-0041", codePrefix: "JDE-26-FR5-0041", level: "5e AEP", issued: 2000, activated: 1638, expiresAt: "2027-08-31", status: "Actif" },
+      { id: "lot-fr4-0028", codePrefix: "JDE-26-FR4-0028", level: "4e AEP", issued: 2400, activated: 2070, expiresAt: "2027-08-31", status: "Actif" },
+      { id: "lot-fr6-0019", codePrefix: "JDE-26-FR6-0019", level: "6e AEP", issued: 1800, activated: 1402, expiresAt: "2026-09-26", status: "À renouveler" },
+    ],
+    supportTickets: [
+      { id: "2841", requester: "École Al Amal", subject: "Activation d’un lot", priority: "Haute", status: "En cours", createdAt: "2026-08-26T08:00:00.000Z" },
+      { id: "2838", requester: "Mme Benjelloun", subject: "Projection vidéo", priority: "Normale", status: "Nouveau", createdAt: "2026-08-25T12:00:00.000Z" },
+      { id: "2835", requester: "Institut Ibn Battouta", subject: "Import des élèves", priority: "Haute", status: "En attente", createdAt: "2026-08-24T09:30:00.000Z" },
+    ],
+    actionResolutions: [],
+    importJobs: [],
+    contentVersions: [],
+    mediaAssets: BETA_MEDIA_ASSETS.map((item) => ({ ...item, createdAt: timestamp, updatedAt: timestamp })),
+    referenceItems: [
+      ...AEP_LEVELS.map((item) => ({ id: `level-${item.code}`, family: "levels", code: item.code, label: item.label, active: true, system: true })),
+      ...LEARNING_DOMAINS.map((item) => ({ id: `domain-${item.code}`, family: "domains", code: item.code, label: item.label, active: true, system: true })),
+      ...LEARNING_COMPETENCIES.map((item) => ({ id: `competency-${item.code}`, family: "competencies", code: item.code, label: item.label, domainCode: item.domainCode, active: item.status === "active", system: true })),
+      ...["Élèves", "Enseignants", "Élèves et enseignants", "Public"].map((label, index) => ({ id: `audience-${index + 1}`, family: "audiences", code: slugify(label), label, active: true, system: false })),
+      ...["Unité 1", "Unité 2", "Unité 3", "Unité 4", "Unité 5", "Unité 6", "Hors unité"].map((label, index) => ({ id: `unit-${index + 1}`, family: "units", code: slugify(label), label, active: true, system: false })),
+      ...["Documentaire", "Podcast", "E-book", "Jeu éducatif", "Article"].map((label, index) => ({ id: `format-${index + 1}`, family: "formats", code: slugify(label), label, active: true, system: false })),
+    ],
+    auditEntries: [],
     contents: [
       {
         id: "POD-0018",
@@ -477,6 +521,12 @@ function mergeKnownState(candidate, seed) {
         ? candidateSession.pendingActivation
         : null,
   };
+  const savedReferences = Array.isArray(candidate.referenceItems) ? candidate.referenceItems : [];
+  const seedReferenceIds = new Set(seed.referenceItems.map((item) => item.id));
+  const referenceItems = [
+    ...seed.referenceItems.map((seedItem) => ({ ...seedItem, ...(savedReferences.find((item) => item?.id === seedItem.id) || {}) })),
+    ...savedReferences.filter((item) => item?.id && !seedReferenceIds.has(item.id)),
+  ];
 
   return {
     ...seed,
@@ -496,6 +546,17 @@ function mergeKnownState(candidate, seed) {
     classChallenges: Array.isArray(candidate.classChallenges) ? candidate.classChallenges : seed.classChallenges,
     classChallengeResults: Array.isArray(candidate.classChallengeResults) ? candidate.classChallengeResults : seed.classChallengeResults,
     submissions: Array.isArray(candidate.submissions) ? candidate.submissions : seed.submissions,
+    establishments: Array.isArray(candidate.establishments) ? candidate.establishments : seed.establishments,
+    classes: Array.isArray(candidate.classes) ? candidate.classes : seed.classes,
+    staff: Array.isArray(candidate.staff) ? candidate.staff : seed.staff,
+    licenseLots: Array.isArray(candidate.licenseLots) ? candidate.licenseLots : seed.licenseLots,
+    supportTickets: Array.isArray(candidate.supportTickets) ? candidate.supportTickets : seed.supportTickets,
+    actionResolutions: Array.isArray(candidate.actionResolutions) ? candidate.actionResolutions : seed.actionResolutions,
+    importJobs: Array.isArray(candidate.importJobs) ? candidate.importJobs : seed.importJobs,
+    contentVersions: Array.isArray(candidate.contentVersions) ? candidate.contentVersions : seed.contentVersions,
+    mediaAssets: Array.isArray(candidate.mediaAssets) ? candidate.mediaAssets : seed.mediaAssets,
+    referenceItems,
+    auditEntries: Array.isArray(candidate.auditEntries) ? candidate.auditEntries : seed.auditEntries,
     assignments: Array.isArray(legacyAssignments) ? legacyAssignments : seed.assignments,
     contents: Array.isArray(legacyContents) ? legacyContents : seed.contents,
     articles: Array.isArray(legacyArticles) ? legacyArticles : seed.articles,
@@ -535,6 +596,19 @@ export function migrateDemoState(candidate, now = new Date()) {
   if (version < 6) {
     migrated.classChallenges = migrated.classChallenges || seed.classChallenges;
     migrated.classChallengeResults = migrated.classChallengeResults || seed.classChallengeResults;
+  }
+  if (version < 7) {
+    migrated.establishments = migrated.establishments || seed.establishments;
+    migrated.classes = migrated.classes || seed.classes;
+    migrated.staff = migrated.staff || seed.staff;
+    migrated.licenseLots = migrated.licenseLots || seed.licenseLots;
+    migrated.supportTickets = migrated.supportTickets || seed.supportTickets;
+    migrated.actionResolutions = migrated.actionResolutions || [];
+    migrated.importJobs = migrated.importJobs || [];
+    migrated.contentVersions = migrated.contentVersions || [];
+    migrated.mediaAssets = migrated.mediaAssets || seed.mediaAssets;
+    migrated.referenceItems = migrated.referenceItems || seed.referenceItems;
+    migrated.auditEntries = migrated.auditEntries || [];
   }
 
   return mergeKnownState(migrated, seed);
@@ -654,6 +728,30 @@ export function createDemoStore(options = {}) {
   function subscribe(listener) {
     listeners.add(listener);
     return () => listeners.delete(listener);
+  }
+
+  function buildAuditEntry(action, entityType, entityId, summary) {
+    return {
+      id: createId("audit"),
+      action,
+      entityType,
+      entityId: entityId || null,
+      actorRole: state.session.role || "system",
+      actorUserId: state.session.userId || null,
+      summary: String(summary || action).slice(0, 240),
+      createdAt: asIso(now),
+    };
+  }
+
+  function buildContentVersionRecords(current, updated, reason, timestamp = asIso(now)) {
+    const existing = state.contentVersions.filter((version) => version.contentId === updated.id);
+    const maxVersion = Math.max(0, ...existing.map((version) => Number(version.version) || 0));
+    const records = [];
+    if (current && existing.length === 0) {
+      records.push({ id: createId("version"), contentId: current.id, version: 1, snapshot: clone(current), previousSnapshot: null, reason: "Version ALPHA importée", actorRole: "system", createdAt: current.updatedAt || current.createdAt || timestamp });
+    }
+    records.unshift({ id: createId("version"), contentId: updated.id, version: Math.max(maxVersion + 1, current && existing.length === 0 ? 2 : 1), snapshot: clone(updated), previousSnapshot: current ? clone(current) : null, reason, actorRole: state.session.role || "system", createdAt: timestamp });
+    return records;
   }
 
   function signIn(role, credentials = {}) {
@@ -810,7 +908,11 @@ export function createDemoStore(options = {}) {
       archivedAt: null,
     };
     if (collection === "articles") entity.slug = input.slug ? slugify(input.slug) : slugify(title);
-    commit({ ...state, [collection]: [entity, ...state[collection]] });
+    const contentVersions = collection === "contents"
+      ? [{ id: createId("version"), contentId: entity.id, version: 1, snapshot: clone(entity), reason: "Création", actorRole: state.session.role || "system", createdAt: timestamp }, ...state.contentVersions]
+      : state.contentVersions;
+    const auditEntries = [buildAuditEntry("create", collection, entity.id, `Création de « ${entity.title} »`), ...state.auditEntries];
+    commit({ ...state, [collection]: [entity, ...state[collection]], contentVersions, auditEntries });
     return { ok: true, item: clone(entity) };
   }
 
@@ -832,7 +934,11 @@ export function createDemoStore(options = {}) {
     if (collection === "articles" && patch.slug !== undefined) updated.slug = slugify(patch.slug);
     const nextCollection = [...state[collection]];
     nextCollection[index] = updated;
-    commit({ ...state, [collection]: nextCollection });
+    const contentVersions = collection === "contents"
+      ? [...buildContentVersionRecords(current, updated, patch.changeNote || "Modification", updated.updatedAt), ...state.contentVersions]
+      : state.contentVersions;
+    const auditEntries = [buildAuditEntry("update", collection, current.id, `Mise à jour de « ${updated.title} »`), ...state.auditEntries];
+    commit({ ...state, [collection]: nextCollection, contentVersions, auditEntries });
     return { ok: true, item: clone(updated) };
   }
 
@@ -1206,6 +1312,169 @@ export function createDemoStore(options = {}) {
     return { ok: true, recorded: true, duplicate: false, result: clone(result) };
   }
 
+  function resolveActionItem(actionId, status = "resolved") {
+    const id = String(actionId || "").trim();
+    if (!id) return resultError("action_required", "L’action à traiter est obligatoire.");
+    const allowed = ["resolved", "snoozed", "open"];
+    if (!allowed.includes(status)) return resultError("invalid_status", "Le statut de suivi est invalide.");
+    const timestamp = asIso(now);
+    const current = state.actionResolutions.find((item) => item.actionId === id);
+    const resolution = {
+      ...(current || {}),
+      id: current?.id || createId("resolution"),
+      actionId: id,
+      status,
+      actorRole: state.session.role || "admin",
+      updatedAt: timestamp,
+      resolvedAt: status === "resolved" ? timestamp : null,
+    };
+    const actionResolutions = current
+      ? state.actionResolutions.map((item) => item.actionId === id ? resolution : item)
+      : [resolution, ...state.actionResolutions];
+    commit({ ...state, actionResolutions, auditEntries: [buildAuditEntry("action_status", "action", id, `Action marquée ${status}`), ...state.auditEntries] });
+    return { ok: true, resolution: clone(resolution) };
+  }
+
+  function bulkUpdateContents(ids = [], patch = {}) {
+    const selected = new Set((Array.isArray(ids) ? ids : []).map(String));
+    if (!selected.size) return resultError("selection_required", "Sélectionnez au moins un contenu.");
+    const timestamp = asIso(now);
+    const touched = [];
+    const versions = [];
+    const contents = state.contents.map((content) => {
+      if (!selected.has(String(content.id))) return content;
+      const updated = { ...content, ...clone(patch), id: content.id, title: patch.title === undefined ? content.title : String(patch.title).trim() || content.title, createdAt: content.createdAt, updatedAt: timestamp };
+      touched.push(updated);
+      versions.push(...buildContentVersionRecords(content, updated, "Action groupée", timestamp));
+      return updated;
+    });
+    if (!touched.length) return resultError("not_found", "Aucun contenu sélectionné n’a été trouvé.");
+    commit({ ...state, contents, contentVersions: [...versions, ...state.contentVersions], auditEntries: [buildAuditEntry("bulk_update", "contents", null, `${touched.length} contenus mis à jour`), ...state.auditEntries] });
+    return { ok: true, count: touched.length, items: clone(touched) };
+  }
+
+  function importContentToLegacy(content, current, timestamp) {
+    const statusLabels = { draft: "Brouillon", fle_review: "À réviser", pedagogical_review: "À réviser", accessibility_review: "À réviser", approved: "À réviser", scheduled: "Planifié", published: "Publié", archived: "Archivé" };
+    const typeLabels = { audio: "Podcast", video: "Documentaire", ebook: "E-book", game_pack: "Jeu éducatif", article: "Article", manual: "Manuel", unit: "Unité", lesson: "Leçon", activity: "Activité", question_bank: "Banque de questions" };
+    const firstLevel = AEP_LEVELS.find((level) => level.code === content.aepLevels?.[0])?.label || current?.level || "Tous niveaux";
+    return {
+      ...(current || {}),
+      ...clone(content),
+      id: current?.id || content.externalId || createId("contenu"),
+      externalId: content.externalId || current?.externalId || current?.id,
+      title: content.title,
+      type: typeLabels[content.type] || content.type || current?.type || "Article",
+      level: firstLevel,
+      unit: content.unitCode || current?.unit || "Toutes",
+      competencies: (content.competencyTargets || []).map((target) => target.competencyCode),
+      status: statusLabels[content.editorialStatus] || current?.status || "Brouillon",
+      visibility: content.audience?.join(" et ") || current?.visibility || "Élèves et enseignants",
+      createdAt: current?.createdAt || timestamp,
+      updatedAt: timestamp,
+      archivedAt: null,
+    };
+  }
+
+  function applyContentImport(plan, optionsForImport = {}) {
+    if (!plan || plan.ok !== true || !Array.isArray(plan.operations)) return resultError("invalid_plan", "Corrigez toutes les erreurs avant de confirmer l’import.");
+    if (plan.operations.length > 500) return resultError("too_many_rows", "La BETA accepte au maximum 500 lignes par import.");
+    const timestamp = asIso(now);
+    const nextContents = [...state.contents];
+    const changes = [];
+    const versions = [];
+    for (const operation of plan.operations) {
+      if (operation.type === "unchanged") continue;
+      const index = nextContents.findIndex((item) => String(item.externalId || item.id) === String(operation.externalId));
+      const before = index >= 0 ? clone(nextContents[index]) : null;
+      const after = importContentToLegacy(operation.content, before, timestamp);
+      if (index >= 0) nextContents[index] = after;
+      else nextContents.unshift(after);
+      changes.push({ type: before ? "update" : "create", contentId: after.id, externalId: operation.externalId, before, after: clone(after) });
+      versions.push(...buildContentVersionRecords(before, after, "Import CSV", timestamp));
+    }
+    const job = {
+      id: createId("import"),
+      type: "contents",
+      fileName: String(optionsForImport.fileName || "contenus.csv").slice(0, 180),
+      status: "completed",
+      totalRows: plan.rows?.length || plan.operations.length,
+      created: changes.filter((item) => item.type === "create").length,
+      updated: changes.filter((item) => item.type === "update").length,
+      unchanged: plan.summary?.unchanged || 0,
+      rejected: 0,
+      changes,
+      createdAt: timestamp,
+      completedAt: timestamp,
+      rolledBackAt: null,
+    };
+    commit({ ...state, contents: nextContents, importJobs: [job, ...state.importJobs], contentVersions: [...versions, ...state.contentVersions], auditEntries: [buildAuditEntry("import_commit", "import", job.id, `${job.created} créations et ${job.updated} mises à jour`), ...state.auditEntries] });
+    return { ok: true, job: clone(job) };
+  }
+
+  function rollbackImportJob(jobId) {
+    const job = state.importJobs.find((item) => item.id === jobId);
+    if (!job) return resultError("not_found", "Import introuvable.");
+    if (job.status === "rolled_back") return { ok: true, rolledBack: false, duplicate: true, job: clone(job) };
+    if (job.status !== "completed") return resultError("invalid_status", "Seul un import terminé peut être annulé.");
+    let contents = [...state.contents];
+    for (const change of [...(job.changes || [])].reverse()) {
+      const index = contents.findIndex((item) => item.id === change.contentId);
+      if (change.type === "create") {
+        if (index >= 0) contents.splice(index, 1);
+      } else if (change.before) {
+        if (index >= 0) contents[index] = clone(change.before);
+        else contents.unshift(clone(change.before));
+      }
+    }
+    const rolledBackAt = asIso(now);
+    const updatedJob = { ...job, status: "rolled_back", rolledBackAt };
+    const importJobs = state.importJobs.map((item) => item.id === job.id ? updatedJob : item);
+    commit({ ...state, contents, importJobs, auditEntries: [buildAuditEntry("import_rollback", "import", job.id, `Import « ${job.fileName} » annulé`), ...state.auditEntries] });
+    return { ok: true, rolledBack: true, job: clone(updatedJob) };
+  }
+
+  function upsertMediaAsset(input = {}) {
+    const name = String(input.name || "").trim();
+    if (!name) return resultError("name_required", "Le nom du média est obligatoire.");
+    const current = input.id ? state.mediaAssets.find((item) => item.id === input.id) : null;
+    const timestamp = asIso(now);
+    const asset = { ...(current || {}), ...clone(input), id: current?.id || createId("media"), name, createdAt: current?.createdAt || timestamp, updatedAt: timestamp };
+    asset.status = asset.owner && asset.license && asset.altReady && (asset.type !== "audio" || asset.transcriptReady) && (asset.type !== "video" || (asset.transcriptReady && asset.captionsReady)) ? "Prêt" : "À compléter";
+    const mediaAssets = current ? state.mediaAssets.map((item) => item.id === current.id ? asset : item) : [asset, ...state.mediaAssets];
+    commit({ ...state, mediaAssets, auditEntries: [buildAuditEntry(current ? "update" : "create", "media", asset.id, `${current ? "Mise à jour" : "Création"} du média « ${name} »`), ...state.auditEntries] });
+    return { ok: true, asset: clone(asset) };
+  }
+
+  function upsertReferenceItem(input = {}) {
+    const family = String(input.family || "").trim(); const label = String(input.label || "").trim();
+    if (!family || !label) return resultError("required_fields", "La famille et le libellé sont obligatoires.");
+    const current = input.id ? state.referenceItems.find((item) => item.id === input.id) : null;
+    const code = String(input.code || slugify(label)).trim();
+    const duplicate = state.referenceItems.find((item) => item.family === family && item.code === code && item.id !== current?.id);
+    if (duplicate) return resultError("duplicate", "Ce code existe déjà dans ce référentiel.");
+    const item = { ...(current || {}), ...clone(input), id: current?.id || createId("reference"), family, code, label, active: input.active !== false, system: current?.system || false, updatedAt: asIso(now) };
+    const referenceItems = current ? state.referenceItems.map((candidate) => candidate.id === current.id ? item : candidate) : [item, ...state.referenceItems];
+    commit({ ...state, referenceItems, auditEntries: [buildAuditEntry(current ? "update" : "create", "reference", item.id, `Référentiel « ${label} »`), ...state.auditEntries] });
+    return { ok: true, item: clone(item) };
+  }
+
+  function toggleReferenceItem(id, active) {
+    const current = state.referenceItems.find((item) => item.id === id);
+    if (!current) return resultError("not_found", "Élément de référentiel introuvable.");
+    if (active === false && current.family === "competencies" && state.contents.some((content) => (content.competencies || []).includes(current.code))) {
+      return resultError("in_use", "Cette compétence est utilisée par un contenu et ne peut pas être désactivée.");
+    }
+    return upsertReferenceItem({ ...current, active: Boolean(active) });
+  }
+
+  function restoreContentVersion(versionId) {
+    const version = state.contentVersions.find((item) => item.id === versionId);
+    if (!version) return resultError("not_found", "Version introuvable.");
+    const current = state.contents.find((item) => item.id === version.contentId);
+    if (!current) return resultError("content_not_found", "Contenu introuvable.");
+    return updateEntity("contents", current.id, { ...clone(version.snapshot), id: current.id, status: "Brouillon", changeNote: `Restauration de la version ${version.version}` });
+  }
+
   function reset() {
     safeStorage.removeItem(storageKey);
     const initialState = createInitialDemoState(now());
@@ -1243,6 +1512,14 @@ export function createDemoStore(options = {}) {
     createClassChallenge,
     finishClassChallenge,
     recordClassChallengeResult,
+    resolveActionItem,
+    bulkUpdateContents,
+    applyContentImport,
+    rollbackImportJob,
+    upsertMediaAsset,
+    upsertReferenceItem,
+    toggleReferenceItem,
+    restoreContentVersion,
     reset,
   });
 

@@ -335,7 +335,7 @@ test("conserve les anciennes URL Élève et Direction comme alias", () => {
   assert.equal(parseRoute("/eleve/progres").screen, "student.progress");
   assert.equal(parseRoute("/directeur/activations").screen, "director.activation");
   assert.equal(parseRoute("/directeur/utilisation").screen, "director.usage");
-  assert.equal(parseRoute("/admin/studio").screen, "admin.studio");
+  assert.equal(parseRoute("/admin/studio").screen, "admin.beta-studio");
 });
 
 test("résout les écrans canoniques Direction et leurs modes", () => {
@@ -391,6 +391,27 @@ test("résout tout le cycle éditorial Admin et le contenu public", () => {
   assert.equal(publicContent.screen, "public.content");
   assert.deepEqual(publicContent.params, { slug: "les-voix-du-maroc" });
   assert.equal(resolveAppAccess(publicContent, {}).allowed, true);
+});
+
+test("résout et protège les nouveaux centres opérationnels BETA", () => {
+  for (const page of ["analyses", "imports", "referentiels", "medias"]) {
+    const route = parseRoute(`/admin/${page}`);
+    assert.equal(route.kind, "app", page);
+    assert.equal(route.role, "admin", page);
+    assert.equal(route.page, page, page);
+    assert.equal(resolveAppAccess(route, { authenticated: false }).redirectTo, "/connexion/admin");
+    assert.equal(resolveAppAccess(route, { authenticated: true, role: "admin" }).allowed, true);
+  }
+});
+
+test("résout les centres d’actions BETA Enseignant et Direction", () => {
+  for (const [path, role] of [["/enseignant/actions", "enseignant"], ["/directeur/actions", "directeur"]]) {
+    const route = parseRoute(path);
+    assert.equal(route.kind, "app", path);
+    assert.equal(route.role, role, path);
+    assert.equal(route.page, "actions", path);
+    assert.equal(resolveAppAccess(route, { authenticated: true, role }).allowed, true);
+  }
 });
 
 test("protège aussi les routes Pen profondes selon leur rôle", () => {
