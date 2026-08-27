@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
+    "test": "node --test",
     "inject:prototype": "node scripts/inject-pencil-prototype.mjs",
     "preview": "vite preview",
     "test:prototype": "node --test tests/prototype-contract.test.mjs",

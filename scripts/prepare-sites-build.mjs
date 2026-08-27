@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,4 +18,39 @@ mkdirSync(path.join(dist, ".openai"), { recursive: true });
 copyFileSync(worker, path.join(dist, "server", "index.js"));
 copyFileSync(hosting, path.join(dist, ".openai", "hosting.json"));
 
-console.log("Prepared Sites build: dist/server/index.js and dist/.openai/hosting.json");
+// Keep the editable Pen export and PNG masters in `public/`, but do not ship
+// those heavy reference files with the React prototype.
+const referenceOnlyFiles = [
+  "pencil-export.html",
+  "prototype-config.js",
+  "prototype.css",
+  "prototype.js",
+  ...[
+    "generated-1773971687495.png",
+    "generated-1773971894915.png",
+    "generated-1774007656775.png",
+    "generated-1774007681359.png",
+    "generated-1774007817252.png",
+    "generated-1774007838586.png",
+    "generated-1774018325276.png",
+    "generated-1774018768922.png",
+    "generated-1774018865796.png",
+    "generated-1774018887348.png",
+    "jet-dencre-logo-horizontal-light.png",
+    "jet-dencre-logo-vertical-dark.png",
+    "jet-dencre-monogram-light.png",
+  ].map((name) => path.join("assets", name)),
+];
+
+let pruned = 0;
+for (const relativePath of referenceOnlyFiles) {
+  const target = path.resolve(dist, "client", relativePath);
+  const clientRoot = path.resolve(dist, "client") + path.sep;
+  if (!target.startsWith(clientRoot)) throw new Error(`Unsafe build prune target: ${target}`);
+  if (existsSync(target)) {
+    rmSync(target);
+    pruned += 1;
+  }
+}
+
+console.log(`Prepared Sites build and removed ${pruned} reference-only files.`);
