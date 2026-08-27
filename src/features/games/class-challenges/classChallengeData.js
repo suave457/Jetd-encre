@@ -1,6 +1,8 @@
 import { QUESTION_STATUSES } from "../../question-bank/questionBankConstants.js";
 import { seedQuestionBank } from "../../question-bank/questionBankSeed.js";
 import { toCultureQuizQuestion } from "../../question-bank/questionBankCore.js";
+import { hashQuizSeed } from "../quizEngine.js";
+import { readEditorialQuestionBank } from "../publishedQuestionSource.js";
 import { CLASS_CHALLENGE_QUESTION_COUNT } from "./classChallengeEngine.js";
 
 export const CURRENT_CLASS_PARTICIPANT = Object.freeze({
@@ -16,6 +18,25 @@ export const CLASS_OPTIONS = Object.freeze([
   Object.freeze({ id: "classe-6a", label: "6e AEP · Classe 6A", level: "6e AEP" }),
   Object.freeze({ id: "classe-6b", label: "6e AEP · Classe 6B", level: "6e AEP" }),
 ]);
+
+export const CLASS_CHALLENGE_THEMES = Object.freeze([
+  "Culture marocaine",
+  "Langue française",
+  "Sciences & découvertes",
+  "Culture générale",
+]);
+
+const THEME_MATCHERS = Object.freeze({
+  "Culture marocaine": (question) =>
+    question.category === "Culture marocaine" ||
+    question.tags?.includes("maroc") ||
+    question.tags?.includes("patrimoine"),
+  "Langue française": (question) =>
+    ["Langue française", "Vie quotidienne", "Arts et littérature"].includes(question.category),
+  "Sciences & découvertes": (question) =>
+    ["Sciences", "Géographie"].includes(question.category),
+  "Culture générale": () => true,
+});
 
 const BANK_DEFINITIONS = Object.freeze([
   Object.freeze({
@@ -39,13 +60,7 @@ const BANK_DEFINITIONS = Object.freeze([
 ]);
 
 export function readQuestionBankQuestions(storage = globalThis.localStorage) {
-  if (!storage?.getItem) return [...seedQuestionBank];
-  try {
-    const parsed = JSON.parse(storage.getItem("jde.question-bank.v1") || "null");
-    return Array.isArray(parsed?.questions) ? parsed.questions : [...seedQuestionBank];
-  } catch {
-    return [...seedQuestionBank];
-  }
+  return readEditorialQuestionBank(storage);
 }
 
 export function getPublishedClassChallengeBanks(questions = seedQuestionBank) {
@@ -72,6 +87,46 @@ export function resolveClassChallengeQuestions(challenge, questions = seedQuesti
     .map(toCultureQuizQuestion);
 }
 
+function levelNumber(level) {
+  const match = String(level || "").match(/\d+/);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
+
+/**
+ * Sélectionne cinq questions en faisant réellement intervenir le thème puis la
+ * proximité du niveau. Les éventuels compléments restent dans la banque publiée
+ * choisie afin qu'un petit corpus éditorial ne bloque pas la classe.
+ */
+export function selectClassChallengeQuestionIds({
+  bank,
+  questions = seedQuestionBank,
+  level,
+  theme,
+  count = CLASS_CHALLENGE_QUESTION_COUNT,
+}) {
+  if (!bank || !Array.isArray(bank.questionIds)) return [];
+  const allowedIds = new Set(bank.questionIds);
+  const targetLevel = levelNumber(level);
+  const matchesTheme = THEME_MATCHERS[theme] || THEME_MATCHERS["Culture générale"];
+  const candidates = (Array.isArray(questions) ? questions : [])
+    .filter((question) =>
+      question?.status === QUESTION_STATUSES.PUBLISHED && allowedIds.has(question.id))
+    .map((question) => ({
+      question,
+      themePriority: matchesTheme(question) ? 0 : 1,
+      levelDistance: Math.abs(levelNumber(question.level) - targetLevel),
+      tieBreaker: hashQuizSeed(`${bank.id}:${level}:${theme}:${question.id}`),
+    }))
+    .sort((left, right) =>
+      left.themePriority - right.themePriority ||
+      left.levelDistance - right.levelDistance ||
+      left.tieBreaker - right.tieBreaker ||
+      left.question.id.localeCompare(right.question.id, "fr"));
+
+  return candidates.slice(0, Math.max(0, Number(count) || 0))
+    .map(({ question }) => question.id);
+}
+
 const addHours = (date, hours) => new Date(date.getTime() + hours * 3_600_000).toISOString();
 
 export function createSeedClassChallengeState(now = new Date()) {
@@ -92,7 +147,12 @@ export function createSeedClassChallengeState(now = new Date()) {
       bankLabel: activeBank.label,
       bankStatus: "publie",
       durationHours: 72,
-      questionIds: activeBank.questionIds.slice(0, CLASS_CHALLENGE_QUESTION_COUNT),
+      questionIds: selectClassChallengeQuestionIds({
+        bank: activeBank,
+        questions: seedQuestionBank,
+        level: "5e AEP",
+        theme: "Culture marocaine",
+      }),
       status: "en_cours",
       startAt: addHours(current, -12),
       endAt: addHours(current, 60),
@@ -109,7 +169,12 @@ export function createSeedClassChallengeState(now = new Date()) {
       bankLabel: mixedBank.label,
       bankStatus: "publie",
       durationHours: 72,
-      questionIds: mixedBank.questionIds.slice(0, CLASS_CHALLENGE_QUESTION_COUNT),
+      questionIds: selectClassChallengeQuestionIds({
+        bank: mixedBank,
+        questions: seedQuestionBank,
+        level: "5e AEP",
+        theme: "Langue française",
+      }),
       status: "termine",
       startAt: addHours(current, -120),
       endAt: addHours(current, -48),

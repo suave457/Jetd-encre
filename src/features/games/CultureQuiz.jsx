@@ -16,12 +16,13 @@ import {
   Trophy,
   XCircle,
 } from "@phosphor-icons/react/ssr";
-import { cultureQuizQuestions } from "./cultureQuizData.js";
+import { readPublishedGameQuestions } from "./publishedQuestionSource.js";
 import {
   XP_PER_CORRECT,
   calculateQuizSummary,
   evaluateAnswer,
   isTimeExpired,
+  prepareQuizQuestions,
 } from "./quizEngine.js";
 import "./culture-quiz.css";
 
@@ -53,6 +54,8 @@ const DEFAULT_EXPERIENCE = Object.freeze({
   awardNamespace: null,
   dailyKey: null,
   category: null,
+  shuffleQuestions: true,
+  shuffleSeed: null,
 });
 
 function createAttemptId(quizId = "culture-generale") {
@@ -524,7 +527,7 @@ export default function CultureQuiz({
   onAwardXp = NOOP,
   onComplete = NOOP,
   onExit,
-  questionSet = cultureQuizQuestions,
+  questionSet = null,
   questionLimit = MAX_QUESTIONS,
   experience: experienceOptions = DEFAULT_EXPERIENCE,
 }) {
@@ -532,10 +535,23 @@ export default function CultureQuiz({
     () => ({ ...DEFAULT_EXPERIENCE, ...(experienceOptions || {}) }),
     [experienceOptions],
   );
+  const publishedQuestions = useMemo(() => readPublishedGameQuestions(), []);
+  const sourceQuestions = Array.isArray(questionSet)
+    ? questionSet
+    : publishedQuestions;
+  const initialAttemptIdRef = useRef(
+    experience.attemptId || createAttemptId(experience.quizId),
+  );
+  const [questionOrderSeed, setQuestionOrderSeed] = useState(
+    experience.shuffleSeed || initialAttemptIdRef.current,
+  );
   const questions = useMemo(
-    () => (Array.isArray(questionSet) ? questionSet : cultureQuizQuestions)
-      .slice(0, Math.max(0, Number(questionLimit) || MAX_QUESTIONS)),
-    [questionLimit, questionSet],
+    () => prepareQuizQuestions(sourceQuestions, {
+      limit: Math.max(0, Number(questionLimit) || MAX_QUESTIONS),
+      seed: questionOrderSeed,
+      shuffle: experience.shuffleQuestions !== false,
+    }),
+    [experience.shuffleQuestions, questionLimit, questionOrderSeed, sourceQuestions],
   );
   const [phase, setPhase] = useState("welcome");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -547,9 +563,7 @@ export default function CultureQuiz({
   const [announcement, setAnnouncement] = useState("");
   const answerLockRef = useRef(false);
   const completionSentRef = useRef(false);
-  const attemptIdRef = useRef(
-    experience.attemptId || createAttemptId(experience.quizId),
-  );
+  const attemptIdRef = initialAttemptIdRef;
   const questionStartedAtRef = useRef(Date.now());
   const profileXpAtStartRef = useRef(
     Number(startingXp ?? currentXp ?? totalXp ?? 0) || 0,
@@ -565,7 +579,8 @@ export default function CultureQuiz({
       onExit();
       return;
     }
-    window.location.hash = "#/eleve/jeux";
+    window.history.pushState({}, "", "/eleve/jeux");
+    window.dispatchEvent(new Event("jde:navigate"));
   }, [onExit]);
 
   const submitAnswer = useCallback(
@@ -662,8 +677,9 @@ export default function CultureQuiz({
   const startQuiz = useCallback(() => {
     answerLockRef.current = false;
     completionSentRef.current = false;
-    attemptIdRef.current =
-      experience.attemptId || createAttemptId(experience.quizId);
+    const nextAttemptId = experience.attemptId || createAttemptId(experience.quizId);
+    attemptIdRef.current = nextAttemptId;
+    setQuestionOrderSeed(experience.shuffleSeed || nextAttemptId);
     profileXpAtStartRef.current =
       Number(startingXp ?? currentXp ?? totalXp ?? 0) || 0;
     questionStartedAtRef.current = Date.now();

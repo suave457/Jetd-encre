@@ -4,6 +4,7 @@ import test from "node:test";
 import { cultureQuizQuestions } from "../src/features/games/cultureQuizData.js";
 import {
   QUESTION_CATEGORIES,
+  QUESTION_BANK_STORAGE_KEY,
   QUESTION_STATUSES,
 } from "../src/features/question-bank/questionBankConstants.js";
 import {
@@ -17,6 +18,7 @@ import {
   validateQuestion,
 } from "../src/features/question-bank/questionBankCore.js";
 import { seedQuestionBank } from "../src/features/question-bank/questionBankSeed.js";
+import { readPublishedGameQuestions } from "../src/features/games/publishedQuestionSource.js";
 
 function clock() {
   let tick = 0;
@@ -134,13 +136,31 @@ test("seules les questions publiées sont projetées vers le moteur du quiz", ()
   assert.equal(projected.find((item) => item.id === "qb-maroc-atlantique").level, "facile");
 });
 
-test("les questions du quiz culturel existant peuvent être importées sans ressaisie", () => {
+test("les jeux relisent les publications enregistrées par l'administration", () => {
+  const storage = createMemoryQuestionBankStorage();
+  storage.setItem(QUESTION_BANK_STORAGE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    questions: seedQuestionBank.map((question) =>
+      question.id === "qb-maroc-atlantique"
+        ? { ...question, status: QUESTION_STATUSES.APPROVED }
+        : question),
+    updatedAt: "2026-08-27T10:00:00.000Z",
+  }));
+
+  const published = readPublishedGameQuestions(storage);
+  assert.equal(published.some(({ id }) => id === "qb-maroc-atlantique"), false);
+  assert.ok(published.every(({ id }) =>
+    seedQuestionBank.find((question) => question.id === id)?.status === QUESTION_STATUSES.PUBLISHED));
+});
+
+test("la projection éditoriale peut faire un aller-retour sans changer de catégorie", () => {
   const imported = cultureQuizQuestions.map((item) => fromCultureQuizQuestion(item));
   assert.ok(imported.every((result) => result.ok));
-  assert.equal(imported[0].item.level, "5e AEP");
-  assert.equal(imported[0].item.status, QUESTION_STATUSES.PUBLISHED);
-  assert.equal(imported[0].item.category, "Culture marocaine");
-  assert.equal(imported.find((result) => result.item.id === "culture-05").item.category, "Arts et littérature");
+  imported.forEach((result, index) => {
+    assert.equal(result.item.level, "5e AEP");
+    assert.equal(result.item.status, QUESTION_STATUSES.PUBLISHED);
+    assert.equal(result.item.category, cultureQuizQuestions[index].sourceCategory);
+  });
 });
 
 test("une sauvegarde illisible ou issue d’une version future revient aux données initiales", () => {

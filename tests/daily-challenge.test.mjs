@@ -29,14 +29,16 @@ test("le défi quotidien reste déterministe et contient cinq catégories distin
     first.questions.map((question) => question.id),
     second.questions.map((question) => question.id),
   );
+  assert.equal(first.categories.length, 5);
   assert.deepEqual(new Set(first.categories), new Set(DAILY_CATEGORIES));
+  assert.deepEqual(first.categories, first.questions.map((question) => question.dailyCategory));
   assert.equal(new Set(first.questions.map((question) => question.id)).size, 5);
   assert.ok(first.questions.every((question) => question.choices.length === 4));
 });
 
 test("la catégorie vedette tourne chaque jour", () => {
-  const days = [26, 27, 28, 29, 30].map((day) =>
-    getDailyChallenge(`2026-08-${day}`).category,
+  const days = DAILY_CATEGORIES.map((_, offset) =>
+    getDailyChallenge(new Date(Date.UTC(2026, 7, 26 + offset, 12))).category,
   );
   assert.equal(new Set(days).size, DAILY_CATEGORIES.length);
   assert.deepEqual(new Set(days), new Set(DAILY_CATEGORIES));

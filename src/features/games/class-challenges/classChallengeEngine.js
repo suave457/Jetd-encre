@@ -139,6 +139,12 @@ export function validateClassChallengeDraft(draft = {}, publishedBanks = []) {
   const bankId = asText(draft.bankId);
   const durationHours = Number(draft.durationHours);
   const bank = publishedBanks.find((item) => item.id === bankId && item.status === "publie");
+  const requestedQuestionIds = Array.isArray(draft.questionIds)
+    ? [...new Set(draft.questionIds.map(asText).filter(Boolean))]
+    : [];
+  const selectedQuestionIds = bank && requestedQuestionIds.length
+    ? requestedQuestionIds.filter((id) => bank.questionIds.includes(id))
+    : bank?.questionIds.slice(0, CLASS_CHALLENGE_QUESTION_COUNT) || [];
 
   if (title.length < 5 || title.length > 80) fieldErrors.title = "Choisissez un titre de 5 à 80 caractères.";
   if (!classId || !classLabel) fieldErrors.classId = "Choisissez une classe.";
@@ -150,6 +156,9 @@ export function validateClassChallengeDraft(draft = {}, publishedBanks = []) {
   if (!bank) fieldErrors.bankId = "Choisissez une banque publiée.";
   if (bank && bank.questionIds.length < CLASS_CHALLENGE_QUESTION_COUNT) {
     fieldErrors.bankId = `Cette banque doit contenir au moins ${CLASS_CHALLENGE_QUESTION_COUNT} questions publiées.`;
+  }
+  if (bank && selectedQuestionIds.length < CLASS_CHALLENGE_QUESTION_COUNT) {
+    fieldErrors.bankId = "Le niveau et le thème choisis doivent permettre de retenir cinq questions publiées.";
   }
 
   if (Object.keys(fieldErrors).length) return { ok: false, error: "validation_failed", fieldErrors };
@@ -165,7 +174,7 @@ export function validateClassChallengeDraft(draft = {}, publishedBanks = []) {
       bankLabel: bank.label,
       bankStatus: "publie",
       durationHours,
-      questionIds: Object.freeze(bank.questionIds.slice(0, CLASS_CHALLENGE_QUESTION_COUNT)),
+      questionIds: Object.freeze(selectedQuestionIds.slice(0, CLASS_CHALLENGE_QUESTION_COUNT)),
     }),
   };
 }

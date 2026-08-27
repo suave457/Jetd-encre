@@ -34,15 +34,19 @@ const DIFFICULTY_TO_QUIZ_LEVEL = Object.freeze({
 
 const QUIZ_THEME_TO_CATEGORY = Object.freeze({
   maroc: "Culture marocaine",
+  "culture marocaine": "Culture marocaine",
   "culture generale maroc": "Culture marocaine",
   "patrimoine marocain": "Culture marocaine",
+  "langue francaise": "Langue française",
   litterature: "Arts et littérature",
   arts: "Arts et littérature",
+  "arts et litterature": "Arts et littérature",
   sciences: "Sciences",
   geographie: "Géographie",
   histoire: "Histoire",
   "histoire et sport": "Histoire",
   "monde francophone": "Monde francophone",
+  "vie quotidienne": "Vie quotidienne",
 });
 
 function clone(value) {
@@ -480,8 +484,10 @@ export function toCultureQuizQuestion(question) {
   return Object.freeze({
     id: cleanText(question.id),
     theme: validation.value.category,
+    sourceCategory: validation.value.category,
     level: DIFFICULTY_TO_QUIZ_LEVEL[validation.value.difficulty],
     targetLevel: validation.value.level,
+    tags: Object.freeze([...validation.value.tags]),
     prompt: validation.value.prompt,
     choices: Object.freeze([...validation.value.choices]),
     correctIndex: validation.value.correctIndex,

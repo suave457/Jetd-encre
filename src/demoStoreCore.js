@@ -456,13 +456,34 @@ function mergeKnownState(candidate, seed) {
     }
     return mergedUser;
   });
+  const candidateSession = candidate.session && typeof candidate.session === "object"
+    ? candidate.session
+    : {};
+  const candidateRole = DEMO_ROLES.includes(candidateSession.role) ? candidateSession.role : null;
+  const expectedUserId = candidateRole ? DEMO_ACCOUNTS[candidateRole].userId : null;
+  const authenticated = candidateSession.authenticated === true
+    && candidateRole !== null
+    && candidateSession.userId === expectedUserId;
+  const session = {
+    ...seed.session,
+    authenticated,
+    role: authenticated ? candidateRole : null,
+    userId: authenticated ? expectedUserId : null,
+    signedInAt: authenticated && typeof candidateSession.signedInAt === "string"
+      ? candidateSession.signedInAt
+      : null,
+    pendingActivation:
+      candidateSession.pendingActivation && typeof candidateSession.pendingActivation === "object"
+        ? candidateSession.pendingActivation
+        : null,
+  };
 
   return {
     ...seed,
     ...candidate,
     schemaVersion: DEMO_SCHEMA_VERSION,
     meta: { ...seed.meta, ...(candidate.meta || {}) },
-    session: { ...seed.session, ...(candidate.session || {}) },
+    session,
     sessions: Object.fromEntries(
       DEMO_ROLES.map((role) => [role, { ...seed.sessions[role], ...(candidate.sessions?.[role] || {}) }]),
     ),
@@ -554,6 +575,36 @@ function resultError(error, message) {
   return { ok: false, error, message };
 }
 
+export function validateDemoCredentials(role, credentials) {
+  if (!DEMO_ROLES.includes(role)) {
+    return resultError("unknown_role", "Ce profil de démonstration n’existe pas.");
+  }
+
+  const supplied = credentials && typeof credentials === "object" && !Array.isArray(credentials)
+    ? credentials
+    : {};
+  const identifierValue = supplied.identifier ?? supplied.email ?? supplied.username;
+  const passwordValue = supplied.password;
+  const identifier = typeof identifierValue === "string" ? identifierValue.trim() : "";
+  const password = typeof passwordValue === "string" ? passwordValue : "";
+  if (!identifier || !password) {
+    return resultError(
+      "credentials_required",
+      "Saisissez l’identifiant et le mot de passe du compte de démonstration.",
+    );
+  }
+
+  const account = DEMO_ACCOUNTS[role];
+  const identifierMatches = identifier.toLocaleLowerCase("fr")
+    === account.identifier.toLocaleLowerCase("fr");
+  const passwordMatches = password === account.password;
+  if (!identifierMatches || !passwordMatches) {
+    return resultError("invalid_credentials", "Identifiant ou mot de passe incorrect.");
+  }
+
+  return Object.freeze({ ok: true, role, userId: account.userId });
+}
+
 function titleFrom(input) {
   return String(input?.title ?? "").trim();
 }
@@ -606,15 +657,9 @@ export function createDemoStore(options = {}) {
   }
 
   function signIn(role, credentials = {}) {
-    if (!DEMO_ROLES.includes(role)) return resultError("unknown_role", "Ce profil de démonstration n’existe pas.");
+    const validation = validateDemoCredentials(role, credentials);
+    if (!validation.ok) return validation;
     const account = DEMO_ACCOUNTS[role];
-    const identifier = credentials.identifier ?? credentials.email ?? credentials.username;
-    const password = credentials.password;
-    const identifierMatches = !identifier || String(identifier).trim().toLowerCase() === account.identifier.toLowerCase();
-    const passwordMatches = !password || String(password) === account.password;
-    if (!identifierMatches || !passwordMatches) {
-      return resultError("invalid_credentials", "Identifiant ou mot de passe incorrect.");
-    }
 
     const signedInAt = asIso(now);
     const pendingActivation = role === "eleve" ? state.session.pendingActivation : null;

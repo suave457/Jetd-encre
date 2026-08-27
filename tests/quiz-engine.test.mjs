@@ -9,11 +9,21 @@ import {
   evaluateAnswer,
   getRemainingSeconds,
   isTimeExpired,
+  prepareQuizQuestions,
+  shuffleQuizQuestions,
 } from "../src/features/games/quizEngine.js";
+import { QUESTION_STATUSES } from "../src/features/question-bank/questionBankConstants.js";
+import { seedQuestionBank } from "../src/features/question-bank/questionBankSeed.js";
 
-test("la banque contient 12 questions conformes au contrat", () => {
-  assert.equal(cultureQuizQuestions.length, 12);
-  assert.equal(new Set(cultureQuizQuestions.map(({ id }) => id)).size, 12);
+test("le quiz reprend exactement les questions publiées de la banque éditoriale", () => {
+  const publishedIds = seedQuestionBank
+    .filter(({ status }) => status === QUESTION_STATUSES.PUBLISHED)
+    .map(({ id }) => id);
+  assert.deepEqual(
+    cultureQuizQuestions.map(({ id }) => id).sort(),
+    publishedIds.sort(),
+  );
+  assert.equal(new Set(cultureQuizQuestions.map(({ id }) => id)).size, publishedIds.length);
 
   for (const question of cultureQuizQuestions) {
     assert.equal(typeof question.prompt, "string", question.id);
@@ -24,7 +34,21 @@ test("la banque contient 12 questions conformes au contrat", () => {
     assert.ok(question.explanation.length > 0, question.id);
     assert.ok(question.theme.length > 0, question.id);
     assert.ok(["facile", "intermédiaire"].includes(question.level), question.id);
+    assert.ok(question.targetLevel.endsWith("AEP"), question.id);
+    assert.ok(Array.isArray(question.tags), question.id);
   }
+});
+
+test("le brassage est déterministe, non destructif et limité", () => {
+  const originalIds = cultureQuizQuestions.map(({ id }) => id);
+  const first = shuffleQuizQuestions(cultureQuizQuestions, "classe-5a:2026-08-27");
+  const replay = shuffleQuizQuestions(cultureQuizQuestions, "classe-5a:2026-08-27");
+  const other = shuffleQuizQuestions(cultureQuizQuestions, "classe-5b:2026-08-27");
+
+  assert.deepEqual(first.map(({ id }) => id), replay.map(({ id }) => id));
+  assert.notDeepEqual(first.map(({ id }) => id), other.map(({ id }) => id));
+  assert.deepEqual(cultureQuizQuestions.map(({ id }) => id), originalIds);
+  assert.equal(prepareQuizQuestions(cultureQuizQuestions, { limit: 5, seed: "audit" }).length, 5);
 });
 
 test("une bonne réponse rapporte 10 XP", () => {

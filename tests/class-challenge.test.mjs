@@ -13,6 +13,7 @@ import {
   CURRENT_CLASS_PARTICIPANT,
   getPublishedClassChallengeBanks,
   resolveClassChallengeQuestions,
+  selectClassChallengeQuestionIds,
 } from "../src/features/games/class-challenges/classChallengeData.js";
 import { seedQuestionBank } from "../src/features/question-bank/questionBankSeed.js";
 import { createDemoStore, createMemoryStorage, DEMO_ACCOUNTS } from "../src/demoStoreCore.js";
@@ -83,6 +84,48 @@ test("projette uniquement les questions publiées choisies par le défi", () => 
   const questions = resolveClassChallengeQuestions({ questionIds: bank.questionIds.slice(0, 5) }, seedQuestionBank);
   assert.equal(questions.length, 5);
   assert.ok(questions.every((question) => question.choices.length === 4));
+});
+
+test("le niveau et le thème modifient réellement la sélection du défi", () => {
+  const bank = getPublishedClassChallengeBanks(seedQuestionBank)[0];
+  const maroc5 = selectClassChallengeQuestionIds({
+    bank,
+    questions: seedQuestionBank,
+    level: "5e AEP",
+    theme: "Culture marocaine",
+  });
+  const maroc6 = selectClassChallengeQuestionIds({
+    bank,
+    questions: seedQuestionBank,
+    level: "6e AEP",
+    theme: "Culture marocaine",
+  });
+  const sciences5 = selectClassChallengeQuestionIds({
+    bank,
+    questions: seedQuestionBank,
+    level: "5e AEP",
+    theme: "Sciences & découvertes",
+  });
+
+  assert.equal(maroc5.length, 5);
+  assert.equal(new Set(maroc5).size, 5);
+  assert.notDeepEqual(maroc5, maroc6);
+  assert.notDeepEqual(maroc5, sciences5);
+  assert.equal(seedQuestionBank.find(({ id }) => id === maroc5[0]).level, "5e AEP");
+  assert.equal(seedQuestionBank.find(({ id }) => id === maroc6[0]).level, "6e AEP");
+
+  const validation = validateClassChallengeDraft({
+    title: "Le Maroc en cinquième",
+    classId: "classe-5a",
+    classLabel: "5e AEP · Classe 5A",
+    level: "5e AEP",
+    theme: "Culture marocaine",
+    bankId: bank.id,
+    durationHours: 72,
+    questionIds: maroc5,
+  }, [bank]);
+  assert.equal(validation.ok, true);
+  assert.deepEqual(validation.value.questionIds, maroc5);
 });
 
 test("empêche une seconde participation terminée", () => {

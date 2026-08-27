@@ -63,7 +63,7 @@ export default function ClassChallengesStudent({
   participant = CURRENT_CLASS_PARTICIPANT,
   onAwardXp = () => {},
   onComplete = () => {},
-  onExit = () => { window.location.hash = "#/eleve/jeux"; },
+  onExit = () => { window.history.pushState({}, "", "/eleve/jeux"); window.dispatchEvent(new Event("jde:navigate")); },
 }) {
   const [tab, setTab] = useState("en_cours");
   const [mode, setMode] = useState("hub");
@@ -128,6 +128,8 @@ export default function ClassChallengesStudent({
         attemptId: `defi-classe:${selected.id}:${participant.participantId}`,
         awardNamespace: `defi-classe:${selected.id}:${participant.participantId}`,
         category: selected.theme,
+        // Même ordre pour toute la classe : la comparaison ne dépend jamais du hasard.
+        shuffleSeed: `defi-classe:${selected.id}`,
       }}
       onAwardXp={onAwardXp}
       onComplete={(summary) => {

@@ -16,11 +16,20 @@ import {
 
 const integrationParams = new URLSearchParams(window.location.search);
 const integrationAudience = integrationParams.get("audience");
+const integrationEmbedded = integrationParams.get("embedded") === "1" && window.parent !== window;
+const integrationChannel = String(integrationParams.get("channel") || "");
+const integrationEnabled = integrationEmbedded &&
+  ["eleve", "enseignant"].includes(integrationAudience) &&
+  /^[a-z0-9-]{8,96}$/i.test(integrationChannel);
+const integrationTargetOrigin = window.location.origin;
 const storageScope = ["eleve", "enseignant"].includes(integrationAudience) ? `-${integrationAudience}` : "";
 const SESSION_KEY = `projet-debat-v01-session${storageScope}`;
 const PREFS_KEY = `projet-debat-v01-preferences${storageScope}`;
 const CARDS_CACHE_KEY = "projet-debat-v01-cards";
-const APP_VERSION = 7;
+const APP_VERSION = 8;
+const INTEGRATION_SOURCE = "jet-dencre.projet-debat";
+const INTEGRATION_VERSION = 1;
+const INTEGRATION_XP_PER_ROUND = 10;
 const QUICK_SCORE_IDS = ["d1", "d3", "d4"];
 const HELP_LABELS = ["Indice / image", "Piste / amorce", "Phrase de secours"];
 const HELP_FIELDS = ["indice_leger", "piste_thematique", "argument_complet_de_secours"];
@@ -109,6 +118,8 @@ const state = {
   history: [],
   totals: emptyTotals(),
   lastStep: null,
+  integrationAttemptId: null,
+  integrationCompletionSent: false,
   ui: { teacherDeskOpen: false, setupAdvancedOpen: false },
 };
 
@@ -431,6 +442,63 @@ function showToast(message) {
   toastHandle = window.setTimeout(() => toast.classList.remove("is-visible"), 3000);
 }
 
+function createIntegrationAttemptId() {
+  const suffix = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `projet-debat:${integrationAudience || "autonome"}:${suffix}`;
+}
+
+function emitIntegrationEvent(type, payload = {}) {
+  if (!integrationEnabled) return;
+  window.parent.postMessage({
+    source: INTEGRATION_SOURCE,
+    version: INTEGRATION_VERSION,
+    type,
+    audience: integrationAudience,
+    channel: integrationChannel,
+    payload,
+  }, integrationTargetOrigin);
+}
+
+function integrationTotals() {
+  return {
+    A: state.totals.A.base + state.totals.A.twist,
+    B: state.totals.B.base + state.totals.B.twist,
+    interactionA: state.totals.A.interaction,
+    interactionB: state.totals.B.interaction,
+  };
+}
+
+function emitIntegrationCompletion() {
+  if (!integrationEnabled || state.integrationCompletionSent || !state.integrationAttemptId) return;
+  const totals = integrationTotals();
+  const winner = decideWinner(totals.A, totals.B, totals.interactionA, totals.interactionB);
+  const xpEarned = integrationAudience === "eleve"
+    ? state.history.length * INTEGRATION_XP_PER_ROUND
+    : 0;
+  state.integrationCompletionSent = true;
+  persistSession();
+
+  if (xpEarned > 0) {
+    emitIntegrationEvent("xp-earned", {
+      amount: xpEarned,
+      eventId: `${state.integrationAttemptId}:completion`,
+      attemptId: state.integrationAttemptId,
+      roundsCompleted: state.history.length,
+    });
+  }
+  emitIntegrationEvent("game-completed", {
+    attemptId: state.integrationAttemptId,
+    roundsCompleted: state.history.length,
+    winner,
+    totals,
+    xpEarned,
+    level: getLevel().code,
+    schoolLevel: state.settings.schoolLevel,
+  });
+}
+
 function focusScreenTitle(resetScroll = true) {
   window.requestAnimationFrame(() => {
     const title = app.querySelector("[data-screen-title]");
@@ -749,7 +817,15 @@ function startGame() {
   state.lastStep = null;
   state.recoveryAwarded = { A: null, B: null };
   state.recoveryTimer = { side: null, remaining: 0, stage: "idle", paused: false };
+  state.integrationAttemptId = createIntegrationAttemptId();
+  state.integrationCompletionSent = false;
   drawRoundCard();
+  emitIntegrationEvent("session-started", {
+    attemptId: state.integrationAttemptId,
+    roundsPlanned: state.settings.rounds,
+    level: getLevel().code,
+    schoolLevel: state.settings.schoolLevel,
+  });
 }
 
 function drawRoundCard() {
@@ -1524,6 +1600,14 @@ function submitScore() {
   state.playedCardIds.push(state.cardId);
   state.screen = "roundResult";
   persistSession();
+  emitIntegrationEvent("round-completed", {
+    attemptId: state.integrationAttemptId,
+    round: state.round,
+    roundsPlanned: state.settings.rounds,
+    cardId: state.cardId,
+    result,
+    totals: integrationTotals(),
+  });
   render(true);
   announce("Résultat de la manche " + state.round + ".");
 }
@@ -1937,6 +2021,7 @@ function handleClick(event) {
     captureLastStep();
     state.screen = "summary";
     persistSession();
+    emitIntegrationCompletion();
     render(true);
     announce("Résultat final de la partie.");
   } else if (action === "print-summary") {
@@ -2049,6 +2134,11 @@ async function initialize() {
     }
     render(true);
     announce(restored ? "Partie restaurée." : "Projet DÉBAT prêt.");
+    emitIntegrationEvent("ready", {
+      restored,
+      screen: state.screen,
+      attemptId: state.integrationAttemptId,
+    });
     if (fromCache) showToast("Mode hors connexion : cartes chargées depuis cet appareil.");
   } catch (error) {
     app.innerHTML = renderError(error.message);

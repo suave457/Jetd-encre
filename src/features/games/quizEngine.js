@@ -1,6 +1,56 @@
 export const QUESTION_DURATION_SECONDS = 10;
 export const XP_PER_CORRECT = 10;
 
+export function hashQuizSeed(value) {
+  let hash = 2166136261;
+  for (const character of String(value ?? "jet-dencre")) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Générateur reproductible Mulberry32, suffisant pour ordonner un quiz. */
+export function createQuizRandom(seed = "jet-dencre") {
+  let state = hashQuizSeed(seed);
+  return () => {
+    state = (state + 0x6D2B79F5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}
+
+/**
+ * Mélange de Fisher-Yates non destructif. La même collection et la même graine
+ * produisent strictement le même ordre, ce qui rend une tentative rejouable en QA.
+ */
+export function shuffleQuizQuestions(questions, seed = "jet-dencre") {
+  if (!Array.isArray(questions)) {
+    throw new TypeError("La liste de questions doit être un tableau.");
+  }
+  const random = createQuizRandom(seed);
+  const shuffled = [...questions];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+export function prepareQuizQuestions(
+  questions,
+  { limit = questions?.length ?? 0, seed = "jet-dencre", shuffle = true } = {},
+) {
+  if (!Array.isArray(questions)) {
+    throw new TypeError("La liste de questions doit être un tableau.");
+  }
+  const safeLimit = Math.max(0, Math.min(questions.length, Number(limit) || 0));
+  const ordered = shuffle ? shuffleQuizQuestions(questions, seed) : [...questions];
+  return Object.freeze(ordered.slice(0, safeLimit));
+}
+
 function assertValidQuestion(question) {
   if (!question || typeof question !== "object") {
     throw new TypeError("Une question valide est requise.");

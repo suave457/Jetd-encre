@@ -13,3 +13,64 @@
 @media (max-width:1180px){.pen-reader-layout{grid-template-columns:minmax(0,1fr) 270px}.pen-review-layout{grid-template-columns:190px minmax(0,1fr)}.pen-review-layout>aside:last-child{grid-column:1/3}.pen-assignment-columns{grid-template-columns:1fr 1fr}.pen-assignment-columns>section:last-child{grid-column:1/3}.pen-school-grid{grid-template-columns:1fr 1fr}.pen-school-grid>.pen-assistance{grid-column:1/3}.pen-public-content h1{font-size:48px}}
 @media (max-width:980px){.pen-onboarding-page{grid-template-columns:260px minmax(0,1fr)}.pen-onboarding-aside{padding:24px 20px}.pen-onboarding-aside>img{width:170px}.pen-onboarding-aside h1{font-size:31px}.pen-onboarding-main{padding:24px}.pen-onboarding-main>header{margin-bottom:60px}.pen-manual-grid,.pen-reader-layout,.pen-result-hero,.pen-preview-layout,.pen-audio-correction,.pen-studio-layout,.pen-schedule-layout,.pen-history-layout{grid-template-columns:1fr}.pen-reader-resources{display:grid;grid-template-columns:1fr 1fr}.pen-reader-resources h2{grid-column:1/3}.pen-reader-resources .pen-tip{grid-column:1/3}.pen-result-score{width:240px;justify-self:center}.pen-profile-layout{grid-template-columns:210px 1fr}.pen-activation-overview{grid-template-columns:160px 1fr}.pen-activation-overview>.button{grid-column:1/3}.pen-review-layout{grid-template-columns:1fr}.pen-review-layout>aside:last-child{grid-column:auto}.pen-public-content main>section{grid-template-columns:1fr;gap:35px}.pen-public-content main>section picture img{max-height:360px;object-fit:cover}}
 @media (max-width:760px){.pen-onboarding-page{grid-template-columns:1fr}.pen-onboarding-aside{display:none}.pen-onboarding-main>header{margin-bottom:30px}.pen-onboarding-card{padding:20px}.pen-card-title h2{font-size:24px}.pen-form-grid,.pen-class-choice,.pen-answer-grid,.pen-help-grid,.pen-public-facts{grid-template-columns:1fr}.pen-form-actions{flex-direction:column-reverse}.pen-form-actions>.button{width:100%;min-width:0}.pen-manual-card.featured{grid-template-columns:1fr}.pen-reader-tabs{overflow-x:auto}.pen-reader-tabs button{white-space:nowrap}.pen-reader-resources{grid-template-columns:1fr}.pen-reader-resources h2,.pen-reader-resources .pen-tip{grid-column:auto}.pen-audio-player{grid-template-columns:48px 1fr}.pen-audio-player>small{grid-column:2}.pen-result-hero{padding:22px}.pen-result-hero>div:last-child>div{flex-direction:column}.pen-confirmation-page,.pen-system-state{padding:28px 20px;margin:20px}.pen-confirmation-page h1,.pen-system-state h1{font-size:29px}.pen-confirmation-page>div{grid-template-columns:1fr}.pen-profile-layout{grid-template-columns:1fr}.pen-profile-layout>nav{grid-template-columns:repeat(3,1fr)}.pen-profile-layout>nav button{grid-template-columns:24px 1fr}.pen-profile-layout>nav button>svg:last-child{display:none}.pen-workflow-steps{grid-template-columns:1fr 1fr}.pen-submission-summary{grid-template-columns:1fr}.pen-submission-row{grid-template-columns:44px 1fr auto}.pen-submission-row>.button{grid-column:2/4}.pen-assignment-columns{grid-template-columns:1fr}.pen-assignment-columns>section:last-child{grid-column:auto}.pen-activation-overview{grid-template-columns:1fr}.pen-activation-overview>.button{grid-column:auto}.pen-school-grid{grid-template-columns:1fr}.pen-school-grid>.pen-assistance{grid-column:auto}.pen-review-layout{grid-template-columns:1fr}.pen-version-row{grid-template-columns:44px 1fr auto}.pen-version-row>.button{grid-column:2/4}.pen-public-content>header nav{display:none}.pen-public-content h1{font-size:40px}}
+
+/* Stabilisation responsive des écrans issus du prototype éditorial */
+:where(.pen-onboarding-main, .pen-onboarding-card, .pen-reader-layout > *, .pen-profile-layout > *, .pen-preview-layout > *, .pen-review-layout > *, .pen-public-content main > *) { min-width: 0; }
+.pen-reader-tabs,
+.pen-reader-toolbar,
+.pen-profile-layout > nav { overscroll-behavior-inline: contain; scrollbar-width: thin; scrollbar-color: #b6a993 transparent; }
+
+@media (max-width:760px){
+  .pen-onboarding-main{padding:18px 14px 32px}
+  .pen-onboarding-main>header{align-items:flex-start;flex-wrap:wrap;gap:10px}
+  .pen-onboarding-main>header>span{width:100%;justify-content:space-between}
+  .pen-onboarding-main>header i{flex:1;max-width:190px}
+  .pen-card-title{align-items:flex-start}
+  .pen-avatar-choice{flex-wrap:wrap}
+  .pen-reader-tabs{scroll-snap-type:x proximity}
+  .pen-reader-tabs button{flex:0 0 auto;scroll-snap-align:start}
+  .pen-reader-toolbar{overflow-x:auto;padding-bottom:5px}
+  .pen-reader-toolbar button,.pen-reader-toolbar span{flex:0 0 auto}
+  .pen-reader-toolbar button:last-child{margin-left:0}
+  .pen-reader-viewer{padding:10px}
+  .pen-reader-viewer>picture img,.pen-reader-viewer>img{border-width:5px}
+  .pen-reader-viewer footer{align-items:center;flex-wrap:wrap;padding-top:8px}
+  .pen-reader-viewer footer button{flex:1 1 130px;justify-content:center}
+  .pen-profile-layout>nav{display:flex;overflow-x:auto;scroll-snap-type:x proximity}
+  .pen-profile-layout>nav button{min-width:175px;flex:0 0 auto;scroll-snap-align:start}
+  .pen-settings-list label{align-items:flex-start;flex-direction:column}
+  .pen-settings-list select{width:100%}
+  .pen-submission-row{grid-template-columns:44px minmax(0,1fr)}
+  .pen-submission-row>.status-pill{grid-column:2;justify-self:start}
+  .pen-submission-row>.button{grid-column:1/3;width:100%}
+  .pen-waveform{height:130px;gap:3px;padding:14px}
+  .pen-school-grid dl>div{align-items:flex-start;flex-direction:column;gap:5px}
+  .pen-public-content>header{padding-inline:16px}
+  .pen-public-content>header img{width:155px}
+  .pen-public-content main>section{min-height:0;padding:44px 18px}
+  .pen-public-content main>article{padding:48px 18px}
+}
+
+@media (max-width:420px){
+  .pen-onboarding-card{padding:18px 15px}
+  .pen-card-title{display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px}
+  .pen-card-title>span{width:48px;height:48px}
+  .pen-card-title h2{font-size:21px}
+  .pen-workflow-steps{grid-template-columns:1fr}
+  .pen-result-score{width:190px}
+  .pen-result-score strong{font-size:37px}
+  .pen-confirmation-page,.pen-system-state{padding:24px 15px;margin:14px}
+  .pen-confirmation-page h1,.pen-system-state h1{font-size:26px}
+  .pen-activation-overview>div strong{font-size:29px}
+  .pen-public-content h1{font-size:34px}
+  .pen-public-content main>section p{font-size:15px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .pen-onboarding-page *,
+  .pen-onboarding-page *::before,
+  .pen-onboarding-page *::after,
+  .pen-public-content *,
+  .pen-public-content *::before,
+  .pen-public-content *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

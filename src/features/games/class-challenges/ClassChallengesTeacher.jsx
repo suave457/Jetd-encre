@@ -23,9 +23,11 @@ import {
   validateClassChallengeDraft,
 } from "./classChallengeEngine.js";
 import {
+  CLASS_CHALLENGE_THEMES,
   CLASS_OPTIONS,
   getPublishedClassChallengeBanks,
   readQuestionBankQuestions,
+  selectClassChallengeQuestionIds,
 } from "./classChallengeData.js";
 import "./class-challenges.css";
 
@@ -55,6 +57,16 @@ export default function ClassChallengesTeacher({ challenges = [], results = [], 
   const [confirmFinishId, setConfirmFinishId] = useState(null);
   const questions = useMemo(() => readQuestionBankQuestions(), []);
   const banks = useMemo(() => getPublishedClassChallengeBanks(questions), [questions]);
+  const selectedBank = banks.find((bank) => bank.id === draft.bankId) || null;
+  const selectedQuestionIds = useMemo(
+    () => selectClassChallengeQuestionIds({
+      bank: selectedBank,
+      questions,
+      level: draft.level,
+      theme: draft.theme,
+    }),
+    [draft.level, draft.theme, questions, selectedBank],
+  );
   const selected = challenges.find((item) => item.id === selectedId) || challenges[0] || null;
   const liveCount = challenges.filter((item) => getClassChallengeStatus(item) === "en_cours").length;
   const finishedCount = challenges.length - liveCount;
@@ -67,7 +79,10 @@ export default function ClassChallengesTeacher({ challenges = [], results = [], 
 
   const submit = (event) => {
     event.preventDefault();
-    const validation = validateClassChallengeDraft(draft, banks);
+    const validation = validateClassChallengeDraft(
+      { ...draft, questionIds: selectedQuestionIds },
+      banks,
+    );
     if (!validation.ok) {
       setErrors(validation.fieldErrors);
       setNotice("");
@@ -102,7 +117,7 @@ export default function ClassChallengesTeacher({ challenges = [], results = [], 
 
     <section className="cc-teacher-hero"><div><span><Sparkle weight="fill"/> MODE SÛR POUR LA CLASSE</span><h2>Une émulation positive, sans exposer les élèves</h2><p>Le score repose uniquement sur les bonnes réponses. Les égalités sont conservées et signalées comme ex æquo.</p><div><span><strong>{liveCount}</strong> en cours</span><span><strong>{finishedCount}</strong> terminés</span><span><strong>{totalParticipants}</strong> pseudonymes actifs</span></div></div><img src={HERO_SRC} alt="Trophée doré entouré de figurines abstraites et de motifs marocains" width="1254" height="1254"/></section>
 
-    {creating&&<form className="cc-create-form" onSubmit={submit} noValidate><div className="cc-form-heading"><div><span>NOUVEAU DÉFI</span><h2>Préparer le parcours</h2></div><span className="cc-published-chip"><Check weight="bold"/> Questions publiées uniquement</span></div>{errors.form&&<p className="cc-form-error" role="alert"><WarningCircle/> {errors.form}</p>}<div className="cc-form-grid"><label>Titre du défi<input value={draft.title} onChange={(event)=>setDraft({...draft,title:event.target.value})} aria-invalid={Boolean(errors.title)}/>{errors.title&&<small>{errors.title}</small>}</label><label>Classe<select value={draft.classId} onChange={(event)=>updateClass(event.target.value)}>{CLASS_OPTIONS.map((option)=><option value={option.id} key={option.id}>{option.label}</option>)}</select>{errors.classId&&<small>{errors.classId}</small>}</label><label>Niveau<select value={draft.level} onChange={(event)=>setDraft({...draft,level:event.target.value})}><option>5e AEP</option><option>6e AEP</option></select>{errors.level&&<small>{errors.level}</small>}</label><label>Thème<select value={draft.theme} onChange={(event)=>setDraft({...draft,theme:event.target.value})}><option>Culture marocaine</option><option>Langue française</option><option>Sciences & découvertes</option><option>Culture générale</option></select>{errors.theme&&<small>{errors.theme}</small>}</label><label>Durée<select value={draft.durationHours} onChange={(event)=>setDraft({...draft,durationHours:Number(event.target.value)})}>{CLASS_CHALLENGE_DURATIONS.map((duration)=><option value={duration.hours} key={duration.hours}>{duration.label}</option>)}</select>{errors.durationHours&&<small>{errors.durationHours}</small>}</label><label>Banque publiée<select value={draft.bankId} onChange={(event)=>setDraft({...draft,bankId:event.target.value})}>{banks.map((bank)=><option value={bank.id} key={bank.id}>{bank.label} · {bank.questionCount} questions</option>)}</select>{errors.bankId&&<small>{errors.bankId}</small>}</label></div><div className="cc-bank-preview"><GameController weight="duotone"/><div><strong>{banks.find((bank)=>bank.id===draft.bankId)?.label || "Banque indisponible"}</strong><p>{banks.find((bank)=>bank.id===draft.bankId)?.description || "Publiez au moins cinq questions pour rendre une banque disponible."}</p></div><span>{banks.find((bank)=>bank.id===draft.bankId)?.questionCount || 0} publiées</span></div><div className="cc-form-actions"><button type="button" className="button button-light" onClick={()=>setCreating(false)}>Annuler</button><button type="submit" className="button button-dark">Lancer le défi <ArrowRight/></button></div></form>}
+    {creating&&<form className="cc-create-form" onSubmit={submit} noValidate><div className="cc-form-heading"><div><span>NOUVEAU DÉFI</span><h2>Préparer le parcours</h2></div><span className="cc-published-chip"><Check weight="bold"/> Questions publiées uniquement</span></div>{errors.form&&<p className="cc-form-error" role="alert"><WarningCircle/> {errors.form}</p>}<div className="cc-form-grid"><label>Titre du défi<input value={draft.title} onChange={(event)=>setDraft({...draft,title:event.target.value})} aria-invalid={Boolean(errors.title)}/>{errors.title&&<small>{errors.title}</small>}</label><label>Classe<select value={draft.classId} onChange={(event)=>updateClass(event.target.value)}>{CLASS_OPTIONS.map((option)=><option value={option.id} key={option.id}>{option.label}</option>)}</select>{errors.classId&&<small>{errors.classId}</small>}</label><label>Niveau<select value={draft.level} disabled aria-describedby="cc-level-help"><option>{draft.level}</option></select><small id="cc-level-help">Déduit de la classe sélectionnée.</small>{errors.level&&<small>{errors.level}</small>}</label><label>Thème<select value={draft.theme} onChange={(event)=>setDraft({...draft,theme:event.target.value})}>{CLASS_CHALLENGE_THEMES.map((theme)=><option key={theme}>{theme}</option>)}</select>{errors.theme&&<small>{errors.theme}</small>}</label><label>Durée<select value={draft.durationHours} onChange={(event)=>setDraft({...draft,durationHours:Number(event.target.value)})}>{CLASS_CHALLENGE_DURATIONS.map((duration)=><option value={duration.hours} key={duration.hours}>{duration.label}</option>)}</select>{errors.durationHours&&<small>{errors.durationHours}</small>}</label><label>Banque publiée<select value={draft.bankId} onChange={(event)=>setDraft({...draft,bankId:event.target.value})}>{banks.map((bank)=><option value={bank.id} key={bank.id}>{bank.label} · {bank.questionCount} questions</option>)}</select>{errors.bankId&&<small>{errors.bankId}</small>}</label></div><div className="cc-bank-preview"><GameController weight="duotone"/><div><strong>{selectedBank?.label || "Banque indisponible"}</strong><p>{selectedBank ? `Cinq questions sélectionnées en privilégiant « ${draft.theme} » et le niveau ${draft.level}.` : "Publiez au moins cinq questions pour rendre une banque disponible."}</p></div><span>{selectedQuestionIds.length} retenues</span></div><div className="cc-form-actions"><button type="button" className="button button-light" onClick={()=>setCreating(false)}>Annuler</button><button type="submit" className="button button-dark">Lancer le défi <ArrowRight/></button></div></form>}
 
     <div className="cc-teacher-layout"><section className="cc-teacher-list" aria-label="Défis créés"><div className="cc-section-heading"><div><span>SUIVI</span><h2>Défis créés</h2></div><span>{challenges.length} au total</span></div>{challenges.map((challenge)=>{const status=getClassChallengeStatus(challenge);const scoped=buildSafeClassLeaderboard(challenge,results);const completed=scoped.filter((row)=>row.status==="termine").length;return <article className={selected?.id===challenge.id?"is-selected":""} key={challenge.id}><button type="button" className="cc-select-challenge" onClick={()=>setSelectedId(challenge.id)} aria-label={`Consulter ${challenge.title}`}><span className={`cc-status ${status==="en_cours"?"is-live":"is-finished"}`}><i/>{status==="en_cours"?"En cours":"Terminé"}</span><h3>{challenge.title}</h3><p>{challenge.classLabel} · {challenge.theme}</p><div><span><Clock/> {getChallengeTimeLabel(challenge)}</span><span><UsersThree/> {completed} terminés</span><span><GameController/> {challenge.questionIds.length} questions</span></div><Eye weight="bold"/></button>{status==="en_cours"&&<button type="button" className={confirmFinishId===challenge.id?"cc-finish is-confirm":"cc-finish"} onClick={()=>finish(challenge)}>{confirmFinishId===challenge.id?"Confirmer la clôture":"Clôturer maintenant"}</button>}</article>})}</section>{selected?<TeacherLeaderboard challenge={selected} results={results}/>:<section className="cc-teacher-ranking cc-no-selection"><Trophy weight="duotone"/><h2>Aucun défi</h2><p>Créez un premier défi avec une banque de questions publiée.</p></section>}</div>
   </div>;

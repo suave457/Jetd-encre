@@ -72,6 +72,20 @@ export const ROLE_HOME = Object.freeze({
   admin: "/admin/pilotage",
 });
 
+const ROLE_SCREEN_PREFIX = Object.freeze({
+  eleve: "student",
+  parent: "parent",
+  enseignant: "teacher",
+  directeur: "director",
+  admin: "admin",
+});
+
+export const ROLE_NOT_FOUND_SCREEN = Object.freeze(
+  Object.fromEntries(
+    ROLES.map((role) => [role, `${ROLE_SCREEN_PREFIX[role]}.not-found`]),
+  ),
+);
+
 const SEGMENT_PATTERN = /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/;
 const DETAIL_SEGMENT_PATTERN = /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/i;
 
@@ -348,7 +362,22 @@ function matchCanonicalAppRoute(path) {
 }
 
 function notFound(path, reason = "unknown_route", context = {}) {
-  return Object.freeze({ kind: "not-found", path, reason, ...context });
+  const routeRole = isRole(context.role) ? context.role : null;
+  const route = {
+    kind: "not-found",
+    path,
+    reason,
+    ...context,
+  };
+  return withRouteMeta(
+    route,
+    routeRole ? ROLE_NOT_FOUND_SCREEN[routeRole] : "public.not-found",
+    {
+      role: routeRole,
+      home: routeRole ? ROLE_HOME[routeRole] : "/",
+      reason,
+    },
+  );
 }
 
 function pathFromUrl(value) {
@@ -362,14 +391,39 @@ function pathFromUrl(value) {
   }
 }
 
+export function isRouteHash(value) {
+  return /^#\//.test(String(value ?? "").trim());
+}
+
+export function isDocumentAnchor(value) {
+  const hash = String(value ?? "").trim();
+  return hash.startsWith("#") && !isRouteHash(hash) && hash.length > 1;
+}
+
 export function normalizeRoute(input = "/") {
   let path = pathFromUrl(String(input ?? "/").trim());
-  if (path.startsWith("#")) path = path.slice(1);
+  if (isDocumentAnchor(path)) return "/";
+  if (isRouteHash(path)) path = path.slice(1);
+  path = path.replace(/\\/g, "/");
   path = path.split(/[?#]/, 1)[0] || "/";
   if (!path.startsWith("/")) path = `/${path}`;
   path = path.replace(/\/{2,}/g, "/");
   if (path.length > 1) path = path.replace(/\/+$/, "");
   return path || "/";
+}
+
+/**
+ * Résout l'adresse d'une fenêtre sans confondre les ancres d'accessibilité
+ * (`#auth-main`) avec les routes historiques du prototype (`#/eleve/...`).
+ */
+export function resolveLocationRoute(locationLike = {}) {
+  if (typeof locationLike === "string") return normalizeRoute(locationLike);
+
+  const pathname = normalizeRoute(locationLike?.pathname || "/");
+  const hash = String(locationLike?.hash ?? "").trim();
+  if (isRouteHash(hash)) return normalizeRoute(hash);
+
+  return pathname === "/index.html" ? "/" : pathname;
 }
 
 export function isRole(role) {
@@ -396,6 +450,24 @@ export function buildAppPath(role, page = null, detail = null) {
     throw new TypeError("Le détail doit être un segment d’adresse simple.");
   }
   return `/${role}/${resolvedPage}/${detailSegment}`;
+}
+
+/**
+ * Recherche stricte d'une ressource ciblée par une route. Une absence reste
+ * une absence : ce contrat ne retombe jamais sur le premier élément.
+ */
+export function resolveRouteRecord(records, identifier, key = "id") {
+  if (!Array.isArray(records) || identifier == null || identifier === "") return null;
+  if (typeof key !== "string" || !key) return null;
+  const expected = String(identifier);
+  return records.find((record) => record && String(record[key]) === expected) ?? null;
+}
+
+export function getNotFoundHome(routeOrPath, sessionRole = null) {
+  const route = typeof routeOrPath === "string" ? parseRoute(routeOrPath) : routeOrPath;
+  if (isRole(route?.role)) return ROLE_HOME[route.role];
+  if (isRole(sessionRole)) return ROLE_HOME[sessionRole];
+  return "/";
 }
 
 export function parseRoute(input = "/") {
@@ -425,6 +497,18 @@ export function parseRoute(input = "/") {
   }
   if (path === "/activation") {
     return publicRoute({ kind: "activation", path }, "activation.entry");
+  }
+
+  const legalPages = Object.freeze([
+    "mentions-legales",
+    "confidentialite",
+    "conditions-utilisation",
+    "cookies",
+    "accessibilite",
+  ]);
+  const legalPage = path.slice(1);
+  if (legalPages.includes(legalPage)) {
+    return publicRoute({ kind: "legal", path, page: legalPage }, "public.legal", { page: legalPage });
   }
 
   const activationStates = Object.freeze({
@@ -495,11 +579,17 @@ export function parseRoute(input = "/") {
 
 export function resolveAppAccess(route, session = {}) {
   const parsed = typeof route === "string" ? parseRoute(route) : route;
-  if (!parsed || parsed.kind !== "app") {
+  const protectedRole = parsed?.kind === "app"
+    ? parsed.role
+    : parsed?.kind === "not-found" && isRole(parsed.role)
+      ? parsed.role
+      : null;
+  if (!protectedRole) {
     return Object.freeze({ allowed: true, route: parsed, redirectTo: null, reason: null });
   }
   if (
-    parsed.role === "eleve" &&
+    protectedRole === "eleve" &&
+    parsed.kind === "app" &&
     ["student.onboarding-profile", "student.onboarding-class"].includes(parsed.screen) &&
     session.pendingActivation
   ) {
@@ -509,11 +599,11 @@ export function resolveAppAccess(route, session = {}) {
     return Object.freeze({
       allowed: false,
       route: parsed,
-      redirectTo: `/connexion/${parsed.role}`,
+      redirectTo: `/connexion/${protectedRole}`,
       reason: "authentication_required",
     });
   }
-  if (session.role !== parsed.role) {
+  if (session.role !== protectedRole) {
     return Object.freeze({
       allowed: false,
       route: parsed,

@@ -3,15 +3,21 @@ import test from "node:test";
 
 import {
   ROLE_HOME,
+  ROLE_NOT_FOUND_SCREEN,
   ROLE_PAGES,
   ROLES,
   buildAppPath,
   getRoleHome,
+  getNotFoundHome,
+  isDocumentAnchor,
   isPageAllowed,
   isRole,
+  isRouteHash,
   normalizeRoute,
   parseRoute,
+  resolveLocationRoute,
   resolveAppAccess,
+  resolveRouteRecord,
 } from "../src/routeCore.js";
 
 test("les cinq rôles et leurs accueils sont centralisés", () => {
@@ -39,10 +45,37 @@ test("les pages sont validées par rôle", () => {
 test("normalise les chemins hashés, les requêtes et les URL complètes", () => {
   assert.equal(normalizeRoute("#/eleve/devoirs/?filtre=a-faire"), "/eleve/devoirs");
   assert.equal(normalizeRoute("eleve//manuel/"), "/eleve/manuel");
+  assert.equal(normalizeRoute("eleve\\jeux\\mot-juste"), "/eleve/jeux/mot-juste");
+  assert.equal(normalizeRoute("#auth-main"), "/");
   assert.equal(
     normalizeRoute("https://prototype.example/?device=desktop#/directeur/enseignants"),
     "/directeur/enseignants",
   );
+  assert.equal(
+    normalizeRoute("https://prototype.example/connexion/parent#parent-login-main"),
+    "/connexion/parent",
+  );
+});
+
+test("distingue les routes hashées, les ancres de document et les URL profondes", () => {
+  assert.equal(isRouteHash("#/admin/pilotage"), true);
+  assert.equal(isRouteHash("#app-main"), false);
+  assert.equal(isDocumentAnchor("#app-main"), true);
+  assert.equal(isDocumentAnchor("#/parent/devoirs"), false);
+
+  assert.equal(
+    resolveLocationRoute({ pathname: "/directeur/suivi-utilisation", hash: "" }),
+    "/directeur/suivi-utilisation",
+  );
+  assert.equal(
+    resolveLocationRoute({ pathname: "/connexion/eleve", hash: "#auth-main" }),
+    "/connexion/eleve",
+  );
+  assert.equal(
+    resolveLocationRoute({ pathname: "/", hash: "#/enseignant/devoirs/devoir-1/remises" }),
+    "/enseignant/devoirs/devoir-1/remises",
+  );
+  assert.equal(resolveLocationRoute({ pathname: "/index.html", hash: "" }), "/");
 });
 
 test("analyse toutes les routes publiques et d’authentification", () => {
@@ -55,6 +88,13 @@ test("analyse toutes les routes publiques et d’authentification", () => {
   });
   assert.deepEqual(parseRoute("/connexion"), { kind: "connection", path: "/connexion" });
   assert.deepEqual(parseRoute("/activation"), { kind: "activation", path: "/activation" });
+  assert.deepEqual(parseRoute("/mentions-legales"), {
+    kind: "legal",
+    path: "/mentions-legales",
+    page: "mentions-legales",
+  });
+  assert.equal(parseRoute("/confidentialite").screen, "public.legal");
+  assert.equal(parseRoute("/accessibilite").params.page, "accessibilite");
   assert.deepEqual(parseRoute("/connexion/parent"), {
     kind: "login",
     path: "/connexion/parent",
@@ -126,6 +166,56 @@ test("rejette les rôles, pages, détails et profondeurs inconnus", () => {
   assert.equal(parseRoute("/parent/enfants/lina/progres").reason, "too_many_segments");
   assert.equal(parseRoute("/connexion/famille").reason, "unknown_login_role");
   assert.equal(parseRoute("/blog/article/suite").reason, "invalid_blog_route");
+});
+
+test("produit une page introuvable contextualisée et protégée pour chaque rôle", () => {
+  const expectedScreens = {
+    eleve: "student.not-found",
+    parent: "parent.not-found",
+    enseignant: "teacher.not-found",
+    directeur: "director.not-found",
+    admin: "admin.not-found",
+  };
+  for (const role of ROLES) {
+    const missing = parseRoute(`/${role}/page-absente`);
+    assert.equal(missing.kind, "not-found", role);
+    assert.equal(missing.role, role, role);
+    assert.equal(missing.screen, expectedScreens[role], role);
+    assert.equal(missing.params.home, ROLE_HOME[role], role);
+    assert.equal(getNotFoundHome(missing), ROLE_HOME[role], role);
+  }
+
+  const studentMissing = parseRoute("/eleve/page-absente");
+  assert.equal(studentMissing.kind, "not-found");
+  assert.equal(studentMissing.role, "eleve");
+  assert.equal(studentMissing.screen, "student.not-found");
+  assert.deepEqual(studentMissing.params, {
+    role: "eleve",
+    home: "/eleve/tableau-de-bord",
+    reason: "page_not_allowed",
+  });
+  assert.equal(getNotFoundHome(studentMissing), "/eleve/tableau-de-bord");
+  assert.equal(getNotFoundHome("/route-publique-absente", "admin"), "/admin/pilotage");
+  assert.equal(resolveAppAccess(studentMissing, { authenticated: false }).redirectTo, "/connexion/eleve");
+  assert.equal(
+    resolveAppAccess(studentMissing, { authenticated: true, role: "parent" }).redirectTo,
+    "/parent/tableau-de-bord",
+  );
+  assert.equal(resolveAppAccess(studentMissing, { authenticated: true, role: "eleve" }).allowed, true);
+  assert.equal(ROLE_NOT_FOUND_SCREEN.enseignant, "teacher.not-found");
+  assert.ok(Object.isFrozen(ROLE_NOT_FOUND_SCREEN));
+});
+
+test("résout strictement les données ciblées sans repli sur le premier élément", () => {
+  const records = [
+    { id: "devoir-1", slug: "ma-ville" },
+    { id: "devoir-2", slug: "mon-ecole" },
+  ];
+  assert.equal(resolveRouteRecord(records, "devoir-2"), records[1]);
+  assert.equal(resolveRouteRecord(records, "ma-ville", "slug"), records[0]);
+  assert.equal(resolveRouteRecord(records, "absent"), null);
+  assert.equal(resolveRouteRecord(records, null), null);
+  assert.equal(resolveRouteRecord([], "devoir-1"), null);
 });
 
 test("construit des chemins canoniques sûrs", () => {

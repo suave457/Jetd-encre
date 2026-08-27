@@ -332,7 +332,10 @@ export default function WordChoiceGame({
 
   const exitGame = useCallback(() => {
     if (typeof onExit === "function") onExit();
-    else window.location.hash = "#/eleve/jeux";
+    else {
+      window.history.pushState({}, "", "/eleve/jeux");
+      window.dispatchEvent(new Event("jde:navigate"));
+    }
   }, [onExit]);
 
   const startGame = useCallback(() => {

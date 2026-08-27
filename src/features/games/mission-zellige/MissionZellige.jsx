@@ -220,7 +220,10 @@ export default function MissionZellige({
     if (!completionStateRef.current) trackMissionEvent("abandon", { completed: false });
     completionStateRef.current = true;
     if (typeof onExit === "function") onExit();
-    else window.location.hash = "#/eleve/jeux";
+    else {
+      window.history.pushState({}, "", "/eleve/jeux");
+      window.dispatchEvent(new Event("jde:navigate"));
+    }
   };
 
   const resetForMission = (index, { replay = false } = {}) => {

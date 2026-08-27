@@ -12,17 +12,20 @@ export const DAILY_CATEGORIES = Object.freeze([
   "Monde",
 ]);
 
-const QUESTION_IDS_BY_CATEGORY = Object.freeze({
-  Maroc: Object.freeze(["culture-01", "culture-02", "culture-03", "culture-04"]),
-  Français: Object.freeze(["culture-05", "culture-09"]),
-  Sciences: Object.freeze(["culture-06", "culture-07"]),
-  Histoire: Object.freeze(["culture-10", "culture-11"]),
-  Monde: Object.freeze(["culture-08", "culture-12"]),
+const DAILY_CATEGORY_SOURCES = Object.freeze({
+  Maroc: Object.freeze({ primary: Object.freeze(["Culture marocaine"]) }),
+  Français: Object.freeze({
+    primary: Object.freeze(["Langue française", "Vie quotidienne"]),
+  }),
+  Sciences: Object.freeze({ primary: Object.freeze(["Sciences"]) }),
+  Histoire: Object.freeze({
+    primary: Object.freeze(["Histoire"]),
+    fallback: Object.freeze(["Arts et littérature"]),
+  }),
+  Monde: Object.freeze({
+    primary: Object.freeze(["Géographie", "Monde francophone"]),
+  }),
 });
-
-const questionsById = new Map(
-  cultureQuizQuestions.map((question) => [question.id, question]),
-);
 
 function hashString(value) {
   let hash = 2166136261;
@@ -65,29 +68,64 @@ function dayNumberFromKey(dateKey) {
   return Math.floor(timestamp / 86_400_000);
 }
 
-export function getDailyChallenge(value = new Date()) {
+export function getDailyChallenge(
+  value = new Date(),
+  questionSource = cultureQuizQuestions,
+) {
   const dateKey = getMoroccoDateKey(value);
   const dayNumber = dayNumberFromKey(dateKey);
+  const uniqueQuestions = [...new Map(
+    (Array.isArray(questionSource) ? questionSource : [])
+      .filter((question) => question?.id && Array.isArray(question.choices))
+      .map((question) => [question.id, question]),
+  ).values()];
+  const candidatesByCategory = new Map(DAILY_CATEGORIES.map((category) => {
+    const definition = DAILY_CATEGORY_SOURCES[category];
+    const primary = uniqueQuestions.filter((question) =>
+      definition.primary.includes(question.sourceCategory || question.theme));
+    const fallback = primary.length || !definition.fallback
+      ? []
+      : uniqueQuestions.filter((question) =>
+        definition.fallback.includes(question.sourceCategory || question.theme));
+    return [category, primary.length ? primary : fallback];
+  }));
   const featuredIndex = ((dayNumber % DAILY_CATEGORIES.length) + DAILY_CATEGORIES.length)
     % DAILY_CATEGORIES.length;
-  const orderedCategories = DAILY_CATEGORIES.map(
+  const rotatedCategories = DAILY_CATEGORIES.map(
     (_, index) => DAILY_CATEGORIES[(featuredIndex + index) % DAILY_CATEGORIES.length],
   );
-  const questions = orderedCategories.map((category) => {
-    const ids = QUESTION_IDS_BY_CATEGORY[category];
-    const questionId = ids[hashString(`${dateKey}:${category}`) % ids.length];
-    const question = questionsById.get(questionId);
-    return Object.freeze({
+  const selectedIds = new Set();
+  const questions = rotatedCategories.flatMap((category) => {
+    const candidates = candidatesByCategory.get(category);
+    if (!candidates?.length) return [];
+    const question = candidates[hashString(`${dateKey}:${category}`) % candidates.length];
+    selectedIds.add(question.id);
+    return [Object.freeze({
       ...question,
       dailyCategory: category,
       theme: `Défi du jour · ${category}`,
-    });
+    })];
   });
+  if (questions.length < DAILY_QUESTION_COUNT) {
+    const remaining = uniqueQuestions
+      .filter((question) => !selectedIds.has(question.id))
+      .sort((left, right) =>
+        hashString(`${dateKey}:${left.id}`) - hashString(`${dateKey}:${right.id}`));
+    remaining.slice(0, DAILY_QUESTION_COUNT - questions.length).forEach((question) => {
+      const category = question.sourceCategory || question.theme || "Culture générale";
+      questions.push(Object.freeze({
+        ...question,
+        dailyCategory: category,
+        theme: `Défi du jour · ${category}`,
+      }));
+    });
+  }
+  const orderedCategories = questions.map((question) => question.dailyCategory);
 
   return Object.freeze({
     id: DAILY_CHALLENGE_ID,
     dateKey,
-    category: orderedCategories[0],
+    category: orderedCategories[0] || "Culture générale",
     categories: Object.freeze([...orderedCategories]),
     questions: Object.freeze(questions),
     questionCount: questions.length,

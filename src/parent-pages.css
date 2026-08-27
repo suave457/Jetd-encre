@@ -869,3 +869,94 @@
   .role-shell-parent *,
   .parent-login-page * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Stabilisation de la messagerie et des très petits écrans */
+.role-shell-parent :where(.parent-filter-tabs, .parent-detail-tabs, .parent-message-filters) {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b6a68c transparent;
+  scroll-snap-type: x proximity;
+}
+.role-shell-parent :where(.parent-filter-tabs, .parent-detail-tabs, .parent-message-filters) button {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.role-shell-parent :where(a, button, input, select, textarea):focus-visible,
+.parent-login-page :where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #176ed1;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px #fff;
+}
+.role-shell-parent .app-sidebar :where(a, button):focus-visible { outline-color: #e7bd72; box-shadow: 0 0 0 2px var(--parent-navy); }
+
+@media (max-width: 680px) {
+  .parent-message-summary { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; padding: 14px; }
+  .parent-message-summary > div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .parent-message-summary > span { grid-column: 2; grid-row: 1; }
+  .parent-message-filters { width: 100%; }
+  .parent-compose-message { width: 100%; padding: 15px; }
+  .parent-compose-message > div:last-of-type { align-items: stretch; flex-direction: column; }
+  .parent-compose-message > div:last-of-type .button { width: 100%; }
+  .parent-inbox { display: grid; gap: 10px; overflow: visible; border: 0; border-radius: 0; background: transparent; }
+  .parent-inbox-head { display: none; }
+  .parent-inbox > article {
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto;
+    gap: 9px 11px;
+    padding: 14px;
+    border: 1px solid var(--parent-border);
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgb(5 18 35 / 5%);
+  }
+  .parent-inbox > article.unread { border-color: #dfbe78; background: #fffaf0; }
+  .parent-message-avatar { grid-column: 1; grid-row: 1; }
+  .parent-message-sender { grid-column: 2; grid-row: 1; align-self: center; }
+  .parent-message-subject { grid-column: 1 / -1; grid-row: 2; padding: 11px 0; border-block: 1px solid #eee5da; }
+  .parent-inbox > article > span:nth-child(4) { grid-column: 1 / 3; grid-row: 3; align-self: center; color: var(--parent-muted); }
+  .parent-inbox > article > span:nth-child(5) { grid-column: 3; grid-row: 3; align-self: center; color: var(--parent-muted); text-align: right; }
+  .parent-inbox > article > .status-pill { grid-column: 3; grid-row: 1; align-self: center; }
+  .parent-inbox > article > .button { grid-column: 1 / -1; grid-row: 4; width: 100%; }
+  .parent-message-sender strong,
+  .parent-message-sender small,
+  .parent-message-subject strong,
+  .parent-message-subject small { overflow: visible; text-overflow: clip; white-space: normal; }
+  .parent-message-subject strong { font-size: 13px; }
+  .parent-message-subject small { line-height: 1.5; }
+  .parent-message-reader { max-width: none; }
+  .parent-message-reader > div:last-child { align-items: stretch; flex-direction: column; }
+  .parent-message-reader > div:last-child .button { width: 100%; }
+}
+
+@media (max-width: 390px) {
+  .parent-metric-grid,
+  .parent-message-metrics,
+  .parent-link-states,
+  .parent-detail-metrics,
+  .parent-progress-kpis { grid-template-columns: 1fr; }
+  .parent-page-actions { flex-direction: column; }
+  .parent-page-actions .button { width: 100%; }
+  .parent-follow-row { grid-template-columns: 40px minmax(0, 1fr); }
+  .parent-follow-row > .button { grid-column: 1 / -1; width: 100%; }
+  .parent-child-row { grid-template-columns: 44px minmax(0, 1fr); }
+  .parent-child-row > .button { grid-column: 1 / -1; width: 100%; }
+  .parent-login-aside { min-height: 280px; }
+  .parent-login-intro { margin-top: 42px; }
+  .parent-login-intro h1 { font-size: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-shell-parent *,
+  .role-shell-parent *::before,
+  .role-shell-parent *::after,
+  .parent-login-page *,
+  .parent-login-page *::before,
+  .parent-login-page *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -14,6 +14,7 @@ import {
   getDailyChallenge,
   getDailyChallengeHistory,
 } from "./dailyChallengeData.js";
+import { readPublishedGameQuestions } from "./publishedQuestionSource.js";
 import "./daily-challenge.css";
 
 const NOOP = () => {};
@@ -102,7 +103,11 @@ export default function DailyChallenge({
   now = new Date(),
 }) {
   const openedAtRef = useRef(now);
-  const challenge = useMemo(() => getDailyChallenge(openedAtRef.current), []);
+  const questionSource = useMemo(() => readPublishedGameQuestions(), []);
+  const challenge = useMemo(
+    () => getDailyChallenge(openedAtRef.current, questionSource),
+    [questionSource],
+  );
   const history = useMemo(
     () => getDailyChallengeHistory(attempts, userId),
     [attempts, userId],
@@ -114,7 +119,10 @@ export default function DailyChallenge({
   const wasCompletedWhenOpened = useRef(completion);
   const exitChallenge = () => {
     if (typeof onExit === "function") onExit();
-    else window.location.hash = "#/eleve/jeux";
+    else {
+      window.history.pushState({}, "", "/eleve/jeux");
+      window.dispatchEvent(new Event("jde:navigate"));
+    }
   };
 
   const experience = useMemo(() => ({
@@ -123,7 +131,7 @@ export default function DailyChallenge({
     welcomeKicker: `Défi du ${formatChallengeDate(challenge.dateKey)}`,
     title: "Cinq questions pour",
     titleEmphasis: " illuminer ta journée",
-    description: `Aujourd’hui, la catégorie vedette est « ${challenge.category} ». Réponds aux cinq questions, découvre une explication après chaque réponse et gagne un bonus en allant jusqu’au bout.`,
+    description: `Aujourd’hui, la catégorie vedette est « ${challenge.category} ». Réponds aux ${challenge.questionCount} questions publiées, découvre une explication après chaque réponse et gagne un bonus en allant jusqu’au bout.`,
     resultKicker: "Défi du jour accompli",
     resultDescription:
       "Tes réponses sont enregistrées dans ton historique. Reviens demain pour découvrir une nouvelle catégorie vedette.",
@@ -134,6 +142,7 @@ export default function DailyChallenge({
     awardNamespace: challenge.awardNamespace,
     dailyKey: challenge.dateKey,
     category: challenge.category,
+    shuffleSeed: challenge.attemptId,
   }), [challenge]);
 
   if (wasCompletedWhenOpened.current) {
