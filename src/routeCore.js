@@ -31,6 +31,7 @@ export const ROLE_PAGES = Object.freeze({
     "eleves",
     "devoirs",
     "remises",
+    "jeux",
     "ressources",
     "analyses",
     "defis",

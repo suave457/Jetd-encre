@@ -27,6 +27,7 @@ test("les pages sont validées par rôle", () => {
   assert.equal(isRole("famille"), false);
   assert.equal(isPageAllowed("parent", "enfants"), true);
   assert.equal(isPageAllowed("eleve", "jeux"), true);
+  assert.equal(isPageAllowed("enseignant", "jeux"), true);
   assert.equal(isPageAllowed("enseignant", "defis"), true);
   assert.equal(isPageAllowed("admin", "questions"), true);
   assert.equal(isPageAllowed("parent", "pilotage"), false);
@@ -79,6 +80,22 @@ test("analyse une page d’application et un unique segment de détail", () => {
     isDetail: true,
   });
   assert.equal(parseRoute("/eleve/jeux/mot-juste").detail, "mot-juste");
+  assert.deepEqual(parseRoute("/eleve/jeux/debat"), {
+    kind: "app",
+    path: "/eleve/jeux/debat",
+    role: "eleve",
+    page: "jeux",
+    detail: "debat",
+    isDetail: true,
+  });
+  assert.deepEqual(parseRoute("/enseignant/jeux/debat"), {
+    kind: "app",
+    path: "/enseignant/jeux/debat",
+    role: "enseignant",
+    page: "jeux",
+    detail: "debat",
+    isDetail: true,
+  });
   assert.equal(parseRoute("/admin/questions").page, "questions");
 });
 

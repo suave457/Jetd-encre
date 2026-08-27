@@ -42,6 +42,7 @@ const CultureQuiz=lazy(()=>import("./features/games/CultureQuiz.jsx"));
 const DailyChallenge=lazy(()=>import("./features/games/DailyChallenge.jsx"));
 const MissionZellige=lazy(()=>import("./features/games/mission-zellige/MissionZellige.jsx"));
 const WordChoiceGame=lazy(()=>import("./features/games/word-choice/WordChoiceGame.jsx"));
+const DebateGameFrame=lazy(()=>import("./features/games/debate/DebateGameFrame.jsx"));
 const QuestionBankAdmin=lazy(()=>import("./features/question-bank/QuestionBankAdmin.jsx"));
 const ClassChallengesStudent=lazy(()=>import("./features/games/class-challenges/ClassChallengesStudent.jsx"));
 const ClassChallengesTeacher=lazy(()=>import("./features/games/class-challenges/ClassChallengesTeacher.jsx"));
@@ -58,7 +59,7 @@ const roleConfigs = {
   },
   enseignant: {
     label: "Enseignant", space: "ESPACE ENSEIGNANT", initials: "SB", name: "Mme Salma Benjelloun",
-    nav: [["tableau-de-bord","Tableau de bord",House],["classes","Mes classes",ChalkboardTeacher],["eleves","Élèves",Student],["devoirs","Devoirs",ClipboardText],["defis","Défis de classe",Trophy],["ressources","Ressources",FolderOpen],["analyses","Analyses",ChartBar]],
+    nav: [["tableau-de-bord","Tableau de bord",House],["classes","Mes classes",ChalkboardTeacher],["eleves","Élèves",Student],["devoirs","Devoirs",ClipboardText],["jeux","Mes jeux",GameController],["defis","Défis de classe",Trophy],["ressources","Ressources",FolderOpen],["analyses","Analyses",ChartBar]],
   },
   directeur: {
     label: "Direction", space: "ESPACE DIRECTION", initials: "MA", name: "M. Amine Alaoui",
@@ -449,6 +450,23 @@ function StudentHomework(){
 
 function StudentMedia(){const {contents}=useDemoStore();const iconFor={Podcast:Headphones,Documentaire:PlayCircle,"Jeu éducatif":GameController,"E-book":BookOpenText};const imageFor={Podcast:"generated-1774007681359.png",Documentaire:"generated-1774007838586.png","Jeu éducatif":"generated-1774007656775.png","E-book":"generated-1773971894915.png"};const cards=contents.filter(item=>item.status==="Publié"&&item.visibility!=="Enseignants uniquement").map(item=>({id:item.id,Icon:iconFor[item.type]||FileText,type:item.type,title:item.title,meta:`${item.level||"Tous niveaux"} · ${item.unit||"Toutes les unités"}`,image:imageFor[item.type]||"generated-1774018865796.png",to:item.type==="Jeu éducatif"?"/eleve/jeux/culture-generale":`/eleve/mediatheque/${item.id}`}));return <><PageHeader eyebrow="MÉDIATHÈQUE" title="Écoute, regarde et joue" subtitle="Les contenus publiés par l’équipe éditoriale apparaissent ici automatiquement."/><div className="media-grid">{cards.map(({id,Icon,type,title,meta,image,to})=><article className="media-card" key={id}><ResponsiveImage fileName={image} alt="" sizes="(max-width: 680px) 100vw, 33vw"/><div><span><Icon weight="fill"/> {type}</span><h3>{title}</h3><p>{meta}</p><RouteLink to={to} className="button button-light">Ouvrir <PlayCircle weight="fill"/></RouteLink></div></article>)}</div>{cards.length===0&&<div className="empty-state"><PlayCircle/><h3>Aucun contenu publié</h3><p>Les prochaines ressources validées par l’administration apparaîtront ici.</p></div>}</>}
 
+function DebateGameFeature({role="eleve"}){
+  const teacher=role==="enseignant";
+  return <section className="game-feature-card debate-game-feature">
+    <div className="game-feature-copy">
+      <span className="game-kicker"><ChatCircleDots weight="fill"/> EXPRESSION ORALE · A1 À B2</span>
+      <h2>Projet DÉBAT</h2>
+      <p>{teacher?"Préparez une séance de débat adaptée à votre classe, projetez une consigne claire et pilotez le temps, les aides et l’évaluation depuis le pupitre professeur.":"Choisis ton camp, trouve tes arguments et fais vivre le débat en duo ou en équipe, avec des sujets proches de ton quotidien."}</p>
+      <div className="game-facts" aria-label="Caractéristiques de Projet DÉBAT"><span><Student weight="fill"/> 6–12 ans</span><span><Books weight="fill"/> 74 cartes · 18 thèmes</span><span><ChartLineUp weight="bold"/> A1 à B2</span><span><Clock weight="bold"/> 10–30 min</span></div>
+      <RouteLink to={`/${role}/jeux/debat`} className="button button-gold">{teacher?"Préparer une séance":"Lancer le jeu"} <ArrowRight weight="bold"/></RouteLink>
+    </div>
+    <div className="debate-game-card-art">
+      <img src="/games/projet-debat/assets/illustrations/welcome-debat.webp" alt="Livre ouvert, plume et bulles de parole pour lancer un débat" width="512" height="512" loading="eager" decoding="async"/>
+      <span><PresentationChart weight="fill"/> {teacher?"Projection + pupitre professeur":"Duel ou équipes"}</span>
+    </div>
+  </section>
+}
+
 function StudentGames({studentXp=DEFAULT_STUDENT_XP}){
   const {quizAttempts,session}=useDemoStore();
   const challenge=getDailyChallenge();
@@ -460,6 +478,7 @@ function StudentGames({studentXp=DEFAULT_STUDENT_XP}){
   const zelligeFragmentCount=new Set(zelligeHistory.map(attempt=>attempt.fragmentId||attempt.category).filter(Boolean)).size;
   return <>
     <PageHeader eyebrow="APPRENDRE EN JOUANT" title="Mes jeux" subtitle="Teste tes connaissances, découvre de nouveaux repères et fais progresser ton profil." action={<div className="games-xp-balance"><Sparkle weight="fill"/><span><small>MON PROFIL</small><strong>{studentXp} XP</strong></span></div>}/>
+    <DebateGameFeature role="eleve"/>
     <section className={`game-feature-card mission-zellige-feature${zelligeCompleted?" is-completed":""}`}>
       <div className="game-feature-copy">
         <span className="game-kicker"><Sparkle weight="fill"/> MISSION DU JOUR · AVENTURE GUIDÉE</span>
@@ -508,7 +527,9 @@ function StudentGames({studentXp=DEFAULT_STUDENT_XP}){
 
 function TeacherClassChallengesPage(){const {classChallenges,classChallengeResults,createClassChallenge,finishClassChallenge}=useDemoStore();return <Suspense fallback={<div className="panel" role="status">Ouverture des défis de classe…</div>}><ClassChallengesTeacher challenges={classChallenges} results={classChallengeResults} onCreate={createClassChallenge} onFinish={finishClassChallenge}/></Suspense>}
 
-function TeacherPages({page,search}){if(page==="tableau-de-bord")return <TeacherDashboard/>;if(page==="classes")return <TeacherClasses/>;if(page==="eleves")return <TeacherStudents search={search}/>;if(page==="devoirs")return <TeacherHomework/>;if(page==="defis")return <TeacherClassChallengesPage/>;if(page==="ressources")return <TeacherResources/>;return <TeacherAnalytics/>}
+function TeacherGames(){return <><PageHeader eyebrow="ENSEIGNER PAR LE JEU" title="Mes jeux" subtitle="Préparez une activité orale, lancez-la en classe et gardez les consignes bien visibles pour tous les élèves."/><DebateGameFeature role="enseignant"/><section className="game-secondary-card class-challenge-entry"><span className="game-secondary-icon class-challenge-thumb"><img src="/assets/games/class-challenges/defis-classes-hero.webp" alt="" width="160" height="160" loading="lazy" decoding="async"/></span><div><span className="game-kicker">DÉFIS DE CLASSE · PARTICIPATION PRIVÉE</span><h2>La classe avance ensemble</h2><p>Créez un défi à partir d’une banque publiée, suivez les résultats par pseudonyme et valorisez les réussites sans exposer l’identité des élèves.</p></div><RouteLink to="/enseignant/defis" className="button button-light">Gérer les défis <ArrowRight/></RouteLink></section><div className="game-guidance teacher-game-guidance" aria-label="Repères pédagogiques"><article><PresentationChart weight="duotone"/><div><strong>Projection lisible</strong><span>La consigne et le temps restent visibles pour toute la classe.</span></div></article><article><Student weight="duotone"/><div><strong>Différenciation immédiate</strong><span>Choisissez le niveau oral, les aides et le parcours scolaire.</span></div></article><article><CheckCircle weight="duotone"/><div><strong>Évaluation formative</strong><span>Le pupitre guide une observation simple et encourageante.</span></div></article></div></>}
+
+function TeacherPages({page,search}){if(page==="tableau-de-bord")return <TeacherDashboard/>;if(page==="classes")return <TeacherClasses/>;if(page==="eleves")return <TeacherStudents search={search}/>;if(page==="devoirs")return <TeacherHomework/>;if(page==="jeux")return <TeacherGames/>;if(page==="defis")return <TeacherClassChallengesPage/>;if(page==="ressources")return <TeacherResources/>;return <TeacherAnalytics/>}
 
 function TeacherDashboard(){return <><PageHeader eyebrow="GROUPE SCOLAIRE AL MANAR · CASABLANCA" title="Bonjour Mme Benjelloun" subtitle="Voici les actions importantes pour aujourd’hui." action={<RouteLink to="/enseignant/devoirs" className="button button-green"><Plus/> Créer un devoir</RouteLink>}/><KpiGrid items={[["Classes","4","Toutes actives"],["Élèves","112","+ 3 cette semaine"],["À corriger","18","À traiter","gold"],["Actifs cette semaine","76 %","+ 8 points"]]}/><div className="dashboard-two-columns teacher-columns"><article className="panel"><div className="panel-heading"><h2>Mes classes</h2><RouteLink to="/enseignant/classes">Voir toutes les classes</RouteLink></div>{[["5A","5e AEP · Classe 5A","29 élèves · Moyenne 7,6/10","82 % actifs"],["5B","5e AEP · Classe 5B","28 élèves · 6 devoirs à corriger","74 % actifs"],["6A","6e AEP · Classe 6A","30 élèves","79 % actifs"]].map(r=><div className="class-row" key={r[0]}><span>{r[0]}</span><div><strong>{r[1]}</strong><small>{r[2]}</small></div><i>{r[3]}</i></div>)}</article><article className="panel action-panel"><h2>À faire maintenant</h2><div className="notice-card"><WarningCircle weight="fill"/><span><strong>5 élèves sans activation</strong><small>Classes 5A et 5B</small></span></div><div className="task-line"><strong>Quiz Unité 3</strong><small>24 remises · 6 à corriger</small></div><RouteLink to="/enseignant/ressources" className="button button-light button-wide"><PresentationChart/> Choisir une ressource</RouteLink></article></div></>}
 
@@ -737,6 +758,7 @@ export function App(){
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defis-classe")return <Suspense fallback={<Redirecting/>}><ClassChallengesStudent challenges={classChallenges} results={classChallengeResults} currentXp={studentXp} participant={CURRENT_CLASS_PARTICIPANT} onAwardXp={awardXp} onComplete={completeClassChallenge} onExit={()=>{window.location.hash="#/eleve/jeux"}}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defi-du-jour")return <Suspense fallback={<Redirecting/>}><DailyChallenge currentXp={studentXp} attempts={quizAttempts} userId={DEMO_ACCOUNTS.eleve.userId} onAwardXp={awardXp} onComplete={completeDailyChallenge} onExit={()=>{window.location.hash="#/eleve/jeux"}}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="culture-generale")return <Suspense fallback={<Redirecting/>}><CultureQuiz currentXp={studentXp} onAwardXp={awardXp} onComplete={completeQuiz} onExit={()=>{window.location.hash="#/eleve/jeux"}}/></Suspense>;
+  if(parsed.kind==="app"&&["eleve","enseignant"].includes(parsed.role)&&parsed.page==="jeux"&&parsed.detail==="debat")return <Suspense fallback={<Redirecting/>}><DebateGameFrame role={parsed.role}/></Suspense>;
   if(parsed.kind==="app")return <AppShell role={parsed.role} page={parsed.page} detail={parsed.detail} screen={parsed.screen} params={parsed.params} studentXp={studentXp}/>;
   return <NotFound/>;
 }
