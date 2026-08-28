@@ -27,6 +27,29 @@ const API_EVENT_NAMES = new Set([
 ]);
 const API_EVENT_ROLES = new Set(["eleve", "parent", "enseignant", "directeur", "admin", "system"]);
 const API_PROPERTY_KEYS = new Set(["scorePercent", "correctCount", "questionCount", "durationSeconds", "resultCode", "source", "dataMode", "attemptNumber", "completionPercent", "format", "levelCode", "unitCode"]);
+const API_NUMERIC_PROPERTY_RULES = new Map([
+  ["scorePercent", { min: 0, max: 100, integer: false }],
+  ["correctCount", { min: 0, max: 1000, integer: true }],
+  ["questionCount", { min: 0, max: 1000, integer: true }],
+  ["durationSeconds", { min: 0, max: 86400, integer: true }],
+  ["attemptNumber", { min: 1, max: 10000, integer: true }],
+  ["completionPercent", { min: 0, max: 100, integer: false }],
+]);
+const API_STRING_PROPERTY_VALUES = new Map([
+  ["source", new Set(["manual", "lesson", "activity", "game", "quiz", "assessment", "assignment", "search", "admin", "system"])],
+  ["dataMode", new Set(["fixture", "demo", "beta"])],
+  ["format", new Set(["manual", "lesson", "activity", "game", "assessment", "assignment", "audio", "video", "ebook", "article"])],
+  ["levelCode", new Set(["aep1", "aep2", "aep3", "aep4", "aep5", "aep6", "pre_a1", "a1", "a2", "b1"])],
+  ["unitCode", new Set(Array.from({ length: 12 }, (_, index) => `unit${index + 1}`))],
+]);
+const API_COMPETENCY_CODES = new Set([
+  "ORAL-REP-01", "ORAL-REP-02", "ORAL-PRO-01", "INTER-01", "INTER-02", "LECT-01",
+  "LECT-02", "ECRIT-01", "MED-01", "LEX-01", "GRAM-01", "PLURI-01",
+]);
+const API_IDENTIFIER_DOMAINS = Object.freeze({
+  eventId: "evt", subjectKey: "sub", tenantKey: "tnt", classKey: "cls",
+  sessionId: "ses", contentId: "cnt", activityId: "act", attemptId: "att",
+});
 const SENSITIVE_KEY = /(name|nom|email|mail|phone|telephone|message|answer|response|texte|text|audio|voice|location|adresse|address|ip|referrer|url|activation.?code|password|mot.?de.?passe)/i;
 const EDITORIAL_TYPES = new Set(["manual", "unit", "lesson", "activity", "question_bank", "game_pack", "audio", "video", "ebook", "article"]);
 const EDITORIAL_STATUSES = new Set(["draft", "fle_review", "pedagogical_review", "accessibility_review", "approved", "scheduled", "published", "archived"]);
@@ -34,6 +57,7 @@ const MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/avi
 const MAX_JSON_BYTES = 64 * 1024;
 const MAX_EVENT_BATCH = 50;
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
+const MAX_CONTENT_VERSION = 1_000_000;
 
 function cleanText(value, max = 160) {
   return String(value ?? "").trim().slice(0, max);
@@ -42,6 +66,17 @@ function cleanText(value, max = 160) {
 function asIso(value) {
   const date = new Date(value || Date.now());
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function normalizeContentVersion(value) {
+  if (value === undefined || value === null) return { valid: true, value: null };
+  const valid = typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= MAX_CONTENT_VERSION;
+  return { valid, value: valid ? value : null };
+}
+
+function eventPseudonymSecret(env) {
+  const secret = typeof env.BETA_EVENT_PSEUDONYM_KEY === "string" ? env.BETA_EVENT_PSEUDONYM_KEY : "";
+  return secret.length >= 32 ? secret : null;
 }
 
 function secure(response, request, requestId = null) {
@@ -71,13 +106,24 @@ function safeEqual(left, right) {
   return mismatch === 0;
 }
 
-function authorizeWrite(request, env, requestId) {
-  if (!env.BETA_WRITE_TOKEN) return apiError(503, "beta_writes_disabled", "Les écritures serveur BETA ne sont pas activées.", requestId);
+function authorizeBetaAccess(request, env, requestId, mode = "write") {
+  const readMode = mode === "read";
+  if (!env.BETA_WRITE_TOKEN) {
+    return readMode
+      ? apiError(503, "beta_private_access_disabled", "Les lectures privées BETA ne sont pas activées.", requestId)
+      : apiError(503, "beta_writes_disabled", "Les écritures serveur BETA ne sont pas activées.", requestId);
+  }
   const origin = request.headers.get("Origin");
   if (origin && origin !== new URL(request.url).origin) return apiError(403, "origin_rejected", "L’origine de la requête est refusée.", requestId);
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") || "";
-  if (!safeEqual(token, env.BETA_WRITE_TOKEN)) return apiError(401, "write_access_required", "Un accès BETA privé est requis.", requestId);
+  if (!safeEqual(token, env.BETA_WRITE_TOKEN)) {
+    return apiError(401, readMode ? "private_access_required" : "write_access_required", "Un accès BETA privé est requis.", requestId);
+  }
   return null;
+}
+
+function authorizeWrite(request, env, requestId) {
+  return authorizeBetaAccess(request, env, requestId, "write");
 }
 
 async function readJson(request, requestId, maxBytes = MAX_JSON_BYTES) {
@@ -94,13 +140,32 @@ async function sha256(value) {
 
 export function sanitizeApiEvent(input = {}, now = new Date()) {
   const properties = {};
+  const propertyErrors = [];
   for (const [key, value] of Object.entries(input.properties || {})) {
     if (!API_PROPERTY_KEYS.has(key) || SENSITIVE_KEY.test(key)) continue;
-    if (["string", "number", "boolean"].includes(typeof value)) properties[key] = typeof value === "string" ? cleanText(value, 80) : value;
+    const numericRule = API_NUMERIC_PROPERTY_RULES.get(key);
+    if (numericRule) {
+      const valid = typeof value === "number" && Number.isFinite(value)
+        && value >= numericRule.min && value <= numericRule.max
+        && (!numericRule.integer || Number.isInteger(value));
+      if (valid) properties[key] = value;
+      else propertyErrors.push(`invalid_property:${key}`);
+      continue;
+    }
+    const allowedValues = API_STRING_PROPERTY_VALUES.get(key);
+    if (allowedValues) {
+      const normalized = typeof value === "string" ? cleanText(value, 40) : "";
+      if (allowedValues.has(normalized)) properties[key] = normalized;
+      else propertyErrors.push(`invalid_property:${key}`);
+      continue;
+    }
+    propertyErrors.push(`invalid_property:${key}`);
   }
   const occurredAt = asIso(input.occurredAt);
   const currentTime = new Date(now).getTime();
   const occurredTime = occurredAt ? new Date(occurredAt).getTime() : Number.NaN;
+  const contentVersion = normalizeContentVersion(input.contentVersion);
+  const competencyInput = input.competencyCodes == null ? [] : input.competencyCodes;
   const event = {
     eventId: cleanText(input.eventId, 100),
     schemaVersion: 1,
@@ -113,18 +178,51 @@ export function sanitizeApiEvent(input = {}, now = new Date()) {
     classKey: cleanText(input.classKey, 100) || null,
     sessionId: cleanText(input.sessionId, 100) || null,
     contentId: cleanText(input.contentId, 100) || null,
-    contentVersion: Number.isFinite(Number(input.contentVersion)) ? Number(input.contentVersion) : null,
+    contentVersion: contentVersion.value,
     activityId: cleanText(input.activityId, 100) || null,
     attemptId: cleanText(input.attemptId, 100) || null,
-    competencyCodes: [...new Set((input.competencyCodes || []).map((code) => cleanText(code, 40).toUpperCase()).filter(Boolean))].slice(0, 20),
+    competencyCodes: Array.isArray(competencyInput)
+      ? [...new Set(competencyInput.map((code) => cleanText(code, 40).toUpperCase()).filter(Boolean))].slice(0, 20)
+      : [],
     properties,
   };
-  const errors = [];
+  const errors = [...propertyErrors];
+  if (!contentVersion.valid) errors.push("invalid_content_version");
+  if (!Array.isArray(competencyInput)) errors.push("invalid_competency_codes");
   if (!event.eventId || !event.subjectKey || !event.tenantKey) errors.push("required_identifier");
   if (!API_EVENT_NAMES.has(event.eventName)) errors.push("unknown_event");
   if (!API_EVENT_ROLES.has(event.role)) errors.push("unknown_role");
+  if (event.competencyCodes.some((code) => !API_COMPETENCY_CODES.has(code))) errors.push("unknown_competency");
   if (!Number.isFinite(occurredTime) || occurredTime > currentTime + 5 * 60_000 || occurredTime < currentTime - 90 * 86_400_000) errors.push("invalid_time");
   return { ok: errors.length === 0, event, errors };
+}
+
+async function importPseudonymKey(secret) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(String(secret)),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+}
+
+async function pseudonymizeIdentifier(key, domain, value) {
+  if (!value) return null;
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${domain}\u0000${value}`));
+  const digest = [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${domain}_${digest}`;
+}
+
+async function pseudonymizeApiEvents(events, secret) {
+  const key = await importPseudonymKey(secret);
+  return Promise.all(events.map(async (event) => {
+    const protectedIdentifiers = await Promise.all(Object.entries(API_IDENTIFIER_DOMAINS).map(async ([field, domain]) => [
+      field,
+      await pseudonymizeIdentifier(key, domain, event[field]),
+    ]));
+    return { ...event, ...Object.fromEntries(protectedIdentifiers) };
+  }));
 }
 
 async function audit(env, requestId, actorKey, action, entityType, entityId, summary) {
@@ -151,6 +249,7 @@ async function dashboard(env, requestId) {
 }
 
 async function listEditorial(request, env, requestId) {
+  const unauthorized = authorizeBetaAccess(request, env, requestId, "read"); if (unauthorized) return unauthorized;
   const url = new URL(request.url);
   const status = cleanText(url.searchParams.get("status"), 40);
   const type = cleanText(url.searchParams.get("type"), 40);
@@ -179,7 +278,8 @@ async function createEditorial(request, env, requestId) {
   return jsonResponse({ item: payload }, 201, requestId);
 }
 
-async function listMedia(env, requestId) {
+async function listMedia(request, env, requestId) {
+  const unauthorized = authorizeBetaAccess(request, env, requestId, "read"); if (unauthorized) return unauthorized;
   const result = await env.DB.prepare("SELECT id, original_name, mime_type, byte_size, alt_text, source_label, credit, license_type, license_expires_at, status, created_at, updated_at FROM beta_media_assets WHERE archived_at IS NULL ORDER BY updated_at DESC LIMIT 100").all();
   return jsonResponse({ items: result.results || [] }, 200, requestId);
 }
@@ -214,12 +314,15 @@ async function putMediaBlob(request, env, requestId, id) {
 
 async function ingestEvents(request, env, requestId) {
   const unauthorized = authorizeWrite(request, env, requestId); if (unauthorized) return unauthorized;
+  const pseudonymSecret = eventPseudonymSecret(env);
+  if (!pseudonymSecret) return apiError(503, "event_pseudonymization_disabled", "La pseudonymisation stable des événements BETA n’est pas configurée.", requestId);
   const input = await readJson(request, requestId);
   const events = Array.isArray(input.events) ? input.events : [];
   if (!events.length || events.length > MAX_EVENT_BATCH) return apiError(422, "invalid_batch", "Le lot doit contenir entre 1 et 50 événements.", requestId);
   const now = new Date(); const sanitized = events.map((event) => sanitizeApiEvent(event, now));
   if (sanitized.some((item) => !item.ok)) return apiError(422, "invalid_event", "Un ou plusieurs événements ne respectent pas le schéma autorisé.", requestId);
-  const statements = sanitized.map(({ event }) => env.DB.prepare("INSERT OR IGNORE INTO beta_events (event_id, schema_version, event_name, occurred_at, received_at, subject_key, role, tenant_key, class_key, session_id, content_id, content_version, activity_id, attempt_id, competency_codes_json, properties_json) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+  const protectedEvents = await pseudonymizeApiEvents(sanitized.map(({ event }) => event), pseudonymSecret);
+  const statements = protectedEvents.map((event) => env.DB.prepare("INSERT OR IGNORE INTO beta_events (event_id, schema_version, event_name, occurred_at, received_at, subject_key, role, tenant_key, class_key, session_id, content_id, content_version, activity_id, attempt_id, competency_codes_json, properties_json) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(event.eventId, event.eventName, event.occurredAt, event.receivedAt, event.subjectKey, event.role, event.tenantKey, event.classKey, event.sessionId, event.contentId, event.contentVersion, event.activityId, event.attemptId, JSON.stringify(event.competencyCodes), JSON.stringify(event.properties)));
   const results = await env.DB.batch(statements);
   const accepted = results.reduce((sum, result) => sum + Number(result.meta?.changes || 0), 0);
@@ -229,13 +332,13 @@ async function ingestEvents(request, env, requestId) {
 async function handleApi(request, env) {
   const requestId = crypto.randomUUID(); const url = new URL(request.url); const path = url.pathname;
   if (request.method === "OPTIONS") return apiError(405, "method_not_allowed", "Cette méthode n’est pas disponible.", requestId);
-  if (path === "/api/v1/health" && request.method === "GET") return jsonResponse({ ok: true, release: "BETA", storage: { database: Boolean(env.DB), media: Boolean(env.FILES) }, writesEnabled: Boolean(env.BETA_WRITE_TOKEN), time: new Date().toISOString() }, 200, requestId);
+  if (path === "/api/v1/health" && request.method === "GET") return jsonResponse({ ok: true, release: "BETA", storage: { database: Boolean(env.DB), media: Boolean(env.FILES) }, writesEnabled: Boolean(env.BETA_WRITE_TOKEN), eventPseudonymsConfigured: Boolean(eventPseudonymSecret(env)), time: new Date().toISOString() }, 200, requestId);
   if (!env.DB) return apiError(503, "database_unavailable", "La base BETA n’est pas disponible.", requestId);
   try {
     if (path === "/api/v1/dashboard" && request.method === "GET") return await dashboard(env, requestId);
     if (path === "/api/v1/editorial" && request.method === "GET") return await listEditorial(request, env, requestId);
     if (path === "/api/v1/editorial" && request.method === "POST") return await createEditorial(request, env, requestId);
-    if (path === "/api/v1/media" && request.method === "GET") return await listMedia(env, requestId);
+    if (path === "/api/v1/media" && request.method === "GET") return await listMedia(request, env, requestId);
     if (path === "/api/v1/media" && request.method === "POST") return await createMedia(request, env, requestId);
     const mediaBlob = path.match(/^\/api\/v1\/media\/([a-f0-9-]+)\/blob$/i);
     if (mediaBlob && request.method === "PUT") return await putMediaBlob(request, env, requestId, mediaBlob[1]);

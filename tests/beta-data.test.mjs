@@ -55,6 +55,22 @@ test("learning events use a strict privacy allowlist and deduplicate event ids",
   assert.equal(validated.ok, true);
   assert.deepEqual(sanitizeLearningEvent(input).properties, { scorePercent: 80, source: "quiz" });
   assert.equal(deduplicateLearningEvents([input, { ...input }]).length, 1);
+
+  const identifyingValue = validateLearningEvent({
+    ...input,
+    properties: { source: "Lina Mansouri", resultCode: "child@example.test", scorePercent: 101 },
+    competencyCodes: ["LEX-01", "LINA-01"],
+  });
+  assert.equal(identifyingValue.ok, false);
+  assert.deepEqual(identifyingValue.event.properties, {});
+  assert.ok(identifyingValue.errors.some((error) => error.field === "properties.source"));
+  assert.ok(identifyingValue.errors.some((error) => error.field === "properties.resultCode"));
+  assert.ok(identifyingValue.errors.some((error) => error.field === "competencyCodes"));
+
+  const identifyingContentVersion = validateLearningEvent({ ...input, contentVersion: "212661234567" });
+  assert.equal(identifyingContentVersion.ok, false);
+  assert.equal(identifyingContentVersion.event.contentVersion, null);
+  assert.ok(identifyingContentVersion.errors.some((error) => error.field === "contentVersion"));
 });
 
 test("calculates decision KPIs with raw denominators and mature D+7 cohorts", () => {

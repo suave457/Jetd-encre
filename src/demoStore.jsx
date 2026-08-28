@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { clearJetDencreLocalData } from "./localDataReset.js";
 import {
   ACTIVATION_CODE_PATTERN,
   DEMO_ACCOUNTS,
@@ -46,21 +47,35 @@ export function DemoProvider({ children, storage, storageKey = DEMO_STORAGE_KEY,
         notification.userId === state.session.userId,
     );
 
+    const resetDemo = () => {
+      const cleanup = clearJetDencreLocalData();
+      if (!cleanup.ok) {
+        return {
+          ok: false,
+          status: "local_cleanup_incomplete",
+          message: "Certaines données locales n’ont pas pu être effacées. Vérifiez les autorisations de stockage du navigateur, puis réessayez.",
+          cleanup,
+        };
+      }
+      return { ...store.actions.reset(), cleanup };
+    };
+    const actions = { ...store.actions, reset: resetDemo };
+
     return {
       state,
       ...state,
       currentUser,
       visibleNotifications,
       unreadNotifications: visibleNotifications.filter((notification) => !notification.read),
-      actions: store.actions,
-      ...store.actions,
+      actions,
+      ...actions,
       // French aliases make the API natural in the existing editorial vocabulary.
       creerDevoir: store.actions.createAssignment,
       modifierDevoir: store.actions.updateAssignment,
       dupliquerDevoir: store.actions.duplicateAssignment,
       archiverDevoir: store.actions.archiveAssignment,
       supprimerDevoir: store.actions.deleteAssignment,
-      resetDemo: store.actions.reset,
+      resetDemo,
     };
   }, [state, store]);
 

@@ -36,6 +36,15 @@ test("sépare les sessions locales élève et enseignant", async () => {
   assert.match(runtime, /projet-debat-v01-preferences\$\{storageScope\}/);
 });
 
+test("échappe les noms de camp avant le gabarit HTML d’attribution", async () => {
+  const runtime = await readFile(new URL("app.js", gameRoot), "utf8");
+  const assignmentArea = runtime.match(/function renderAssignmentArea\(card\) \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.match(assignmentArea, /esc\(sideName\(chooser\)\)/);
+  assert.match(assignmentArea, /esc\(sideName\(other\)\)/);
+  assert.doesNotMatch(assignmentArea, /\+ sideName\((?:chooser|other)\) \+/);
+  assert.match(runtime, /document\.addEventListener\("input", handleInput\)/);
+});
+
 test("le pont d'intégration refuse un autre rôle, canal ou type d'événement", () => {
   const channel = createDebateIntegrationChannel("audit-12345678");
   const event = {

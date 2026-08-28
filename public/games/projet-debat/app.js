@@ -1097,7 +1097,7 @@ function renderAssignmentArea(card) {
     const chooser = assignmentChooser() || "A";
     const other = otherSide(chooser);
     return (
-      '<p class="control-help">' + sideName(chooser) + " choisit sa position. L’autre position sera attribuée à " + sideName(other) + ".</p>" +
+      '<p class="control-help">' + esc(sideName(chooser)) + " choisit sa position. L’autre position sera attribuée à " + esc(sideName(other)) + ".</p>" +
       '<div class="assignment-buttons">' +
         '<button type="button" data-action="choose-assignment" data-value="pour"><span>1</span>' + esc(card.camp_pour) + "</button>" +
         '<button type="button" data-action="choose-assignment" data-value="contre"><span>2</span>' + esc(card.camp_contre) + "</button>" +
@@ -2047,6 +2047,15 @@ function handleChange(event) {
   }
 }
 
+function handleInput(event) {
+  const control = event.target.closest("[data-setting]");
+  if (!control) return;
+  if (control.dataset.setting === "side-a-name") state.settings.playerAName = control.value.trim() || "Joueur A";
+  else if (control.dataset.setting === "side-b-name") state.settings.playerBName = control.value.trim() || "Joueur B";
+  else return;
+  savePreferences();
+}
+
 function handleKeydown(event) {
   if (event.key === "Escape" && state.ui.teacherDeskOpen) {
     event.preventDefault();
@@ -2090,6 +2099,7 @@ function handleKeydown(event) {
 }
 
 document.addEventListener("click", handleClick);
+document.addEventListener("input", handleInput);
 document.addEventListener("change", handleChange);
 document.addEventListener("keydown", handleKeydown);
 

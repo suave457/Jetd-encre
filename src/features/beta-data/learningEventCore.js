@@ -1,3 +1,5 @@
+import { validateCompetencyCodes } from "./learningTaxonomy.js";
+
 export const LEARNING_EVENT_SCHEMA_VERSION = 1;
 export const LEARNING_EVENT_NAMES = Object.freeze([
   "access_assigned", "manual_activated", "lesson_completed", "activity_started", "activity_completed",
@@ -10,7 +12,23 @@ const SAFE_PROPERTY_KEYS = new Set([
   "scorePercent", "correctCount", "questionCount", "durationSeconds", "resultCode", "source",
   "dataMode", "attemptNumber", "completionPercent", "format", "levelCode", "unitCode",
 ]);
+const NUMERIC_PROPERTY_RULES = new Map([
+  ["scorePercent", { min: 0, max: 100, integer: false }],
+  ["correctCount", { min: 0, max: 1000, integer: true }],
+  ["questionCount", { min: 0, max: 1000, integer: true }],
+  ["durationSeconds", { min: 0, max: 86400, integer: true }],
+  ["attemptNumber", { min: 1, max: 10000, integer: true }],
+  ["completionPercent", { min: 0, max: 100, integer: false }],
+]);
+const STRING_PROPERTY_VALUES = new Map([
+  ["source", new Set(["manual", "lesson", "activity", "game", "quiz", "assessment", "assignment", "search", "admin", "system"])],
+  ["dataMode", new Set(["fixture", "demo", "beta"])],
+  ["format", new Set(["manual", "lesson", "activity", "game", "assessment", "assignment", "audio", "video", "ebook", "article"])],
+  ["levelCode", new Set(["aep1", "aep2", "aep3", "aep4", "aep5", "aep6", "pre_a1", "a1", "a2", "b1"])],
+  ["unitCode", new Set(Array.from({ length: 12 }, (_, index) => `unit${index + 1}`))],
+]);
 const SENSITIVE_KEY = /(name|nom|email|mail|phone|telephone|message|answer|response|texte|text|audio|voice|location|adresse|address|ip|referrer|url|activation.?code|password|mot.?de.?passe)/i;
+const MAX_CONTENT_VERSION = 1_000_000;
 
 function text(value, max = 120) {
   return String(value ?? "").trim().slice(0, max);
@@ -21,13 +39,38 @@ function iso(value, fallback = null) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-export function sanitizeLearningEvent(input = {}) {
+function normalizeContentVersion(value) {
+  if (value === undefined || value === null) return { valid: true, value: null };
+  const valid = typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= MAX_CONTENT_VERSION;
+  return { valid, value: valid ? value : null };
+}
+
+function buildLearningEvent(input = {}) {
   const properties = {};
+  const propertyErrors = [];
   for (const [key, value] of Object.entries(input.properties || {})) {
     if (!SAFE_PROPERTY_KEYS.has(key) || SENSITIVE_KEY.test(key)) continue;
-    if (["string", "number", "boolean"].includes(typeof value)) properties[key] = typeof value === "string" ? text(value, 80) : value;
+    const numericRule = NUMERIC_PROPERTY_RULES.get(key);
+    if (numericRule) {
+      const valid = typeof value === "number" && Number.isFinite(value)
+        && value >= numericRule.min && value <= numericRule.max
+        && (!numericRule.integer || Number.isInteger(value));
+      if (valid) properties[key] = value;
+      else propertyErrors.push({ field: `properties.${key}`, code: "invalid" });
+      continue;
+    }
+    const allowedValues = STRING_PROPERTY_VALUES.get(key);
+    if (allowedValues) {
+      const normalized = typeof value === "string" ? text(value, 40) : "";
+      if (allowedValues.has(normalized)) properties[key] = normalized;
+      else propertyErrors.push({ field: `properties.${key}`, code: "invalid" });
+      continue;
+    }
+    propertyErrors.push({ field: `properties.${key}`, code: "invalid" });
   }
-  const safe = {
+  const competencyValidation = validateCompetencyCodes(input.competencyCodes || []);
+  const contentVersion = normalizeContentVersion(input.contentVersion);
+  const event = {
     eventId: text(input.eventId, 100),
     schemaVersion: LEARNING_EVENT_SCHEMA_VERSION,
     eventName: text(input.eventName, 60),
@@ -39,24 +82,30 @@ export function sanitizeLearningEvent(input = {}) {
     classKey: text(input.classKey, 100) || null,
     sessionId: text(input.sessionId, 100) || null,
     contentId: text(input.contentId, 100) || null,
-    contentVersion: Number.isFinite(Number(input.contentVersion)) ? Number(input.contentVersion) : null,
+    contentVersion: contentVersion.value,
     activityId: text(input.activityId, 100) || null,
     attemptId: text(input.attemptId, 100) || null,
-    competencyCodes: [...new Set((input.competencyCodes || []).map((code) => text(code, 40).toUpperCase()).filter(Boolean))].slice(0, 20),
+    competencyCodes: competencyValidation.codes.slice(0, 20),
     properties,
   };
-  return safe;
+  return { event, propertyErrors, unknownCompetencies: competencyValidation.unknown, contentVersionValid: contentVersion.valid };
+}
+
+export function sanitizeLearningEvent(input = {}) {
+  return buildLearningEvent(input).event;
 }
 
 export function validateLearningEvent(input = {}) {
-  const event = sanitizeLearningEvent(input);
-  const errors = [];
+  const { event, propertyErrors, unknownCompetencies, contentVersionValid } = buildLearningEvent(input);
+  const errors = [...propertyErrors];
   if (!event.eventId) errors.push({ field: "eventId", code: "required" });
   if (!LEARNING_EVENT_NAMES.includes(event.eventName)) errors.push({ field: "eventName", code: "unknown" });
   if (!event.occurredAt) errors.push({ field: "occurredAt", code: "invalid" });
   if (!event.subjectKey) errors.push({ field: "subjectKey", code: "required" });
   if (!event.tenantKey) errors.push({ field: "tenantKey", code: "required" });
   if (!ROLES.has(event.role)) errors.push({ field: "role", code: "unknown" });
+  if (!contentVersionValid) errors.push({ field: "contentVersion", code: "invalid" });
+  if (unknownCompetencies.length) errors.push({ field: "competencyCodes", code: "unknown" });
   return { ok: errors.length === 0, event, errors };
 }
 
