@@ -46,6 +46,7 @@ test("normalise les chemins hashés, les requêtes et les URL complètes", () =>
   assert.equal(normalizeRoute("#/eleve/devoirs/?filtre=a-faire"), "/eleve/devoirs");
   assert.equal(normalizeRoute("eleve//manuel/"), "/eleve/manuel");
   assert.equal(normalizeRoute("eleve\\jeux\\mot-juste"), "/eleve/jeux/mot-juste");
+  assert.equal(normalizeRoute("eleve\\jeux\\souk-des-mots"), "/eleve/jeux/souk-des-mots");
   assert.equal(normalizeRoute("#auth-main"), "/");
   assert.equal(
     normalizeRoute("https://prototype.example/?device=desktop#/directeur/enseignants"),
@@ -120,6 +121,15 @@ test("analyse une page d’application et un unique segment de détail", () => {
     isDetail: true,
   });
   assert.equal(parseRoute("/eleve/jeux/mot-juste").detail, "mot-juste");
+  assert.equal(parseRoute("/eleve/jeux/souk-des-mots").detail, "souk-des-mots");
+  assert.deepEqual(parseRoute("/enseignant/analyses/souk-des-mots"), {
+    kind: "app",
+    path: "/enseignant/analyses/souk-des-mots",
+    role: "enseignant",
+    page: "analyses",
+    detail: "souk-des-mots",
+    isDetail: true,
+  });
   assert.deepEqual(parseRoute("/eleve/jeux/debat"), {
     kind: "app",
     path: "/eleve/jeux/debat",

@@ -6,7 +6,7 @@ import {
   DiamondsFour, DownloadSimple, Eye, FileText, FolderOpen, Funnel, GameController, Gauge,
   GearSix, Headphones, House, Key, List, ListChecks, MagnifyingGlass, Medal, Megaphone,
   PaperPlaneTilt, PencilSimple, PlayCircle, Plus, PresentationChart, Question,
-  RocketLaunch, ShieldCheck, SignOut, Sparkle, Student, Trophy,
+  RocketLaunch, ShieldCheck, SignOut, Sparkle, Storefront, Student, Trophy,
   UserCircle, Users, UsersThree, WarningCircle, X,
 } from "@phosphor-icons/react/ssr";
 import { ParentLoginPage, ParentPages } from "./ParentPages.jsx";
@@ -45,6 +45,8 @@ const CultureQuiz=lazy(()=>import("./features/games/CultureQuiz.jsx"));
 const DailyChallenge=lazy(()=>import("./features/games/DailyChallenge.jsx"));
 const MissionZellige=lazy(()=>import("./features/games/mission-zellige/MissionZellige.jsx"));
 const WordChoiceGame=lazy(()=>import("./features/games/word-choice/WordChoiceGame.jsx"));
+const MarketShopGame=lazy(()=>import("./features/games/market-shop/MarketShopGame.jsx"));
+const TeacherMarketDashboard=lazy(()=>import("./features/games/market-shop/TeacherMarketDashboard.jsx"));
 const DebateGameFrame=lazy(()=>import("./features/games/debate/DebateGameFrame.jsx"));
 const QuestionBankAdmin=lazy(()=>import("./features/question-bank/QuestionBankAdmin.jsx"));
 const ClassChallengesStudent=lazy(()=>import("./features/games/class-challenges/ClassChallengesStudent.jsx"));
@@ -448,6 +450,7 @@ function RoleDetailPage({role,page,detail}){
   const content=["bibliotheque","mediatheque","ressources"].includes(page)?resolveRouteRecord(contents,detail):null;
   const editableContent=role==="admin"&&page==="bibliotheque"?content:null;
   useEffect(()=>()=>window.speechSynthesis?.cancel(),[]);
+  if(role==="enseignant"&&page==="analyses"&&detail==="souk-des-mots")return <TeacherMarketProgressPage/>;
   const previewContent=()=>{
     if(!content)return;
     if(mediaPlaying){window.speechSynthesis?.cancel();setMediaPlaying(false);setFeedback("Lecture arrêtée.");return;}
@@ -558,6 +561,11 @@ function StudentGames({studentXp=DEFAULT_STUDENT_XP}){
       <div><span className="game-kicker">VOCABULAIRE & GRAMMAIRE</span><h2>Le Mot juste</h2><p>Complète des phrases proches du quotidien marocain, choisis parmi quatre mots et découvre une explication simple après chaque réponse.</p></div>
       <RouteLink to="/eleve/jeux/mot-juste" className="button button-light">Trouver le mot <PencilSimple weight="fill"/></RouteLink>
     </section>
+    <section className="game-secondary-card market-shop-entry">
+      <span className="game-secondary-icon market-shop-thumb"><img src="/assets/games/market-shop/market-vendor-scene.webp" alt="" width="160" height="160" loading="lazy" decoding="async"/></span>
+      <div><span className="game-kicker">COMMUNIQUER AU QUOTIDIEN</span><h2>Le Souk des mots</h2><p>Écoute une commande, prépare le bon panier et utilise une formule polie avec le vendeur. Trois paliers et douze missions permettent de gagner jusqu’à 180 XP.</p></div>
+      <RouteLink to="/eleve/jeux/souk-des-mots" className="button button-light">Faire les courses <Storefront weight="fill"/></RouteLink>
+    </section>
     <section className="game-secondary-card class-challenge-entry">
       <span className="game-secondary-icon class-challenge-thumb"><img src="/assets/games/class-challenges/defis-classes-hero.webp" alt="" width="160" height="160" loading="lazy" decoding="async"/></span>
       <div><span className="game-kicker">DÉFI DE LA CLASSE · PSEUDONYME PRIVÉ</span><h2>La classe avance ensemble</h2><p>Participe aux défis de ton enseignante, suis ton rang et compare ta progression uniquement avec les pseudonymes de ta classe.</p></div>
@@ -615,7 +623,9 @@ function HomeworkWizard({step,setStep,onClose,onPublish}){
 
 function TeacherResources(){const {contents}=useDemoStore();const [filter,setFilter]=useState("Tous");const labelFor={Podcast:"Audios",Documentaire:"Vidéos","Jeu éducatif":"Jeux","E-book":"Manuels"};const imageFor={Podcast:"generated-1774007681359.png",Documentaire:"generated-1774007838586.png","Jeu éducatif":"generated-1774007656775.png","E-book":"generated-1773971894915.png"};const resources=contents.filter(item=>item.status==="Publié"&&item.visibility!=="Élèves"&&(filter==="Tous"||labelFor[item.type]===filter));return <><PageHeader eyebrow="RESSOURCES PÉDAGOGIQUES" title="Préparez vos séances" subtitle="Les ressources validées par l’administration sont disponibles sans ressaisie."/><div className="resource-toolbar" aria-label="Filtrer les ressources">{["Tous","Manuels","Audios","Vidéos","Jeux"].map(item=><button className={filter===item?"active":""} aria-pressed={filter===item} onClick={()=>setFilter(item)} key={item}>{item}</button>)}</div><div className="resource-grid">{resources.map(item=><article key={item.id}><ResponsiveImage fileName={imageFor[item.type]||"generated-1774018865796.png"} alt="" sizes="(max-width: 900px) 50vw, 25vw"/><div><span>{item.type}</span><h3>{item.title}</h3><p>{item.unit||"Toutes les unités"} · {item.level||"Tous niveaux"}</p><div><RouteLink to={`/enseignant/ressources/${item.id}`} className="button button-light"><Eye/> Aperçu</RouteLink><button className="icon-button" disabled title="Projection disponible après intégration du lecteur média" aria-label={`Projeter ${item.title}`}><PresentationChart/></button></div></div></article>)}</div>{resources.length===0&&<div className="empty-state"><FolderOpen/><h3>Aucune ressource dans ce filtre</h3><p>Choisissez une autre catégorie.</p></div>}</>}
 
-function TeacherAnalytics(){return <><PageHeader eyebrow="ANALYSES" title="Comprendre pour mieux accompagner" subtitle="Une vue claire des progrès de vos classes et des compétences à renforcer." action={<button className="button button-light" disabled title="Export disponible après raccordement des données"><DownloadSimple/> Exporter le rapport</button>}/><KpiGrid items={[["Élèves actifs","86 / 112","+ 9 cette semaine"],["Temps moyen","34 min","Par semaine"],["Activités réussies","78 %","+ 5 points"],["À accompagner","11","Élèves identifiés","gold"]]}/><div className="dashboard-two-columns"><article className="panel"><h2>Progression par classe</h2><BarChart values={[82,74,79,68]} labels={["5A","5B","6A","6B"]}/></article><article className="panel"><h2>Compétences à renforcer</h2><ProgressBar value={58} label="Expression écrite"/><ProgressBar value={67} label="Accords grammaticaux"/><ProgressBar value={72} label="Compréhension orale"/><RouteLink to="/enseignant/eleves" className="button button-light button-wide">Voir les élèves concernés</RouteLink></article></div></>}
+function TeacherMarketProgressPage(){const {quizAttempts,quizAwards}=useDemoStore();return <Suspense fallback={<div className="panel" role="status">Préparation du suivi du Souk des mots…</div>}><TeacherMarketDashboard awardHistory={quizAwards} attemptHistory={quizAttempts} onBack={()=>navigateRoute("/enseignant/analyses")}/></Suspense>}
+
+function TeacherAnalytics(){return <><PageHeader eyebrow="ANALYSES" title="Comprendre pour mieux accompagner" subtitle="Une vue claire des progrès de vos classes et des compétences à renforcer." action={<RouteLink to="/enseignant/analyses/souk-des-mots" className="button button-dark"><Storefront/> Suivre le Souk</RouteLink>}/><section className="teacher-market-entry"><span className="teacher-market-entry-icon"><Storefront weight="duotone"/></span><div><span>SUIVI PAR JEU · NOUVEAU</span><h2>Le Souk des mots</h2><p>Repérez la progression dans les trois paliers, l’usage des aides et le niveau d’autonomie avant de choisir une action pédagogique.</p><div><small>3 paliers</small><small>12 missions</small><small>Fiches élèves</small></div></div><RouteLink to="/enseignant/analyses/souk-des-mots" className="button button-light">Ouvrir le tableau <ArrowRight/></RouteLink></section><KpiGrid items={[["Élèves actifs","86 / 112","+ 9 cette semaine"],["Temps moyen","34 min","Par semaine"],["Activités réussies","78 %","+ 5 points"],["À accompagner","11","Élèves identifiés","gold"]]}/><div className="dashboard-two-columns"><article className="panel"><h2>Progression par classe</h2><BarChart values={[82,74,79,68]} labels={["5A","5B","6A","6B"]}/></article><article className="panel"><h2>Compétences à renforcer</h2><ProgressBar value={58} label="Expression écrite"/><ProgressBar value={67} label="Accords grammaticaux"/><ProgressBar value={72} label="Compréhension orale"/><RouteLink to="/enseignant/eleves" className="button button-light button-wide">Voir les élèves concernés</RouteLink></article></div></>}
 
 function DirectorPages({page,search}){if(["tableau-de-bord","actions"].includes(page))return <BetaRolePage role="directeur" page={page} ui={{PageHeader,RouteLink}}/>;if(page==="classes")return <DirectorClasses/>;if(page==="enseignants")return <DirectorTeachers search={search}/>;if(page==="activations"||page==="eleves")return <DirectorActivations/>;if(page==="utilisation"||page==="suivi-utilisation")return <DirectorUsage/>;if(page==="rapports")return <DirectorReports/>;return <NotFound route={{role:"directeur"}} sessionRole="directeur"/>}
 
@@ -688,7 +698,7 @@ function Redirecting(){return <div className="not-found redirecting" role="statu
 export function App(){
   const route=useRoute();
   const parsed=useMemo(()=>parseRoute(route),[route]);
-  const {session,users,quizAttempts,classChallenges,classChallengeResults,notify,awardStudentXp,recordQuizAttempt,recordClassChallengeResult}=useDemoStore();
+  const {session,users,quizAttempts,quizAwards,classChallenges,classChallengeResults,notify,awardStudentXp,recordQuizAttempt,recordClassChallengeResult}=useDemoStore();
   const access=useMemo(()=>resolveAppAccess(parsed,session),[parsed,session]);
   const studentUserId=session.role==="eleve"&&session.userId?session.userId:DEMO_ACCOUNTS.eleve.userId;
   const studentUser=users.find(user=>user.id===studentUserId);
@@ -735,6 +745,32 @@ export function App(){
       scorePercent:summary.scorePercent,
     });
     if(result.ok&&result.recorded)notify({role:"eleve",userId:studentUserId,title:"Le Mot juste terminé",message:`${summary.correctCount||0}/${summary.questionCount||10} bonnes réponses · ${summary.xpEarned||0} XP gagnés.`,action:"/eleve/jeux/mot-juste"});
+  };
+  const completeMarketShop=(summary={})=>{
+    const missionCount=Math.max(0,Number(summary.missionCount||4));
+    const completedMissionCount=Math.max(0,Number(summary.completedMissionCount||0));
+    const tierLabel=summary.tierLabel||"Parcours complet";
+    const result=recordQuizAttempt({
+      userId:studentUserId,
+      quizId:"souk-des-mots",
+      attemptId:summary.attemptId,
+      experienceType:summary.experienceType||"market-tier",
+      category:"Communication quotidienne",
+      fragmentId:summary.tierId||"parcours",
+      fragmentLabel:tierLabel,
+      assistanceLevel:summary.withoutHelpCount===missionCount?"autonomous":"guided",
+      masteryLabel:completedMissionCount===missionCount?"Palier réussi":"Palier en cours",
+      level:summary.level||"5e AEP",
+      correctCount:completedMissionCount,
+      questionCount:missionCount,
+      xpEarned:summary.xpEarned,
+      answerXpEarned:summary.xpEarned,
+      completionXp:0,
+      bestStreak:summary.withoutHelpCount,
+      scorePercent:missionCount?Math.round((completedMissionCount/missionCount)*100):0,
+    });
+    if(result.ok&&result.recorded)notify({role:"eleve",userId:studentUserId,title:`${tierLabel} terminé`,message:`${completedMissionCount}/${missionCount} missions · ${summary.xpEarned||0} XP gagnés au Souk des mots.`,action:"/eleve/jeux/souk-des-mots"});
+    return result;
   };
   const completeDailyChallenge=(summary={})=>{
     const result=recordQuizAttempt({
@@ -821,6 +857,7 @@ export function App(){
     return <Suspense fallback={<Redirecting/>}><MissionZellige currentXp={studentXp} attempts={quizAttempts} userId={studentUserId} studentName={studentUser?.name?.split(" ")[0]||"Lina"} fragmentCount={fragmentCount} onAwardXp={awardXp} onComplete={completeMissionZellige} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   }
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="mot-juste")return <Suspense fallback={<Redirecting/>}><WordChoiceGame currentXp={studentXp} onAwardXp={awardXp} onComplete={completeWordChoice} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
+  if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="souk-des-mots")return <Suspense fallback={<Redirecting/>}><MarketShopGame currentXp={studentXp} studentId={studentUserId} awardHistory={quizAwards} attemptHistory={quizAttempts} onAwardXp={awardXp} onComplete={completeMarketShop} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defis-classe")return <Suspense fallback={<Redirecting/>}><ClassChallengesStudent challenges={classChallenges} results={classChallengeResults} currentXp={studentXp} participant={CURRENT_CLASS_PARTICIPANT} onAwardXp={awardXp} onComplete={completeClassChallenge} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defi-du-jour")return <Suspense fallback={<Redirecting/>}><DailyChallenge currentXp={studentXp} attempts={quizAttempts} userId={studentUserId} onAwardXp={awardXp} onComplete={completeDailyChallenge} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="culture-generale")return <Suspense fallback={<Redirecting/>}><CultureQuiz currentXp={studentXp} onAwardXp={awardXp} onComplete={completeQuiz} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
