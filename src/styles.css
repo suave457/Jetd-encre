@@ -585,3 +585,18 @@ textarea { min-height: 104px; padding-block: 13px; resize: vertical; }
   .status-pill,
   .demo-badge { border: 1px solid currentColor; }
 }
+
+.mots-fleches-entry {
+  border-color: #dec998;
+  background: #fffaf0;
+}
+
+.mots-fleches-entry .game-kicker { color: #8d6518; }
+
+.mots-fleches-thumb {
+  border: 1px solid #cfaa56;
+  background: #fff7e6;
+  color: #0b2b45;
+}
+
+.mots-fleches-thumb svg { width: 42px; height: 42px; }

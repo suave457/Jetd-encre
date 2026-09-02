@@ -25,6 +25,7 @@ test("efface toutes les données Jet d’Encre sans toucher aux autres clés de 
     "jde.parent.preferences.v2": "prefs",
     "jde.mission-zellige:v2:user-eleve-lina:2026-08-28": "progress",
     "jde.mission-zellige:telemetry:v1": "events",
+    "jde.mots-fleches:v1:user-eleve-lina": "grid progress",
     "jde.question-bank.v1": "questions",
     "jde.prototype.session.v4": "prototype",
     "projet-debat-v01-preferences-eleve": "names",
@@ -42,9 +43,10 @@ test("efface toutes les données Jet d’Encre sans toucher aux autres clés de 
 
   const report = clearJetDencreLocalData({ localStorage, sessionStorage });
   assert.equal(report.ok, true);
-  assert.equal(report.localStorage.removed, 11);
+  assert.equal(report.localStorage.removed, 12);
   assert.equal(report.sessionStorage.removed, 4);
   assert.equal(localStorage.getItem("jde.reader.notes"), null);
+  assert.equal(localStorage.getItem("jde.mots-fleches:v1:user-eleve-lina"), null);
   assert.equal(localStorage.getItem("projet-debat-v01-cards"), null);
   assert.equal(sessionStorage.getItem("jde.student.onboarding.v1"), null);
   assert.equal(sessionStorage.getItem("projet-debat-v01-session-enseignant"), null);

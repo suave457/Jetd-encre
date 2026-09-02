@@ -1,0 +1,1784 @@
+{
+  "documentId": "jet-encre-mots-fleches-recherche-v3",
+  "version": "3.0.0",
+  "updatedOn": "2026-09-01",
+  "audience": {
+    "age": "9–12 ans",
+    "context": "Apprenants de français au Maroc, répertoires plurilingues et niveaux hétérogènes."
+  },
+  "rules": {
+    "directions": [
+      "right",
+      "down"
+    ],
+    "arrows": [
+      "→",
+      "↓"
+    ],
+    "cluesIntegrated": true,
+    "coordinateSystem": "zeroBased",
+    "oneLetterPerCell": true,
+    "playerInstruction": "Lis l’indice dans la case, suis la flèche et écris une lettre par case.",
+    "constructionCrossings": "exact Unicode glyph equality, including accents",
+    "maximalRuns": "every horizontal or vertical maximal run of at least two letters exactly matches one declared answer",
+    "inputComparison": "case and diacritic insensitive; canonical French spelling displayed"
+  },
+  "xpScheme": {
+    "Facile": 20,
+    "Normal": 35,
+    "Difficile": 50,
+    "rewardVersion": 1,
+    "rationale": "La correction de la disposition ne recrédite jamais une récompense déjà acquise."
+  },
+  "correctionDecision": {
+    "problemFoundInVersion2": "27 suites parasites et 6 faux croisements d’accents.",
+    "result": "passed",
+    "dimensions": [
+      "Facile 10×10",
+      "Normal 12×12",
+      "Difficile 13×13"
+    ],
+    "changes": [
+      "Recalcul intégral des trois matrices.",
+      "Fin de chaque réponse contre une case bloquée, une case-indice ou le bord.",
+      "Croisements stricts : E, É, È et Ê restent distincts dans la construction.",
+      "Validation de toutes les suites maximales horizontales et verticales.",
+      "Trois mots ajoutés restent présents dans chaque niveau."
+    ]
+  },
+  "research": {
+    "selectionPrinciples": [
+      "Mots concrets et indices directs au niveau Facile.",
+      "Lexique marocain authentique au niveau Normal.",
+      "Notions environnementales et citoyennes plus abstraites au niveau Difficile.",
+      "Indice très court dans la case et définition développée dans le bandeau."
+    ],
+    "structuralReferences": [
+      {
+        "url": "https://www.puzzler.com/puzzles-a-z/arroword",
+        "note": "Cases-indices intégrées et réponses orientées par des flèches."
+      },
+      {
+        "url": "https://www.coe.int/en/web/common-european-framework-reference-languages/bank-of-supplementary-descriptors",
+        "note": "Descripteurs adaptés aux jeunes apprenants."
+      },
+      {
+        "url": "https://eduscol.education.gouv.fr/6873/liste-de-frequence-lexicale",
+        "note": "Repère de fréquence lexicale pour la gradation."
+      }
+    ],
+    "lexicalAndInstitutionalSources": [
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9E0279",
+        "label": "Académie française",
+        "usedFor": [
+          "ÉCOLE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9L1074",
+        "label": "Académie française",
+        "usedFor": [
+          "LIVRE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9P3311",
+        "label": "Académie française",
+        "usedFor": [
+          "POMME"
+        ]
+      },
+      {
+        "url": "https://www.cnrtl.fr/definition/chat",
+        "label": "CNRTL",
+        "usedFor": [
+          "CHAT"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9T0028",
+        "label": "Académie française",
+        "usedFor": [
+          "TABLE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9A1466",
+        "label": "Académie française",
+        "usedFor": [
+          "AMI"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9E0003",
+        "label": "Académie française",
+        "usedFor": [
+          "EAU"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9S0048",
+        "label": "Académie française",
+        "usedFor": [
+          "SAC"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9S3100",
+        "label": "Académie française",
+        "usedFor": [
+          "STYLO"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9R1335",
+        "label": "Académie française",
+        "usedFor": [
+          "RÈGLE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9C4764",
+        "label": "Académie française",
+        "usedFor": [
+          "CRAIE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9M2916",
+        "label": "Académie française",
+        "usedFor": [
+          "MOSQUÉE"
+        ]
+      },
+      {
+        "url": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/geographie-du-maroc",
+        "label": "Visit Morocco et Larousse",
+        "usedFor": [
+          "ATLAS"
+        ]
+      },
+      {
+        "url": "https://www.larousse.fr/dictionnaires/francais/argan/5163",
+        "label": "Larousse",
+        "usedFor": [
+          "ARGAN"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9O0005",
+        "label": "Académie française",
+        "usedFor": [
+          "OASIS"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9T0132",
+        "label": "Académie française",
+        "usedFor": [
+          "TAJINE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9S2256",
+        "label": "Académie française",
+        "usedFor": [
+          "SOUK"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9T0950",
+        "label": "Académie française",
+        "usedFor": [
+          "THÉ"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9D1854",
+        "label": "Académie française",
+        "usedFor": [
+          "DÉSERT"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9M1530",
+        "label": "Académie française",
+        "usedFor": [
+          "MÉDINA"
+        ]
+      },
+      {
+        "url": "https://data.un.org/en/iso/ma.html",
+        "label": "Nations Unies",
+        "usedFor": [
+          "MAROC"
+        ]
+      },
+      {
+        "url": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/produits-du-terroir",
+        "label": "Office National Marocain du Tourisme",
+        "usedFor": [
+          "ROSE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9H0129",
+        "label": "Académie française",
+        "usedFor": [
+          "HAMMAM"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9R1624",
+        "label": "Académie française",
+        "usedFor": [
+          "REMPART"
+        ]
+      },
+      {
+        "url": "https://meteofrance.com/changement-climatique/le-climat-en-france-hexagonale-et-corse",
+        "label": "Météo-France",
+        "usedFor": [
+          "CLIMAT"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9L0504",
+        "label": "Académie française",
+        "usedFor": [
+          "LÉGAL"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9N0131",
+        "label": "Académie française",
+        "usedFor": [
+          "NATURE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9D0432",
+        "label": "Académie française",
+        "usedFor": [
+          "DÉCHET"
+        ]
+      },
+      {
+        "url": "https://ozone.unep.org/20-questions-and-answers",
+        "label": "Secrétariat de l’ozone de l’ONU",
+        "usedFor": [
+          "OZONE"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9O0143",
+        "label": "Académie française",
+        "usedFor": [
+          "OCÉAN"
+        ]
+      },
+      {
+        "url": "https://www.cnrtl.fr/definition/droit",
+        "label": "CNRTL",
+        "usedFor": [
+          "DROIT"
+        ]
+      },
+      {
+        "url": "https://www.cnrtl.fr/definition/devoir",
+        "label": "CNRTL",
+        "usedFor": [
+          "DEVOIR"
+        ]
+      },
+      {
+        "url": "https://www.cnrtl.fr/definition/tri",
+        "label": "CNRTL",
+        "usedFor": [
+          "TRI"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9R2081",
+        "label": "Académie française",
+        "usedFor": [
+          "RESPECT"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9E0321",
+        "label": "Académie française",
+        "usedFor": [
+          "ÉCOSYSTÈME"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9P4641",
+        "label": "Académie française",
+        "usedFor": [
+          "PROPRETÉ"
+        ]
+      },
+      {
+        "url": "https://www.dictionnaire-academie.fr/article/A9E1519",
+        "label": "Académie française",
+        "usedFor": [
+          "ÉNERGIE"
+        ]
+      }
+    ]
+  },
+  "grids": [
+    {
+      "id": "jet-encre-mf-facile-01",
+      "contentVersion": 3,
+      "rewardVersion": 1,
+      "levelId": "facile",
+      "level": "Facile",
+      "cefr": "A1",
+      "title": "À l’école et au quotidien",
+      "theme": "Objets, lieux et relations du quotidien",
+      "xp": 20,
+      "rows": 10,
+      "cols": 10,
+      "entries": [
+        {
+          "id": "F01",
+          "answer": "ÉCOLE",
+          "clue": "Lieu où l’on apprend",
+          "cellClue": "Lieu pour apprendre",
+          "direction": "across",
+          "clueRow": 5,
+          "clueCol": 1,
+          "row": 5,
+          "col": 2,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0279",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "F02",
+          "answer": "LIVRE",
+          "clue": "Pages reliées que l’on lit",
+          "cellClue": "Pages reliées à lire",
+          "direction": "down",
+          "clueRow": 4,
+          "clueCol": 5,
+          "row": 5,
+          "col": 5,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9L1074",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "F03",
+          "answer": "POMME",
+          "clue": "Fruit du pommier",
+          "cellClue": "Fruit du pommier",
+          "direction": "across",
+          "clueRow": 9,
+          "clueCol": 0,
+          "row": 9,
+          "col": 1,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9P3311",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "F04",
+          "answer": "CHAT",
+          "clue": "Animal qui miaule",
+          "cellClue": "Animal qui miaule",
+          "direction": "across",
+          "clueRow": 2,
+          "clueCol": 0,
+          "row": 2,
+          "col": 1,
+          "sourceLabel": "CNRTL",
+          "sourceUrl": "https://www.cnrtl.fr/definition/chat",
+          "arrow": "→",
+          "answerLength": 4
+        },
+        {
+          "id": "F05",
+          "answer": "TABLE",
+          "clue": "Meuble où l’on mange",
+          "cellClue": "Meuble pour manger",
+          "direction": "down",
+          "clueRow": 4,
+          "clueCol": 8,
+          "row": 5,
+          "col": 8,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0028",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "F06",
+          "answer": "AMI",
+          "clue": "Bon copain",
+          "cellClue": "Bon copain",
+          "direction": "across",
+          "clueRow": 3,
+          "clueCol": 5,
+          "row": 3,
+          "col": 6,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9A1466",
+          "arrow": "→",
+          "answerLength": 3
+        },
+        {
+          "id": "F07",
+          "answer": "EAU",
+          "clue": "Liquide que l’on boit",
+          "cellClue": "Liquide à boire",
+          "direction": "across",
+          "clueRow": 6,
+          "clueCol": 6,
+          "row": 6,
+          "col": 7,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0003",
+          "arrow": "→",
+          "answerLength": 3
+        },
+        {
+          "id": "F08",
+          "answer": "SAC",
+          "clue": "On y met ses affaires",
+          "cellClue": "Contient tes affaires",
+          "direction": "across",
+          "clueRow": 1,
+          "clueCol": 3,
+          "row": 1,
+          "col": 4,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S0048",
+          "arrow": "→",
+          "answerLength": 3
+        },
+        {
+          "id": "F09",
+          "answer": "STYLO",
+          "clue": "Instrument à encre qui sert à écrire",
+          "cellClue": "Sert à écrire à l’encre",
+          "direction": "down",
+          "clueRow": 0,
+          "clueCol": 4,
+          "row": 1,
+          "col": 4,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S3100",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "F10",
+          "answer": "RÈGLE",
+          "clue": "Instrument droit qui sert à tracer des lignes",
+          "cellClue": "Trace des lignes droites",
+          "direction": "across",
+          "clueRow": 8,
+          "clueCol": 4,
+          "row": 8,
+          "col": 5,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R1335",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "F11",
+          "answer": "CRAIE",
+          "clue": "Bâtonnet qui sert à écrire au tableau",
+          "cellClue": "Écrit au tableau",
+          "direction": "down",
+          "clueRow": 0,
+          "clueCol": 6,
+          "row": 1,
+          "col": 6,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9C4764",
+          "arrow": "↓",
+          "answerLength": 5
+        }
+      ],
+      "layoutLegend": {
+        "#": "case bloquée",
+        "■": "case-indice",
+        "letter": "case-réponse"
+      },
+      "layout": [
+        "####■#■###",
+        "###■SAC###",
+        "■CHAT#R###",
+        "####Y■AMI#",
+        "####L■I#■#",
+        "#■ÉCOLE#T#",
+        "#####I■EAU",
+        "#####V##B#",
+        "####■RÈGLE",
+        "■POMME##E#"
+      ],
+      "crossings": [
+        {
+          "row": 5,
+          "col": 4,
+          "letter": "O",
+          "entryIds": [
+            "F01",
+            "F09"
+          ]
+        },
+        {
+          "row": 5,
+          "col": 5,
+          "letter": "L",
+          "entryIds": [
+            "F01",
+            "F02"
+          ]
+        },
+        {
+          "row": 5,
+          "col": 6,
+          "letter": "E",
+          "entryIds": [
+            "F01",
+            "F11"
+          ]
+        },
+        {
+          "row": 8,
+          "col": 5,
+          "letter": "R",
+          "entryIds": [
+            "F02",
+            "F10"
+          ]
+        },
+        {
+          "row": 9,
+          "col": 5,
+          "letter": "E",
+          "entryIds": [
+            "F02",
+            "F03"
+          ]
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "letter": "T",
+          "entryIds": [
+            "F04",
+            "F09"
+          ]
+        },
+        {
+          "row": 6,
+          "col": 8,
+          "letter": "A",
+          "entryIds": [
+            "F05",
+            "F07"
+          ]
+        },
+        {
+          "row": 8,
+          "col": 8,
+          "letter": "L",
+          "entryIds": [
+            "F05",
+            "F10"
+          ]
+        },
+        {
+          "row": 3,
+          "col": 6,
+          "letter": "A",
+          "entryIds": [
+            "F06",
+            "F11"
+          ]
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "letter": "S",
+          "entryIds": [
+            "F08",
+            "F09"
+          ]
+        },
+        {
+          "row": 1,
+          "col": 6,
+          "letter": "C",
+          "entryIds": [
+            "F08",
+            "F11"
+          ]
+        }
+      ],
+      "density": {
+        "entries": 11,
+        "letters": 37,
+        "clues": 11,
+        "crossings": 11,
+        "blocked": 52,
+        "playablePercent": 48
+      },
+      "validation": {
+        "status": "passed",
+        "errors": [],
+        "allEntriesCross": true,
+        "connected": true,
+        "oneDistinctClueCellPerEntry": true,
+        "exactAccentCrossings": true,
+        "parasiteRunCount": 0,
+        "maximalRunCount": 11
+      }
+    },
+    {
+      "id": "jet-encre-mf-normal-01",
+      "contentVersion": 3,
+      "rewardVersion": 1,
+      "levelId": "normal",
+      "level": "Normal",
+      "cefr": "A1–A2",
+      "title": "Le Maroc en mots",
+      "theme": "Géographie, ville et culture quotidienne du Maroc",
+      "xp": 35,
+      "rows": 12,
+      "cols": 12,
+      "entries": [
+        {
+          "id": "N01",
+          "answer": "MOSQUÉE",
+          "clue": "Lieu où prient les musulmans",
+          "cellClue": "Lieu de prière",
+          "direction": "across",
+          "clueRow": 5,
+          "clueCol": 1,
+          "row": 5,
+          "col": 2,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9M2916",
+          "arrow": "→",
+          "answerLength": 7
+        },
+        {
+          "id": "N02",
+          "answer": "ATLAS",
+          "clue": "Montagnes du Maghreb",
+          "cellClue": "Massif du Maghreb",
+          "direction": "down",
+          "clueRow": 0,
+          "clueCol": 4,
+          "row": 1,
+          "col": 4,
+          "sourceLabel": "Visit Morocco et Larousse",
+          "sourceUrl": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/geographie-du-maroc",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "N03",
+          "answer": "ARGAN",
+          "clue": "Fruit de l’arganier",
+          "cellClue": "Fruit de l’arganier",
+          "direction": "across",
+          "clueRow": 9,
+          "clueCol": 6,
+          "row": 9,
+          "col": 7,
+          "sourceLabel": "Larousse",
+          "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/argan/5163",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "N04",
+          "answer": "OASIS",
+          "clue": "Zone fertile dans le désert",
+          "cellClue": "Verdure au désert",
+          "direction": "down",
+          "clueRow": 6,
+          "clueCol": 4,
+          "row": 7,
+          "col": 4,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9O0005",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "N05",
+          "answer": "TAJINE",
+          "clue": "Plat marocain mijoté",
+          "cellClue": "Plat marocain",
+          "direction": "across",
+          "clueRow": 1,
+          "clueCol": 2,
+          "row": 1,
+          "col": 3,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0132",
+          "arrow": "→",
+          "answerLength": 6
+        },
+        {
+          "id": "N06",
+          "answer": "SOUK",
+          "clue": "Marché du Maghreb",
+          "cellClue": "Marché du Maghreb",
+          "direction": "down",
+          "clueRow": 2,
+          "clueCol": 6,
+          "row": 3,
+          "col": 6,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S2256",
+          "arrow": "↓",
+          "answerLength": 4
+        },
+        {
+          "id": "N07",
+          "answer": "THÉ",
+          "clue": "Boisson préparée avec les feuilles du théier",
+          "cellClue": "Boisson du théier",
+          "direction": "across",
+          "clueRow": 2,
+          "clueCol": 8,
+          "row": 2,
+          "col": 9,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0950",
+          "arrow": "→",
+          "answerLength": 3
+        },
+        {
+          "id": "N08",
+          "answer": "DÉSERT",
+          "clue": "Vaste région très sèche",
+          "cellClue": "Lieu très sec",
+          "direction": "down",
+          "clueRow": 0,
+          "clueCol": 11,
+          "row": 1,
+          "col": 11,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9D1854",
+          "arrow": "↓",
+          "answerLength": 6
+        },
+        {
+          "id": "N09",
+          "answer": "MÉDINA",
+          "clue": "Vieille ville du Maghreb",
+          "cellClue": "Vieille ville",
+          "direction": "across",
+          "clueRow": 10,
+          "clueCol": 0,
+          "row": 10,
+          "col": 1,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9M1530",
+          "arrow": "→",
+          "answerLength": 6
+        },
+        {
+          "id": "N10",
+          "answer": "MAROC",
+          "clue": "Pays dont Rabat est la capitale",
+          "cellClue": "Pays de Rabat",
+          "direction": "across",
+          "clueRow": 7,
+          "clueCol": 0,
+          "row": 7,
+          "col": 1,
+          "sourceLabel": "Nations Unies",
+          "sourceUrl": "https://data.un.org/en/iso/ma.html",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "N11",
+          "answer": "ROSE",
+          "clue": "Fleur parfumée célèbre à Kelaat M’Gouna",
+          "cellClue": "Fleur de M’Gouna",
+          "direction": "across",
+          "clueRow": 4,
+          "clueCol": 7,
+          "row": 4,
+          "col": 8,
+          "sourceLabel": "Office National Marocain du Tourisme",
+          "sourceUrl": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/produits-du-terroir",
+          "arrow": "→",
+          "answerLength": 4
+        },
+        {
+          "id": "N12",
+          "answer": "HAMMAM",
+          "clue": "Bain public traditionnel avec vapeur",
+          "cellClue": "Bain de vapeur",
+          "direction": "down",
+          "clueRow": 2,
+          "clueCol": 2,
+          "row": 3,
+          "col": 2,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9H0129",
+          "arrow": "↓",
+          "answerLength": 6
+        },
+        {
+          "id": "N13",
+          "answer": "REMPART",
+          "clue": "Mur fortifié qui protège une ville",
+          "cellClue": "Mur fortifié",
+          "direction": "down",
+          "clueRow": 3,
+          "clueCol": 8,
+          "row": 4,
+          "col": 8,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R1624",
+          "arrow": "↓",
+          "answerLength": 7
+        }
+      ],
+      "layoutLegend": {
+        "#": "case bloquée",
+        "■": "case-indice",
+        "letter": "case-réponse"
+      },
+      "layout": [
+        "####■######■",
+        "##■TAJINE##D",
+        "##■#T#■#■THÉ",
+        "##H#L#S#■##S",
+        "##A#A#O■ROSE",
+        "#■MOSQUÉE##R",
+        "##M#■#K#M##T",
+        "■MAROC##P###",
+        "##M#A###A###",
+        "####S#■ARGAN",
+        "■MÉDINA#T###",
+        "####S#######"
+      ],
+      "crossings": [
+        {
+          "row": 5,
+          "col": 2,
+          "letter": "M",
+          "entryIds": [
+            "N01",
+            "N12"
+          ]
+        },
+        {
+          "row": 5,
+          "col": 4,
+          "letter": "S",
+          "entryIds": [
+            "N01",
+            "N02"
+          ]
+        },
+        {
+          "row": 5,
+          "col": 6,
+          "letter": "U",
+          "entryIds": [
+            "N01",
+            "N06"
+          ]
+        },
+        {
+          "row": 5,
+          "col": 8,
+          "letter": "E",
+          "entryIds": [
+            "N01",
+            "N13"
+          ]
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "letter": "A",
+          "entryIds": [
+            "N02",
+            "N05"
+          ]
+        },
+        {
+          "row": 9,
+          "col": 8,
+          "letter": "R",
+          "entryIds": [
+            "N03",
+            "N13"
+          ]
+        },
+        {
+          "row": 7,
+          "col": 4,
+          "letter": "O",
+          "entryIds": [
+            "N04",
+            "N10"
+          ]
+        },
+        {
+          "row": 10,
+          "col": 4,
+          "letter": "I",
+          "entryIds": [
+            "N04",
+            "N09"
+          ]
+        },
+        {
+          "row": 2,
+          "col": 11,
+          "letter": "É",
+          "entryIds": [
+            "N07",
+            "N08"
+          ]
+        },
+        {
+          "row": 4,
+          "col": 11,
+          "letter": "E",
+          "entryIds": [
+            "N08",
+            "N11"
+          ]
+        },
+        {
+          "row": 7,
+          "col": 2,
+          "letter": "A",
+          "entryIds": [
+            "N10",
+            "N12"
+          ]
+        },
+        {
+          "row": 4,
+          "col": 8,
+          "letter": "R",
+          "entryIds": [
+            "N11",
+            "N13"
+          ]
+        }
+      ],
+      "density": {
+        "entries": 13,
+        "letters": 57,
+        "clues": 13,
+        "crossings": 12,
+        "blocked": 74,
+        "playablePercent": 48.6
+      },
+      "validation": {
+        "status": "passed",
+        "errors": [],
+        "allEntriesCross": true,
+        "connected": true,
+        "oneDistinctClueCellPerEntry": true,
+        "exactAccentCrossings": true,
+        "parasiteRunCount": 0,
+        "maximalRunCount": 13
+      }
+    },
+    {
+      "id": "jet-encre-mf-difficile-01",
+      "contentVersion": 3,
+      "rewardVersion": 1,
+      "levelId": "difficile",
+      "level": "Difficile",
+      "cefr": "A2–B1",
+      "title": "Planète et citoyenneté",
+      "theme": "Environnement, sciences et droits",
+      "xp": 50,
+      "rows": 13,
+      "cols": 13,
+      "entries": [
+        {
+          "id": "D01",
+          "answer": "CLIMAT",
+          "clue": "Conditions météo habituelles d’une région",
+          "cellClue": "Temps habituel",
+          "direction": "across",
+          "clueRow": 2,
+          "clueCol": 5,
+          "row": 2,
+          "col": 6,
+          "sourceLabel": "Météo-France",
+          "sourceUrl": "https://meteofrance.com/changement-climatique/le-climat-en-france-hexagonale-et-corse",
+          "arrow": "→",
+          "answerLength": 6
+        },
+        {
+          "id": "D02",
+          "answer": "LÉGAL",
+          "clue": "Qui est conforme à la loi",
+          "cellClue": "Selon la loi",
+          "direction": "down",
+          "clueRow": 7,
+          "clueCol": 10,
+          "row": 8,
+          "col": 10,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9L0504",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "D03",
+          "answer": "NATURE",
+          "clue": "Monde physique, hors créations humaines",
+          "cellClue": "Monde naturel",
+          "direction": "down",
+          "clueRow": 0,
+          "clueCol": 10,
+          "row": 1,
+          "col": 10,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9N0131",
+          "arrow": "↓",
+          "answerLength": 6
+        },
+        {
+          "id": "D04",
+          "answer": "DÉCHET",
+          "clue": "Objet ou matière que l’on jette",
+          "cellClue": "Matière jetée",
+          "direction": "down",
+          "clueRow": 4,
+          "clueCol": 1,
+          "row": 5,
+          "col": 1,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9D0432",
+          "arrow": "↓",
+          "answerLength": 6
+        },
+        {
+          "id": "D05",
+          "answer": "OZONE",
+          "clue": "Gaz de la stratosphère qui filtre les UV",
+          "cellClue": "Filtre les UV",
+          "direction": "across",
+          "clueRow": 12,
+          "clueCol": 2,
+          "row": 12,
+          "col": 3,
+          "sourceLabel": "Secrétariat de l’ozone de l’ONU",
+          "sourceUrl": "https://ozone.unep.org/20-questions-and-answers",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "D06",
+          "answer": "OCÉAN",
+          "clue": "Immense étendue d’eau salée",
+          "cellClue": "Vaste mer",
+          "direction": "down",
+          "clueRow": 7,
+          "clueCol": 6,
+          "row": 8,
+          "col": 6,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9O0143",
+          "arrow": "↓",
+          "answerLength": 5
+        },
+        {
+          "id": "D07",
+          "answer": "DROIT",
+          "clue": "Ce que la loi garantit à chacun",
+          "cellClue": "Garanti par la loi",
+          "direction": "across",
+          "clueRow": 4,
+          "clueCol": 2,
+          "row": 4,
+          "col": 3,
+          "sourceLabel": "CNRTL",
+          "sourceUrl": "https://www.cnrtl.fr/definition/droit",
+          "arrow": "→",
+          "answerLength": 5
+        },
+        {
+          "id": "D08",
+          "answer": "DEVOIR",
+          "clue": "Obligation morale ou légale",
+          "cellClue": "Ce qu’on doit",
+          "direction": "across",
+          "clueRow": 8,
+          "clueCol": 2,
+          "row": 8,
+          "col": 3,
+          "sourceLabel": "CNRTL",
+          "sourceUrl": "https://www.cnrtl.fr/definition/devoir",
+          "arrow": "→",
+          "answerLength": 6
+        },
+        {
+          "id": "D09",
+          "answer": "TRI",
+          "clue": "Classement par catégories",
+          "cellClue": "Action de trier",
+          "direction": "down",
+          "clueRow": 5,
+          "clueCol": 7,
+          "row": 6,
+          "col": 7,
+          "sourceLabel": "CNRTL",
+          "sourceUrl": "https://www.cnrtl.fr/definition/tri",
+          "arrow": "↓",
+          "answerLength": 3
+        },
+        {
+          "id": "D10",
+          "answer": "RESPECT",
+          "clue": "Fait de bien traiter les autres",
+          "cellClue": "Égards",
+          "direction": "down",
+          "clueRow": 3,
+          "clueCol": 4,
+          "row": 4,
+          "col": 4,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R2081",
+          "arrow": "↓",
+          "answerLength": 7
+        },
+        {
+          "id": "D11",
+          "answer": "ÉCOSYSTÈME",
+          "clue": "Ensemble d’êtres vivants et de leur milieu en interaction",
+          "cellClue": "Milieu et vie",
+          "direction": "across",
+          "clueRow": 6,
+          "clueCol": 0,
+          "row": 6,
+          "col": 1,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0321",
+          "arrow": "→",
+          "answerLength": 10
+        },
+        {
+          "id": "D12",
+          "answer": "PROPRETÉ",
+          "clue": "Absence de saleté dans un lieu",
+          "cellClue": "Sans saleté",
+          "direction": "down",
+          "clueRow": 4,
+          "clueCol": 12,
+          "row": 5,
+          "col": 12,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9P4641",
+          "arrow": "↓",
+          "answerLength": 8
+        },
+        {
+          "id": "D13",
+          "answer": "ÉNERGIE",
+          "clue": "Capacité d’un corps ou d’un système à produire un travail",
+          "cellClue": "Capacité d’agir",
+          "direction": "across",
+          "clueRow": 10,
+          "clueCol": 5,
+          "row": 10,
+          "col": 6,
+          "sourceLabel": "Académie française",
+          "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E1519",
+          "arrow": "→",
+          "answerLength": 7
+        }
+      ],
+      "layoutLegend": {
+        "#": "case bloquée",
+        "■": "case-indice",
+        "letter": "case-réponse"
+      },
+      "layout": [
+        "##########■##",
+        "##########N##",
+        "#####■CLIMAT#",
+        "####■#####T##",
+        "#■■DROIT##U#■",
+        "#D##E##■##R#P",
+        "■ÉCOSYSTÈME#R",
+        "#C##P#■R##■#O",
+        "#H■DEVOIR#L#P",
+        "#E##C#C###É#R",
+        "#T##T■ÉNERGIE",
+        "######A###A#T",
+        "##■OZONE##L#É"
+      ],
+      "crossings": [
+        {
+          "row": 2,
+          "col": 10,
+          "letter": "A",
+          "entryIds": [
+            "D01",
+            "D03"
+          ]
+        },
+        {
+          "row": 10,
+          "col": 10,
+          "letter": "G",
+          "entryIds": [
+            "D02",
+            "D13"
+          ]
+        },
+        {
+          "row": 6,
+          "col": 10,
+          "letter": "E",
+          "entryIds": [
+            "D03",
+            "D11"
+          ]
+        },
+        {
+          "row": 6,
+          "col": 1,
+          "letter": "É",
+          "entryIds": [
+            "D04",
+            "D11"
+          ]
+        },
+        {
+          "row": 12,
+          "col": 6,
+          "letter": "N",
+          "entryIds": [
+            "D05",
+            "D06"
+          ]
+        },
+        {
+          "row": 8,
+          "col": 6,
+          "letter": "O",
+          "entryIds": [
+            "D06",
+            "D08"
+          ]
+        },
+        {
+          "row": 10,
+          "col": 6,
+          "letter": "É",
+          "entryIds": [
+            "D06",
+            "D13"
+          ]
+        },
+        {
+          "row": 4,
+          "col": 4,
+          "letter": "R",
+          "entryIds": [
+            "D07",
+            "D10"
+          ]
+        },
+        {
+          "row": 8,
+          "col": 4,
+          "letter": "E",
+          "entryIds": [
+            "D08",
+            "D10"
+          ]
+        },
+        {
+          "row": 8,
+          "col": 7,
+          "letter": "I",
+          "entryIds": [
+            "D08",
+            "D09"
+          ]
+        },
+        {
+          "row": 6,
+          "col": 7,
+          "letter": "T",
+          "entryIds": [
+            "D09",
+            "D11"
+          ]
+        },
+        {
+          "row": 6,
+          "col": 4,
+          "letter": "S",
+          "entryIds": [
+            "D10",
+            "D11"
+          ]
+        },
+        {
+          "row": 10,
+          "col": 12,
+          "letter": "E",
+          "entryIds": [
+            "D12",
+            "D13"
+          ]
+        }
+      ],
+      "density": {
+        "entries": 13,
+        "letters": 66,
+        "clues": 13,
+        "crossings": 13,
+        "blocked": 90,
+        "playablePercent": 46.7
+      },
+      "validation": {
+        "status": "passed",
+        "errors": [],
+        "allEntriesCross": true,
+        "connected": true,
+        "oneDistinctClueCellPerEntry": true,
+        "exactAccentCrossings": true,
+        "parasiteRunCount": 0,
+        "maximalRunCount": 13
+      }
+    }
+  ],
+  "clueValidationTable": [
+    {
+      "level": "Facile",
+      "id": "F01",
+      "answer": "ÉCOLE",
+      "clue": "Lieu où l’on apprend",
+      "cellClue": "Lieu pour apprendre",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0279",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F02",
+      "answer": "LIVRE",
+      "clue": "Pages reliées que l’on lit",
+      "cellClue": "Pages reliées à lire",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9L1074",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F03",
+      "answer": "POMME",
+      "clue": "Fruit du pommier",
+      "cellClue": "Fruit du pommier",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9P3311",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F04",
+      "answer": "CHAT",
+      "clue": "Animal qui miaule",
+      "cellClue": "Animal qui miaule",
+      "sourceLabel": "CNRTL",
+      "sourceUrl": "https://www.cnrtl.fr/definition/chat",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F05",
+      "answer": "TABLE",
+      "clue": "Meuble où l’on mange",
+      "cellClue": "Meuble pour manger",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0028",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F06",
+      "answer": "AMI",
+      "clue": "Bon copain",
+      "cellClue": "Bon copain",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9A1466",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F07",
+      "answer": "EAU",
+      "clue": "Liquide que l’on boit",
+      "cellClue": "Liquide à boire",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0003",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F08",
+      "answer": "SAC",
+      "clue": "On y met ses affaires",
+      "cellClue": "Contient tes affaires",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S0048",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F09",
+      "answer": "STYLO",
+      "clue": "Instrument à encre qui sert à écrire",
+      "cellClue": "Sert à écrire à l’encre",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S3100",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F10",
+      "answer": "RÈGLE",
+      "clue": "Instrument droit qui sert à tracer des lignes",
+      "cellClue": "Trace des lignes droites",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R1335",
+      "status": "validated"
+    },
+    {
+      "level": "Facile",
+      "id": "F11",
+      "answer": "CRAIE",
+      "clue": "Bâtonnet qui sert à écrire au tableau",
+      "cellClue": "Écrit au tableau",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9C4764",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N01",
+      "answer": "MOSQUÉE",
+      "clue": "Lieu où prient les musulmans",
+      "cellClue": "Lieu de prière",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9M2916",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N02",
+      "answer": "ATLAS",
+      "clue": "Montagnes du Maghreb",
+      "cellClue": "Massif du Maghreb",
+      "sourceLabel": "Visit Morocco et Larousse",
+      "sourceUrl": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/geographie-du-maroc",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N03",
+      "answer": "ARGAN",
+      "clue": "Fruit de l’arganier",
+      "cellClue": "Fruit de l’arganier",
+      "sourceLabel": "Larousse",
+      "sourceUrl": "https://www.larousse.fr/dictionnaires/francais/argan/5163",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N04",
+      "answer": "OASIS",
+      "clue": "Zone fertile dans le désert",
+      "cellClue": "Verdure au désert",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9O0005",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N05",
+      "answer": "TAJINE",
+      "clue": "Plat marocain mijoté",
+      "cellClue": "Plat marocain",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0132",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N06",
+      "answer": "SOUK",
+      "clue": "Marché du Maghreb",
+      "cellClue": "Marché du Maghreb",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9S2256",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N07",
+      "answer": "THÉ",
+      "clue": "Boisson préparée avec les feuilles du théier",
+      "cellClue": "Boisson du théier",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9T0950",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N08",
+      "answer": "DÉSERT",
+      "clue": "Vaste région très sèche",
+      "cellClue": "Lieu très sec",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9D1854",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N09",
+      "answer": "MÉDINA",
+      "clue": "Vieille ville du Maghreb",
+      "cellClue": "Vieille ville",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9M1530",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N10",
+      "answer": "MAROC",
+      "clue": "Pays dont Rabat est la capitale",
+      "cellClue": "Pays de Rabat",
+      "sourceLabel": "Nations Unies",
+      "sourceUrl": "https://data.un.org/en/iso/ma.html",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N11",
+      "answer": "ROSE",
+      "clue": "Fleur parfumée célèbre à Kelaat M’Gouna",
+      "cellClue": "Fleur de M’Gouna",
+      "sourceLabel": "Office National Marocain du Tourisme",
+      "sourceUrl": "https://www.visitmorocco.com/fr/decouvrir-le-maroc/produits-du-terroir",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N12",
+      "answer": "HAMMAM",
+      "clue": "Bain public traditionnel avec vapeur",
+      "cellClue": "Bain de vapeur",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9H0129",
+      "status": "validated"
+    },
+    {
+      "level": "Normal",
+      "id": "N13",
+      "answer": "REMPART",
+      "clue": "Mur fortifié qui protège une ville",
+      "cellClue": "Mur fortifié",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R1624",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D01",
+      "answer": "CLIMAT",
+      "clue": "Conditions météo habituelles d’une région",
+      "cellClue": "Temps habituel",
+      "sourceLabel": "Météo-France",
+      "sourceUrl": "https://meteofrance.com/changement-climatique/le-climat-en-france-hexagonale-et-corse",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D02",
+      "answer": "LÉGAL",
+      "clue": "Qui est conforme à la loi",
+      "cellClue": "Selon la loi",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9L0504",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D03",
+      "answer": "NATURE",
+      "clue": "Monde physique, hors créations humaines",
+      "cellClue": "Monde naturel",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9N0131",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D04",
+      "answer": "DÉCHET",
+      "clue": "Objet ou matière que l’on jette",
+      "cellClue": "Matière jetée",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9D0432",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D05",
+      "answer": "OZONE",
+      "clue": "Gaz de la stratosphère qui filtre les UV",
+      "cellClue": "Filtre les UV",
+      "sourceLabel": "Secrétariat de l’ozone de l’ONU",
+      "sourceUrl": "https://ozone.unep.org/20-questions-and-answers",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D06",
+      "answer": "OCÉAN",
+      "clue": "Immense étendue d’eau salée",
+      "cellClue": "Vaste mer",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9O0143",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D07",
+      "answer": "DROIT",
+      "clue": "Ce que la loi garantit à chacun",
+      "cellClue": "Garanti par la loi",
+      "sourceLabel": "CNRTL",
+      "sourceUrl": "https://www.cnrtl.fr/definition/droit",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D08",
+      "answer": "DEVOIR",
+      "clue": "Obligation morale ou légale",
+      "cellClue": "Ce qu’on doit",
+      "sourceLabel": "CNRTL",
+      "sourceUrl": "https://www.cnrtl.fr/definition/devoir",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D09",
+      "answer": "TRI",
+      "clue": "Classement par catégories",
+      "cellClue": "Action de trier",
+      "sourceLabel": "CNRTL",
+      "sourceUrl": "https://www.cnrtl.fr/definition/tri",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D10",
+      "answer": "RESPECT",
+      "clue": "Fait de bien traiter les autres",
+      "cellClue": "Égards",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9R2081",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D11",
+      "answer": "ÉCOSYSTÈME",
+      "clue": "Ensemble d’êtres vivants et de leur milieu en interaction",
+      "cellClue": "Milieu et vie",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E0321",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D12",
+      "answer": "PROPRETÉ",
+      "clue": "Absence de saleté dans un lieu",
+      "cellClue": "Sans saleté",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9P4641",
+      "status": "validated"
+    },
+    {
+      "level": "Difficile",
+      "id": "D13",
+      "answer": "ÉNERGIE",
+      "clue": "Capacité d’un corps ou d’un système à produire un travail",
+      "cellClue": "Capacité d’agir",
+      "sourceLabel": "Académie française",
+      "sourceUrl": "https://www.dictionnaire-academie.fr/article/A9E1519",
+      "status": "validated"
+    }
+  ],
+  "automatedValidation": {
+    "status": "passed",
+    "checks": [
+      "dimensions",
+      "answer bounds",
+      "clue cell immediately before answer",
+      "right/down directions",
+      "exact glyph compatibility at crossings",
+      "maximal horizontal and vertical run equality",
+      "no parallel touching letters",
+      "every entry crosses",
+      "connected graph",
+      "one distinct clue cell per entry",
+      "exactly three additions per grid"
+    ],
+    "totals": {
+      "gridCount": 3,
+      "entryCount": 37,
+      "crossingCellCount": 36,
+      "blockedCells": 216,
+      "parasiteRunCount": 0,
+      "accentConflictCount": 0
+    }
+  },
+  "independentReview": {
+    "reviewerTasks": [
+      "solveur_grilles_denses",
+      "audit_pedagogique_densite",
+      "validateur_segments_parasites"
+    ],
+    "status": "passedAfterCorrections",
+    "scope": "37 solutions, indices, accents, coordonnées, suites maximales, croisements, lisibilité FLE et sources directes.",
+    "verifiedMatrices": {
+      "Facile": "10×10, 11 entrées, 11 croisements, 52 cases bloquées, 0 suite parasite.",
+      "Normal": "12×12, 13 entrées, 12 croisements, 74 cases bloquées, 0 suite parasite.",
+      "Difficile": "13×13, 13 entrées, 13 croisements, 90 cases bloquées, 0 suite parasite."
+    }
+  }
+}

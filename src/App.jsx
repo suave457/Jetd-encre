@@ -3,7 +3,7 @@ import {
   Archive, ArrowLeft, ArrowRight, Bell, BookOpenText, Books, Buildings,
   CaretDown, CaretRight, ChartBar, ChartLineUp, ChatCircleDots, Check,
   CheckCircle, ChalkboardTeacher, ClipboardText, Clock, CloudArrowUp, Copy,
-  DiamondsFour, DownloadSimple, Eye, FileText, FolderOpen, Funnel, GameController, Gauge,
+  DiamondsFour, DownloadSimple, Eye, FileText, FolderOpen, Funnel, GameController, Gauge, GridNine,
   GearSix, Headphones, House, Key, List, ListChecks, MagnifyingGlass, Medal, Megaphone,
   PaperPlaneTilt, PencilSimple, PlayCircle, Plus, PresentationChart, Question,
   RocketLaunch, ShieldCheck, SignOut, Sparkle, Storefront, Student, Trophy,
@@ -45,6 +45,7 @@ const CultureQuiz=lazy(()=>import("./features/games/CultureQuiz.jsx"));
 const DailyChallenge=lazy(()=>import("./features/games/DailyChallenge.jsx"));
 const MissionZellige=lazy(()=>import("./features/games/mission-zellige/MissionZellige.jsx"));
 const WordChoiceGame=lazy(()=>import("./features/games/word-choice/WordChoiceGame.jsx"));
+const MotsFlechesGame=lazy(()=>import("./features/games/mots-fleches/MotsFlechesGame.jsx"));
 const MarketShopGame=lazy(()=>import("./features/games/market-shop/MarketShopGame.jsx"));
 const TeacherMarketDashboard=lazy(()=>import("./features/games/market-shop/TeacherMarketDashboard.jsx"));
 const DebateGameFrame=lazy(()=>import("./features/games/debate/DebateGameFrame.jsx"));
@@ -563,6 +564,11 @@ function StudentGames({studentXp=DEFAULT_STUDENT_XP}){
       <div><span className="game-kicker">VOCABULAIRE & GRAMMAIRE</span><h2>Le Mot juste</h2><p>Complète des phrases proches du quotidien marocain, choisis parmi quatre mots et découvre une explication simple après chaque réponse.</p></div>
       <RouteLink to="/eleve/jeux/mot-juste" className="button button-light">Trouver le mot <PencilSimple weight="fill"/></RouteLink>
     </section>
+    <section className="game-secondary-card mots-fleches-entry">
+      <span className="game-secondary-icon mots-fleches-thumb"><GridNine weight="duotone"/></span>
+      <div><span className="game-kicker">LEXIQUE & ORTHOGRAPHE · 18 GRILLES</span><h2>Mots fléchés</h2><p>Retrouve les mots grâce aux définitions placées dans la grille. Explore 6 grilles par niveau et gagne de 20 à 50 XP après chaque grille complète.</p></div>
+      <RouteLink to="/eleve/jeux/mots-fleches" className="button button-light">Choisir une grille <ArrowRight/></RouteLink>
+    </section>
     <section className="game-secondary-card market-shop-entry">
       <span className="game-secondary-icon market-shop-thumb"><img src="/assets/games/market-shop/market-vendor-scene.webp" alt="" width="160" height="160" loading="lazy" decoding="async"/></span>
       <div><span className="game-kicker">COMMUNIQUER AU QUOTIDIEN</span><h2>Le Souk des mots</h2><p>Écoute une commande, prépare le bon panier et utilise une formule polie avec le vendeur. Trois paliers et douze missions permettent de gagner jusqu’à 180 XP.</p></div>
@@ -774,6 +780,38 @@ export function App(){
     if(result.ok&&result.recorded)notify({role:"eleve",userId:studentUserId,title:`${tierLabel} terminé`,message:`${completedMissionCount}/${missionCount} missions · ${summary.xpEarned||0} XP gagnés au Souk des mots.`,action:"/eleve/jeux/souk-des-mots"});
     return result;
   };
+  const completeMotsFleches=(summary={})=>{
+    const result=recordQuizAttempt({
+      userId:studentUserId,
+      quizId:"mots-fleches",
+      attemptId:summary.attemptId,
+      experienceType:"arrowword-grid",
+      category:"Lexique et orthographe",
+      fragmentId:summary.puzzleId,
+      fragmentLabel:summary.puzzleTitle,
+      assistanceLevel:summary.assistanceLevel,
+      masteryLabel:"Grille réussie",
+      level:summary.level,
+      correctCount:summary.correctCount,
+      questionCount:summary.questionCount,
+      xpEarned:summary.xpEarned,
+      answerXpEarned:0,
+      completionXp:summary.completionXp,
+      bestStreak:summary.correctCount,
+      scorePercent:summary.scorePercent||100,
+    });
+    if(result.ok&&result.recorded){
+      const earned=Number(summary.xpEarned||0);
+      notify({
+        role:"eleve",
+        userId:studentUserId,
+        title:`Grille ${summary.level||"Mots fléchés"} terminée`,
+        message:earned>0?`${earned} XP ajoutés à ton profil.`:"Les XP de cette grille avaient déjà été gagnés.",
+        action:"/eleve/jeux/mots-fleches",
+      });
+    }
+    return result;
+  };
   const completeDailyChallenge=(summary={})=>{
     const result=recordQuizAttempt({
       userId:studentUserId,
@@ -859,6 +897,7 @@ export function App(){
     return <Suspense fallback={<Redirecting/>}><MissionZellige currentXp={studentXp} attempts={quizAttempts} userId={studentUserId} studentName={studentUser?.name?.split(" ")[0]||"Lina"} fragmentCount={fragmentCount} onAwardXp={awardXp} onComplete={completeMissionZellige} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   }
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="mot-juste")return <Suspense fallback={<Redirecting/>}><WordChoiceGame currentXp={studentXp} onAwardXp={awardXp} onComplete={completeWordChoice} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
+  if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="mots-fleches")return <Suspense fallback={<Redirecting/>}><MotsFlechesGame currentXp={studentXp} studentId={studentUserId} studentName={studentUser?.name||"Lina Mansouri"} awardHistory={quizAwards} onAwardXp={awardXp} onComplete={completeMotsFleches} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="souk-des-mots")return <Suspense fallback={<Redirecting/>}><MarketShopGame currentXp={studentXp} studentId={studentUserId} awardHistory={quizAwards} attemptHistory={quizAttempts} onAwardXp={awardXp} onComplete={completeMarketShop} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defis-classe")return <Suspense fallback={<Redirecting/>}><ClassChallengesStudent challenges={classChallenges} results={classChallengeResults} currentXp={studentXp} participant={CURRENT_CLASS_PARTICIPANT} onAwardXp={awardXp} onComplete={completeClassChallenge} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
   if(parsed.kind==="app"&&parsed.role==="eleve"&&parsed.page==="jeux"&&parsed.detail==="defi-du-jour")return <Suspense fallback={<Redirecting/>}><DailyChallenge currentXp={studentXp} attempts={quizAttempts} userId={studentUserId} onAwardXp={awardXp} onComplete={completeDailyChallenge} onExit={()=>navigateRoute("/eleve/jeux")}/></Suspense>;
