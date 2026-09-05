@@ -27,12 +27,21 @@ export async function limitAuthStarts(db,request,env) {
   const peer=request.headers.get("CF-Connecting-IP")||"unknown";
   const key=await hash(env.OIDC_CLIENT_SECRET+":"+peer);
   await run(db,"DELETE FROM pilot_auth_limits WHERE bucket IN (SELECT bucket FROM pilot_auth_limits WHERE window < ? LIMIT 100)",window-2);
-  for(const [bucket,limit]of [["global",300],[key,12]]){
-    const changed=await run(db,`INSERT INTO pilot_auth_limits(bucket,window,attempts) VALUES (?,?,1)
+  // One transaction: a refused peer spends no global quota, and an exhausted
+  // global quota allocates no peer row. changes() refers to the preceding insert.
+  const results=await db.batch([
+    db.prepare(`INSERT INTO pilot_auth_limits(bucket,window,attempts)
+      SELECT ?,?,1 WHERE NOT EXISTS (SELECT 1 FROM pilot_auth_limits WHERE bucket='global' AND (window>? OR (window=? AND attempts>=300)))
       ON CONFLICT(bucket) DO UPDATE SET window=excluded.window,attempts=CASE WHEN pilot_auth_limits.window=excluded.window THEN pilot_auth_limits.attempts+1 ELSE 1 END
-      WHERE pilot_auth_limits.window<>excluded.window OR pilot_auth_limits.attempts<?`,bucket,window,limit);
-    if(!changed.meta?.changes)fail(429,"auth_rate_limited","Trop de tentatives de connexion. Réessayez dans une minute.");
-  }
+      WHERE pilot_auth_limits.window<excluded.window OR (pilot_auth_limits.window=excluded.window AND pilot_auth_limits.attempts<12)`)
+      .bind(key,window,window,window),
+    db.prepare(`INSERT INTO pilot_auth_limits(bucket,window,attempts)
+      SELECT 'global',?,1 WHERE changes()=1
+      ON CONFLICT(bucket) DO UPDATE SET window=excluded.window,attempts=CASE WHEN pilot_auth_limits.window=excluded.window THEN pilot_auth_limits.attempts+1 ELSE 1 END
+      WHERE pilot_auth_limits.window<excluded.window OR (pilot_auth_limits.window=excluded.window AND pilot_auth_limits.attempts<300)`)
+      .bind(window),
+  ]);
+  if(results.some((result)=>!result.meta?.changes))fail(429,"auth_rate_limited","Trop de tentatives de connexion. Réessayez dans une minute.");
 }
 async function configuration(env, settings) {
   const cacheKey = JSON.stringify([env.OIDC_ISSUER,env.OIDC_CLIENT_ID,env.OIDC_CLIENT_SECRET,env.OIDC_ALLOWED_ORIGINS]);

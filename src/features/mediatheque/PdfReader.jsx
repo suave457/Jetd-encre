@@ -7,17 +7,20 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react/ssr";
 import pdfWorkerUrl from "./vendor/pdf.worker.min.mjs?url";
-import { getPdfFitScale, INITIAL_PDF_NAVIGATION, pdfNavigationReducer } from "./pdfReaderCore.js";
+import {
+  getPdfCanvasSize,
+  getPdfFitScale,
+  INITIAL_PDF_NAVIGATION,
+  PDF_MAX_ZOOM as MAX_ZOOM,
+  PDF_MIN_ZOOM as MIN_ZOOM,
+  PDF_ZOOM_STEP as ZOOM_STEP,
+  pdfNavigationReducer,
+} from "./pdfReaderCore.js";
+import { getPdfReadingStorageKey, readPdfReadingState, writePdfReadingState } from "./pdfReadingState.js";
 import { useTranscriptPreference } from "./useTranscriptPreference.js";
 import "./pdf-reader.css";
 
 const PDFJS_WORKER_URL = pdfWorkerUrl;
-const MIN_ZOOM = 0.75;
-const MAX_ZOOM = 1.75;
-const ZOOM_STEP = 0.25;
-const MAX_OUTPUT_SCALE = 2;
-const MAX_CANVAS_PIXELS = 6_000_000;
-const MAX_CANVAS_DIMENSION = 4096;
 
 let pdfJsPromise = null;
 
@@ -42,18 +45,6 @@ function loadPdfJs() {
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
-}
-
-function canvasOutputScale(viewport) {
-  const cssWidth = Math.max(1, Number(viewport?.width) || 1);
-  const cssHeight = Math.max(1, Number(viewport?.height) || 1);
-  const deviceScale = Math.min(MAX_OUTPUT_SCALE, Math.max(1, window.devicePixelRatio || 1));
-  const pixelBudgetScale = Math.sqrt(MAX_CANVAS_PIXELS / (cssWidth * cssHeight));
-  const dimensionBudgetScale = Math.min(
-    MAX_CANVAS_DIMENSION / cssWidth,
-    MAX_CANVAS_DIMENSION / cssHeight,
-  );
-  return Math.max(0.01, Math.min(deviceScale, pixelBudgetScale, dimensionBudgetScale));
 }
 
 function cancelRender(task) {
@@ -116,7 +107,7 @@ function safeLabel(value, fallback) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
-export function PdfReader({ book, onBack, pageRequest }) {
+export function PdfReader({ book, onBack, pageRequest, userId = null }) {
   const transcriptPreference = useTranscriptPreference();
   const headingId = useId();
   const keyboardHintId = useId();
@@ -132,6 +123,7 @@ export function PdfReader({ book, onBack, pageRequest }) {
   const title = safeLabel(book?.title, "Livre numérique");
   const metadata = safeLabel(book?.meta || book?.author, "Livre PDF");
   const downloadName = safeLabel(book?.downloadName, "");
+  const storageKey = getPdfReadingStorageKey(userId, book);
 
   const [documentState, setDocumentState] = useState("loading");
   const [documentError, setDocumentError] = useState("");
@@ -150,6 +142,8 @@ export function PdfReader({ book, onBack, pageRequest }) {
   const [announcement, setAnnouncement] = useState("Préparation du lecteur PDF.");
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [renderAttempt, setRenderAttempt] = useState(0);
+  const [resumedPage, setResumedPage] = useState(0);
+  const [storageAvailable, setStorageAvailable] = useState(null);
 
   useEffect(() => {
     const node = viewportRef.current;
@@ -206,6 +200,8 @@ export function PdfReader({ book, onBack, pageRequest }) {
     setNumPages(0);
     setPageText("");
     setTextState("idle");
+    setResumedPage(0);
+    setStorageAvailable(null);
 
     if (!source) {
       setDocumentState("error");
@@ -236,10 +232,17 @@ export function PdfReader({ book, onBack, pageRequest }) {
         loadingTaskRef.current = null;
         pdfDocumentRef.current = pdfDocument;
         const total = Number(pdfDocument.numPages);
-        if (!Number.isInteger(total) || total < 1) {
+        if (!Number.isSafeInteger(total) || total < 1) {
           throw new Error("PDF sans page");
         }
 
+        const saved = readPdfReadingState(storageKey, total);
+        if (saved) {
+          dispatchNavigation({ type: "restore", page: saved.page, total });
+          setZoom(saved.zoom);
+          setFitMode(saved.fitMode);
+          setResumedPage(saved.page > 1 ? saved.page : 0);
+        }
         setNumPages(total);
         setDocumentState("ready");
         setPageState("rendering");
@@ -273,7 +276,7 @@ export function PdfReader({ book, onBack, pageRequest }) {
         destroyPdfResource(ownedLoadingTask);
       }
     };
-  }, [loadAttempt, source, title]);
+  }, [loadAttempt, source, title, storageKey]);
 
   useEffect(() => {
     const pdfDocument = pdfDocumentRef.current;
@@ -319,10 +322,12 @@ export function PdfReader({ book, onBack, pageRequest }) {
           mode: fitMode,
         });
         const viewport = page.getViewport({ scale: fittedScale * zoom });
-        const outputScale = canvasOutputScale(viewport);
+        const bitmap = getPdfCanvasSize(viewport, window.devicePixelRatio);
+        if (!bitmap) throw new Error("Dimensions de page PDF invalides");
+        const { outputScale } = bitmap;
 
-        canvas.width = Math.max(1, Math.floor(viewport.width * outputScale));
-        canvas.height = Math.max(1, Math.floor(viewport.height * outputScale));
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
         canvas.style.width = `${Math.floor(viewport.width)}px`;
         canvas.style.height = `${Math.floor(viewport.height)}px`;
 
@@ -347,6 +352,10 @@ export function PdfReader({ book, onBack, pageRequest }) {
         if (disposed || generation !== renderGenerationRef.current) return;
         setPageState("ready");
         setAnnouncement(`Page ${pageNumber} sur ${numPages} prête. Zoom ${Math.round(zoom * 100)} %.`);
+        // Save only the page that actually rendered, never a pending or failed request.
+        if (storageKey) setStorageAvailable(writePdfReadingState(
+          storageKey, { page: pageNumber, zoom, fitMode }, numPages,
+        ));
 
         const extractedText = await textPromise;
         if (disposed || generation !== renderGenerationRef.current) return;
@@ -383,10 +392,11 @@ export function PdfReader({ book, onBack, pageRequest }) {
       if (renderGenerationRef.current === generation) renderGenerationRef.current += 1;
       cancelRender(ownedRenderTask);
     };
-  }, [documentState, numPages, pageNumber, renderAttempt, viewportWidth, viewportHeight, fitMode, zoom]);
+  }, [documentState, numPages, pageNumber, renderAttempt, viewportWidth, viewportHeight, fitMode, zoom, storageKey]);
 
   const goToPage = useCallback((target) => {
     if (documentState !== "ready" || !numPages) return;
+    setResumedPage(0);
     dispatchNavigation({ type: "navigate", page: target, total: numPages });
   }, [documentState, numPages]);
 
@@ -467,6 +477,18 @@ export function PdfReader({ book, onBack, pageRequest }) {
           </div>
         )}
       </header>
+
+      {readerReady && storageKey && <div className="pdf-reader__reading-status">
+        <p role="status">
+          {resumedPage > 1 && <strong>Lecture reprise à la page {resumedPage}. </strong>}
+          {storageAvailable === false
+            ? "La sauvegarde est indisponible. Tu peux continuer à lire ; ta nouvelle position ne sera pas conservée après fermeture."
+            : storageAvailable === true
+              ? "Ta page et ton affichage sont enregistrés sur cet appareil pour ton profil."
+              : "Ta lecture sera enregistrée après l’affichage de la page."}
+        </p>
+        {pageNumber > 1 && <button type="button" onClick={() => goToPage(1)}>Revenir à la première page</button>}
+      </div>}
 
       <div className="pdf-reader__shell">
         <div className="pdf-reader__toolbar" role="toolbar" aria-label="Commandes de la liseuse PDF">

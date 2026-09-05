@@ -12,10 +12,12 @@ applyAccessibilityPreferences(readAccessibilityPreferences());
 
 const PilotApp = lazy(() => import("./features/pilote/PilotApp.jsx"));
 const AccessAdmin = lazy(() => import('./features/pilote/AccessAdmin.jsx'));
+const PilotCrosswords = lazy(() => import('./features/pilote/PilotCrosswords.jsx'));
 function ApplicationRoot() {
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener("popstate", update); return () => window.removeEventListener("popstate", update); }, []);
   if (path === "/pilote" || path === "/pilote/") return <Suspense fallback={<p role="status">Chargement du pilote…</p>}><PilotApp /></Suspense>;
+  if (path === '/pilote/jeux/mots-fleches') return <Suspense fallback={<p role="status">Chargement des grilles…</p>}><PilotCrosswords /></Suspense>;
   if (path === '/admin/ecoles-acces') return <Suspense fallback={<p role="status">Chargement de l’administration…</p>}><AccessAdmin /></Suspense>;
   return <DemoProvider><App /></DemoProvider>;
 }

@@ -12,7 +12,7 @@
   --mf-teal: #14766f;
   --mf-layout-gap: 12px;
   --mf-board-width: min(930px, calc(100vw - 412px));
-  --mf-board-height: min(690px, calc(100dvh - 360px));
+  --mf-board-height: min(690px, calc(100dvh - 376px));
   --mf-dictionary-width: 360px;
   min-height: 100dvh;
   overflow: hidden;
@@ -139,6 +139,7 @@
 
 .mf-heading-row {
   width: 100%;
+  flex-shrink: 0;
   min-height: 72px;
   display: grid;
   grid-template-columns: 130px minmax(0, 1fr) 160px;
@@ -204,6 +205,7 @@
 
 .mf-levels {
   width: min(900px, 100%);
+  flex-shrink: 0;
   min-height: 54px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -239,6 +241,7 @@
 
 .mf-active-clue {
   width: min(calc(var(--mf-board-width) + var(--mf-dictionary-width) + var(--mf-layout-gap)), 100%);
+  flex-shrink: 0;
   min-height: 44px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -495,7 +498,7 @@
   background: #f7f9fa;
 }
 
-.mf-dictionary-pending small { color: #637587; }
+.mf-dictionary-pending small { color: #526578; }
 .mf-dictionary-pending p { margin: 0; color: #526578; font-size: 11.5px; font-weight: 700; line-height: 1.45; }
 
 .mf-dictionary-answer {
@@ -694,7 +697,7 @@
   .mf-brand strong { font-size: 18px; }
   .mf-heading-row { min-height: 52px; }
   .mf-heading-copy h1 { font-size: 30px; }
-  .mf-heading-copy p { display: none; }
+  .mf-heading-copy p { display: block; font-size: 11px; line-height: 1.35; }
   .mf-levels { min-height: 44px; }
   .mf-levels > button { padding-block: 4px; }
   .mf-active-clue { min-height: 38px; padding-block: 4px; }
@@ -731,15 +734,17 @@
   .mots-fleches-game {
     --mf-layout-gap: 8px;
     --mf-board-width: min(760px, calc(100vw - 242px));
-    --mf-board-height: min(600px, calc(100dvh - 232px), calc(100vw - 34px));
+    --mf-board-height: min(600px, calc(100dvh - 280px), calc(100vw - 34px));
     --mf-dictionary-width: 210px;
   }
   .mf-topbar { height: 48px; }
   .mf-main { width: min(1280px, calc(100% - 24px)); height: calc(100dvh - 48px); gap: 4px; padding: 4px 0; }
   .mf-topbar { padding-inline: 18px; }
   .mf-school-year, .mf-student, .mf-space-label { display: none; }
-  .mf-heading-row { min-height: 44px; grid-template-columns: 70px minmax(0, 1fr) 120px; gap: 10px; }
+  .mf-heading-row { min-height: 78px; grid-template-columns: 70px minmax(0, 1fr) 120px; gap: 10px; }
   .mf-heading-copy h1 { font-size: 27px; }
+  .mf-heading-meta { margin-top: 4px; }
+  .mf-heading-copy p { margin-top: 4px; }
   .mf-back { width: 44px; padding: 0; justify-content: center; font-size: 0; }
   .mf-progress-card { padding: 8px 10px; }
   .mf-levels { min-height: 40px; }
@@ -800,7 +805,7 @@
     --mf-layout-gap: 14px;
     --mf-dictionary-width: clamp(380px, 27vw, 420px);
     --mf-board-width: min(940px, calc(100vw - var(--mf-dictionary-width) - 48px));
-    --mf-board-height: min(540px, calc(100dvh - 248px));
+    --mf-board-height: min(540px, calc(100dvh - 288px));
   }
   .mf-topbar { height: 48px; }
   .mf-main { width: min(1440px, calc(100% - 24px)); height: calc(100dvh - 48px); gap: 4px; padding: 4px 0; }

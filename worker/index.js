@@ -437,9 +437,10 @@ async function readiness(env, requestId) {
         (SELECT verifier FROM pilot_auth_flows LIMIT 1), (SELECT attempts FROM pilot_auth_limits LIMIT 1),
         (SELECT request_hash FROM pilot_assignments LIMIT 1), (SELECT request_hash FROM pilot_submissions LIMIT 1),
         (SELECT score FROM pilot_reviews LIMIT 1), (SELECT active FROM pilot_admins LIMIT 1),
-        (SELECT action FROM pilot_admin_events LIMIT 1)`).first();
+        (SELECT action FROM pilot_admin_events LIMIT 1),
+        (SELECT revision FROM pilot_game_progress LIMIT 1), (SELECT xp FROM pilot_game_awards LIMIT 1)`).first();
     }
-    return jsonResponse({ ok: true, release: "BETA", schema: "beta-v1", storage: { database: "checked", schema: "checked", media: env.FILES ? "binding_configured_not_probed" : "unavailable" }, writesEnabled: Boolean(env.BETA_WRITE_TOKEN), eventPseudonymsConfigured: Boolean(eventPseudonymSecret(env)), identityAssurance: "demo_only", time: new Date().toISOString() }, 200, requestId);
+    return jsonResponse({ ok: true, release: "BETA", schema: "beta-v1", storage: { database: "checked", schema: "checked", media: env.FILES ? "binding_configured_not_probed" : "unavailable" }, writesEnabled: Boolean(env.BETA_WRITE_TOKEN), eventPseudonymsConfigured: Boolean(eventPseudonymSecret(env)), identityAssurance: env.PILOT_ENABLED === "true" ? "oidc" : "demo_only", time: new Date().toISOString() }, 200, requestId);
   } catch {
     console.error(JSON.stringify({ requestId, operation: "readiness", code: "database_schema_unavailable" }));
     return apiError(503, "database_schema_unavailable", "La base ou les migrations requises ne sont pas prêtes.", requestId);
@@ -472,7 +473,10 @@ async function handleApi(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/pilot/")) return secure(await handlePilot(request, env), request);
+    if (url.pathname.startsWith("/api/pilot/")) {
+      const requestId=crypto.randomUUID();
+      return secure(await handlePilot(request, env, {requestId}), request, requestId);
+    }
     if (url.pathname.startsWith("/api/")) return secure(await handleApi(request, env), request);
 
     if (url.pathname.startsWith("/__local-media") || url.pathname.startsWith("/.local-media")) return secure(new Response("Document local non publié.", { status: 404 }), request);

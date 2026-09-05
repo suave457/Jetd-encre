@@ -1,5 +1,6 @@
 import { authSettings, handleOidc } from "./oidc.js";
 import { handleAdmin, isPlatformAdmin } from "./admin.js";
+import { handleGames } from './games.js';
 import { all, authenticate, checkCsrf, fail, first, hash, LIVE_SESSION_SQL, liveValues, now, readInput, reply, requiredText, run, sessionCookie } from "./session.js";
 
 async function context(db, session) {
@@ -107,7 +108,7 @@ async function review(request,db,c,id) {
   if(found.request_hash!==requestHash)fail(409,"review_locked","Une correction a déjà été publiée. Elle ne sera pas remplacée.");
   return reply({id,replayed:!changed.meta?.changes},changed.meta?.changes?201:200);
 }
-export async function handlePilot(request,env,{local=false}={}) {
+export async function handlePilot(request,env,{local=false,requestId=null}={}) {
   const path=new URL(request.url).pathname;
   try {
     // Local fixture sign-in is not part of this handler, even when local=true.
@@ -132,6 +133,7 @@ export async function handlePilot(request,env,{local=false}={}) {
     }
     if(path==='/api/pilot/admin'||path.startsWith('/api/pilot/admin/'))return await handleAdmin(request,env,session,local);
     const c=await context(env.DB,session);
+    if(path.startsWith('/api/pilot/games/'))return await handleGames(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
     const offset=Number(new URL(request.url).searchParams.get("offset")||0);
     if(!Number.isSafeInteger(offset)||offset<0||offset>100000)fail(422,"invalid_page","Page invalide.");
     if(request.method==="GET"&&path==="/api/pilot/workspace")return reply({userId:c.user_id,...await workspace(env.DB,c,offset)});
@@ -144,7 +146,7 @@ export async function handlePilot(request,env,{local=false}={}) {
     return reply({error:{code:"not_found",message:"Route inexistante."}},404);
   }catch(error){
     if(error instanceof Response)return error;
-    const reference=crypto.randomUUID();console.error(JSON.stringify({reference,operation:"pilot",code:"request_failed"}));
+    const reference=requestId||crypto.randomUUID();console.error(JSON.stringify({reference,operation:"pilot",code:"request_failed"}));
     return reply({error:{code:"server_unavailable",message:"Le serveur n’a pas confirmé l’opération. Réessayez sans modifier votre texte."},reference},503);
   }
 }

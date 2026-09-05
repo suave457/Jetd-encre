@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpenText, CheckCircle, ChalkboardTeacher, LockKey, Plus, SignOut, Student, Users, ArrowsClockwise } from "@phosphor-icons/react/ssr";
 import "./pilot.css";
+import { PilotGameSummary } from './PilotCrosswords.jsx';
 
 const roles={enseignant:"Enseignant",eleve:"Élève",parent:"Parent",admin:'Administrateur'};
 const icons={enseignant:ChalkboardTeacher,eleve:Student,parent:Users,admin:LockKey};
@@ -141,6 +142,7 @@ export default function PilotApp(){
     <header className="pilot-top"><a href="/" className="pilot-brand"><BookOpenText/><span>Jet d’Encre<small>PILOTE PÉDAGOGIQUE</small></span></a><span className="pilot-private"><LockKey/> {session?.mode==="local_fixture"?"Essai local · données fictives":"Accès scolaire protégé"}</span><a href="/connexion" className="pilot-demo-link">Revenir à la démonstration <ArrowRight/></a></header>
     <main id="pilot-main" className="pilot-main"><div className="pilot-heading"><div><span className="pilot-eyebrow">UNE CLASSE · UN DEVOIR · UN RETOUR UTILE</span><h1 ref={heading} tabIndex={-1}>{user?`${user.name}`:"Le premier parcours partagé"}</h1><p>{user?`${user.schoolName} · ${roles[role]||role}`:"Enseignant, élève et parent retrouvent le même travail, enregistré par le serveur."}</p></div>{user&&<div className="pilot-actions"><button className="button button-light" onClick={()=>refresh()} disabled={busy||verifying}><ArrowsClockwise/> Actualiser</button><button className="button button-light" disabled={busy||verifying} onClick={()=>{if(!hasDraft||window.confirm("Des textes n’ont pas encore été envoyés. Changer de compte les effacera. Continuer ?"))act("/logout",{}, {},"Déconnexion confirmée.");}}><SignOut/>{session.mode==="local_fixture"?"Changer de profil":"Se déconnecter"}</button></div>}</div>
     {error&&<div className="pilot-alert" role="alert"><strong>Action non confirmée</strong><p>{error}</p><button className="button button-light" onClick={()=>refresh()} disabled={busy}>Actualiser l’accès</button></div>}
+    <p className="pilot-hint"><a href="/guide-ecole">Première connexion, mot de passe oublié ou appareil partagé : consulter le guide de l’école.</a></p>
     {notice&&<p className="pilot-notice" role="status">{notice}</p>}
     {hasDraft&&<p className="pilot-hint">Texte non envoyé : il reste disponible si vous changez de devoir ou utilisez « Actualiser ». Il sera perdu en fermant cette page ou en changeant de compte.</p>}
     {verifying&&<p role="status" className="pilot-loading">Vérification de l’accès et chargement des données…</p>}
@@ -159,5 +161,6 @@ export default function PilotApp(){
         {visibleDetail&&role==="enseignant"&&!submissions.length&&<p className="pilot-hint">Aucune remise reçue pour ce devoir. Le profil élève peut maintenant répondre.</p>}
         {detailLoading&&<p role="status">Chargement des remises…</p>}{!visibleDetail&&!detailLoading&&<button className="button button-light" onClick={()=>loadDetail()}>Recharger les remises</button>}{submissions.map(s=><Submission key={s.id} submission={s} teacher={role==="enseignant"} busy={busy} draft={drafts[`review:${s.id}`]||{}} onChange={patch=>updateDraft(`review:${s.id}`,patch)} onReview={async body=>{const result=await act(`/submissions/${s.id}/review`,body,{},"Correction publiée : l’élève et son parent peuvent la consulter.");if(result)discardDraft(`review:${s.id}`);}}/>) }{visibleDetail?.nextOffset!=null&&<button className="button button-light" disabled={detailLoading} onClick={()=>loadDetail(visibleDetail.nextOffset)}>Voir les remises suivantes</button>}</>:<div className="pilot-empty"><BookOpenText/><h2>Un parcours à construire ensemble</h2><p>{role==="enseignant"?"Crée le premier devoir pour ta classe.":"Les devoirs apparaîtront ici après leur publication par l’enseignant."}</p></div>}
       </section></div></>}
-    </div><footer className="pilot-footer"><LockKey/> Accès et enregistrements contrôlés par le serveur. Les anciens jeux et leurs XP restent dans la démonstration.</footer></main></div>;
+    {user&&workspace&&<PilotGameSummary user={user} refreshKey={workspace}/>}
+    </div><footer className="pilot-footer"><LockKey/> Travaux, mots fléchés et XP du parcours connecté sont enregistrés sur le serveur. Les autres jeux restent des démonstrations.</footer></main></div>;
 }

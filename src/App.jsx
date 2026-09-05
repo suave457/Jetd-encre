@@ -12,11 +12,12 @@ import {
 import { ParentLoginPage, ParentPages } from "./ParentPages.jsx";
 import { DEMO_ACCOUNTS, useDemoStore } from "./demoStore.jsx";
 import { getResponsiveImageProps } from "./mediaAssets.js";
-import { getNotFoundHome, parseRoute, resolveAppAccess, resolveLocationRoute, resolveRouteRecord } from "./routeCore.js";
+import { getNotFoundHome, parseRoute, resolveAppAccess, resolveLocationRoute, resolveRouteRecord, usesSchoolDocumentNavigation } from "./routeCore.js";
 import { LegalPages } from "./LegalPages.jsx";
 import { PublicInfoPage } from "./PublicInfoPage.jsx";
 import { buildParentHomework as getStudentHomework } from "./parentDataCore.js";
-import { PUBLIC_PAGES, getPageMetadata } from "./publicContent.js";
+import { PUBLIC_PAGES, PUBLIC_TEST_NOTICE, getPageMetadata } from "./publicContent.js";
+import { PUBLIC_BLOG_ARTICLES as blogArticles } from "./publicContentArticles.js";
 import {
   DAILY_CHALLENGE_ID,
   getCompletedDailyChallenge,
@@ -99,81 +100,6 @@ const contentItems = [
   {title:"Les animaux du désert",type:"Vidéo",level:"2e AEP",status:"Publié",date:"14 août 2026",color:"green"},
 ];
 
-const blogArticles = [
-  {
-    slug:"7-jeux-parler-francais-maison", category:"Parents", theme:"Oral", audience:"Familles", date:"24 août 2026", readTime:"6 min", author:"Nadia El Mansouri", featured:true,
-    title:"7 jeux simples pour faire parler français à la maison",
-    excerpt:"Des activités courtes, sans écran et sans pression, pour transformer les moments du quotidien en occasions de parler.",
-    image:`${ASSETS}/generated-1774007838586.png`, imageAlt:"Icône de lecture colorée représentant des jeux et activités à découvrir",
-    takeaway:"Mieux vaut dix minutes de parole régulière qu’une longue séance vécue comme un devoir.",
-    sections:[
-      ["Créer un espace où l’enfant ose parler","À la maison, l’objectif n’est pas de corriger chaque erreur. L’enfant a surtout besoin de sentir que sa parole est accueillie. Choisissez un moment calme, annoncez un jeu court et valorisez d’abord ce qu’il réussit à communiquer."],
-      ["Trois jeux à commencer aujourd’hui","Le sac mystère fait deviner un objet par sa forme et son usage. Le reporter du jour raconte un petit événement familial en trois phrases. Enfin, le jeu des interdits demande de faire deviner un mot sans prononcer deux indices trop évidents."],
-      ["Prolonger avec quatre défis express","Décrivez une photo de famille, inventez la suite d’une histoire, préparez ensemble la liste des courses ou commentez le trajet vers l’école. Alternez le français avec la darija ou l’amazighe lorsque cela aide à comprendre, puis reformulez naturellement en français."],
-    ],
-  },
-  {
-    slug:"plurilinguisme-force-classe", category:"Enseignants", theme:"Plurilinguisme", audience:"Professionnels", date:"21 août 2026", readTime:"8 min", author:"L’équipe éditoriale · démonstration",
-    title:"Darija, amazighe, français : transformer le plurilinguisme en force",
-    excerpt:"Des gestes pédagogiques concrets pour mobiliser toutes les langues de la classe au service de l’expression en français.",
-    image:`${ASSETS}/generated-1774018887348.png`, imageAlt:"Enseignante devant un tableau d’apprentissage coloré",
-    takeaway:"La langue première n’est pas un obstacle : bien mobilisée, elle devient un tremplin vers une parole plus précise en français.",
-    sections:[
-      ["Partir du répertoire réel des élèves","Les élèves marocains passent naturellement d’une langue à l’autre. Autoriser une courte phase de recherche en darija ou en amazighe réduit la charge cognitive et permet de concentrer l’effort sur la formulation finale en français."],
-      ["Comparer pour mieux comprendre","Faites repérer les mots transparents, les expressions proches et les différences d’ordre des mots. Une affiche plurilingue construite collectivement donne une valeur visible à chaque langue tout en fixant les formes françaises attendues."],
-      ["Revenir vers une tâche authentique","Terminez par une production concrète : présenter un lieu, enregistrer une consigne ou interviewer un camarade. La réussite se mesure à la clarté du message, puis la correction linguistique est travaillée dans un second temps."],
-    ],
-  },
-  {
-    slug:"routine-comprehension-orale", category:"Enseignants", theme:"Pratiques de classe", audience:"Professionnels", date:"18 août 2026", readTime:"5 min", author:"Salma Benjelloun",
-    title:"Une routine de 10 minutes pour développer la compréhension orale",
-    excerpt:"Un rituel simple en quatre temps pour entraîner l’écoute sans alourdir la préparation de classe.",
-    image:`${ASSETS}/generated-1774007681359.png`, imageAlt:"Casque audio turquoise illustrant la compréhension orale",
-    takeaway:"Écouter plusieurs fois avec une intention différente donne à tous les élèves une vraie chance de comprendre.",
-    sections:[
-      ["Avant l’écoute : anticiper","Montrez une image ou écrivez trois mots-clés. Les élèves formulent des hypothèses en binômes. Cette minute prépare le sens sans dévoiler tout le contenu."],
-      ["Pendant l’écoute : changer de mission","La première écoute sert à identifier la situation. La deuxième permet de relever deux informations précises. Une troisième écoute courte aide à vérifier et à corriger les réponses."],
-      ["Après l’écoute : remettre la langue en circulation","Demandez une reformulation orale, un mini-dialogue ou un message vocal de trente secondes. L’écoute devient alors une ressource pour parler, et non une activité isolée."],
-    ],
-  },
-  {
-    slug:"medina-fes-vocabulaire-defis", category:"Enfants", theme:"Culture marocaine", audience:"Jeunes lecteurs", date:"15 août 2026", readTime:"4 min", author:"L’équipe Jet d’Encre",
-    title:"Découvrir la médina de Fès en français : vocabulaire et mini-défis",
-    excerpt:"Suis notre parcours dans la médina, apprends douze mots et relève trois défis d’observation.",
-    image:`${ASSETS}/generated-1773971894915.png`, imageAlt:"Manuel illustré ouvert sur le patrimoine marocain",
-    takeaway:"Regarder, nommer et raconter : trois gestes simples pour faire vivre le vocabulaire.",
-    sections:[
-      ["Ouvre grand les yeux","Une ruelle, une fontaine, un artisan, une enseigne : choisis quatre détails et décris leurs couleurs, leurs formes ou leurs sons."],
-      ["Relève le défi des mots","Utilise les mots passage, échoppe, cuivre, parfum et mosaïque dans cinq phrases. Tu peux d’abord les dire à voix haute avant de les écrire."],
-      ["Deviens guide pendant une minute","Imagine qu’un ami visite Fès pour la première fois. Prépare un petit itinéraire avec les expressions tourne à gauche, continue tout droit et arrête-toi devant."],
-    ],
-  },
-  {
-    slug:"enfant-comprend-mais-nose-pas-parler", category:"Parents", theme:"Confiance", audience:"Familles", date:"12 août 2026", readTime:"7 min", author:"Imane Aït Lahcen",
-    title:"Mon enfant comprend mais n’ose pas parler : comment l’accompagner ?",
-    excerpt:"Comprendre sans encore s’exprimer est une étape normale. Voici comment soutenir la prise de parole sans mettre l’enfant en difficulté.",
-    image:`${ASSETS}/generated-1774007817252.png`, imageAlt:"Étoile souriante symbolisant la confiance de l’enfant",
-    takeaway:"La sécurité affective précède la performance : l’enfant parle davantage quand il sait qu’il a le droit d’hésiter.",
-    sections:[
-      ["Reconnaître la période silencieuse","Certains enfants comprennent longtemps avant d’oser produire une phrase. Ce décalage n’indique pas un manque de capacité ; il montre souvent que l’enfant observe et construit ses repères."],
-      ["Proposer des réponses graduées","Commencez par des choix simples, puis des phrases à compléter et enfin de courtes réponses personnelles. L’enfant garde le contrôle du niveau de difficulté."],
-      ["Valoriser le message avant la forme","Reformulez correctement sans interrompre. Félicitez l’idée communiquée et notez les progrès concrets : une phrase plus longue, un nouveau mot ou une initiative spontanée."],
-    ],
-  },
-  {
-    slug:"guide-audio-quartier-tache-finale", category:"Enseignants", theme:"Approche actionnelle", audience:"Professionnels", date:"8 août 2026", readTime:"9 min", author:"Youssef Alaoui",
-    title:"Tâche finale : créer le guide audio de son quartier",
-    excerpt:"Un projet actionnel complet pour faire observer, écrire, enregistrer et partager en français.",
-    image:`${ASSETS}/generated-1774018325276.png`, imageAlt:"Maquette d’école représentant un projet collectif",
-    takeaway:"Une tâche finale réussie combine un destinataire réel, un produit partageable et des étapes accessibles.",
-    sections:[
-      ["Donner une mission claire","La classe prépare un guide audio pour accueillir de nouveaux élèves. Chaque groupe choisit un lieu utile ou remarquable du quartier et explique comment s’y rendre."],
-      ["Organiser les étapes","Les élèves observent, collectent le vocabulaire, rédigent un script court puis s’entraînent à la prononciation. Une grille simple aide à vérifier clarté, précision et durée."],
-      ["Publier et évaluer autrement","Réunissez les capsules dans une carte sonore ou une présentation de classe. L’évaluation associe autoévaluation, retour des pairs et commentaire ciblé de l’enseignant."],
-    ],
-  },
-];
-
 function usePublicArticles(){
   const {articles}=useDemoStore();
   return useMemo(()=>{
@@ -231,7 +157,8 @@ function useRoute() {
       document.querySelector(`meta[property="${property}"],meta[name="${property}"]`)?.setAttribute("content",content);
     }
     document.querySelector('link[rel="canonical"]')?.remove();
-    if(metadata.canonical){const link=document.createElement("link");link.rel="canonical";link.href=metadata.canonical;document.head.append(link);}
+    document.querySelector('meta[property="og:url"]')?.remove();
+    if(metadata.canonical){const link=document.createElement("link");link.rel="canonical";link.href=metadata.canonical;document.head.append(link);const tag=document.createElement("meta");tag.setAttribute("property","og:url");tag.content=metadata.canonical;document.head.append(tag);}
     const heading=document.querySelector("main h1");
     if(heading){heading.setAttribute("tabindex","-1");requestAnimationFrame(()=>heading.focus({preventScroll:true}));}
   },[route]);
@@ -255,6 +182,8 @@ function RouteLink({to,className="",children,onClick,target,...props}) {
   const handleClick=(event)=>{
     onClick?.(event);
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||target==="_blank")return;
+    // These routes mount a separate school application; use a document navigation.
+    if(usesSchoolDocumentNavigation(resolved))return;
     event.preventDefault();
     navigateRoute(resolved);
   };
@@ -279,7 +208,10 @@ function Brand({inverse=false,compact=false}) {
 function scrollToId(id) { document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}); }
 
 export function PublicPreview({path="/"}) {
-  return path==="/"?<LandingPage/>:<PublicInfoPage path={path} ui={{RouteLink,PublicSubHeader,BlogFooter}}/>;
+  if(path==="/")return <LandingPage/>;
+  if(path==="/blog")return <BlogPageContent publicArticles={blogArticles}/>;
+  if(path.startsWith("/blog/"))return <BlogArticleContent slug={path.slice(6)} publicArticles={blogArticles}/>;
+  return <PublicInfoPage path={path} ui={{RouteLink,PublicSubHeader,BlogFooter}}/>;
 }
 
 export function LandingPage() {
@@ -287,8 +219,8 @@ export function LandingPage() {
   const faqs = [
     ["À quel âge mon enfant peut-il commencer ?","Le premier pilote se prépare pour la 5e année du primaire, avec des aides adaptées au niveau de français. Les autres niveaux sont présentés comme projets de collection ; aucun test d’orientation n’est encore proposé."],
     ["Le contenu est-il conforme au programme marocain ?","Les situations s’appuient sur le contexte marocain et la didactique du FLE. La couverture du programme et chaque séquence du pilote doivent encore être validées par l’équipe pédagogique."],
-    ["Comment accéder au contenu numérique ?","Dans cette démonstration, utilisez le code fictif affiché sur la page d’activation. Les comptes et progrès restent dans ce navigateur : aucun accès scolaire réel n’est créé."],
-    ["Puis-je utiliser les manuels en classe ?","Vous pouvez explorer les ressources et les écrans enseignant avec des données fictives. La publication d’un devoir vers d’autres appareils sera disponible après le raccordement du service scolaire."],
+    ["Comment accéder au contenu numérique ?","Le bouton Connexion ouvre l’espace scolaire avec le compte remis par votre établissement. Le pilote reste réservé aux comptes de test. Pour explorer les écrans sans compte scolaire, choisissez Essayer la démonstration : ses données restent dans ce navigateur."],
+    ["Comment démarrer avec ma classe ?","Le référent de l’établissement organise les accès individuels et leur remise confidentielle. Le guide d’accueil explique la première connexion et les difficultés d’accès. Les contenus et conditions d’ouverture doivent être validés avant tout usage avec de vrais élèves."],
   ];
   return <div className="landing-page">
     <header className="public-header">
@@ -297,23 +229,23 @@ export function LandingPage() {
       <nav className={menuOpen?"public-nav is-open":"public-nav"} aria-label="Navigation principale">
         <button onClick={()=>{scrollToId("collection");setMenuOpen(false)}}>Nos manuels</button><button onClick={()=>{scrollToId("univers");setMenuOpen(false)}}>Ressources</button><button onClick={()=>{scrollToId("methode");setMenuOpen(false)}}>Notre approche</button><RouteLink to="/familles" onClick={()=>setMenuOpen(false)}>Familles</RouteLink><RouteLink to="/ecoles" onClick={()=>setMenuOpen(false)}>Écoles</RouteLink><RouteLink to="/blog" onClick={()=>setMenuOpen(false)}>Le Mag</RouteLink><button onClick={()=>{scrollToId("faq");setMenuOpen(false)}}>Aide</button>
       </nav>
-      <RouteLink to="/connexion" className="button button-dark header-login"><UserCircle weight="bold"/> Connexion</RouteLink>
+      <RouteLink to="/pilote" className="button button-dark header-login"><UserCircle weight="bold"/> Connexion</RouteLink>
     </header>
     <main>
-      <p className="prototype-banner" role="note"><strong>Démonstration · données fictives.</strong> Aucun compte scolaire réel. Ne saisissez pas de données personnelles d’élèves.</p>
+      <p className="prototype-banner" role="note"><strong>{PUBLIC_TEST_NOTICE.title}</strong> {PUBLIC_TEST_NOTICE.body}</p>
       <section className="hero zellige-section">
-        <div className="hero-copy"><span className="eyebrow"><Sparkle weight="fill"/> Le français entre la classe et la maison</span><h1>Parlons bien,<br/>parlons <em>français&nbsp;!</em></h1><p>Une méthode de français joyeuse et ancrée dans la culture marocaine, conçue pour faire parler, lire et grandir chaque enfant avec confiance.</p><div className="hero-actions"><RouteLink to="/activation" className="button button-gold">Tester l’activation <ArrowRight weight="bold"/></RouteLink><RouteLink to="/decouvrir" className="button button-light">Lire un extrait <BookOpenText/></RouteLink></div><div className="trust-points"><span><CheckCircle weight="fill"/> Contexte marocain</span><span><CheckCircle weight="fill"/> Activités ludiques</span><span><CheckCircle weight="fill"/> Suivi des progrès</span></div></div>
+        <div className="hero-copy"><span className="eyebrow"><Sparkle weight="fill"/> Le français entre la classe et la maison</span><h1>Parlons bien,<br/>parlons <em>français&nbsp;!</em></h1><p>Une méthode de français joyeuse et ancrée dans la culture marocaine, conçue pour faire parler, lire et grandir chaque enfant avec confiance.</p><div className="hero-actions"><RouteLink to="/pilote" className="button button-gold">Me connecter <ArrowRight weight="bold"/></RouteLink><RouteLink to="/connexion" className="button button-light">Essayer la démonstration <BookOpenText/></RouteLink></div><div className="trust-points"><span><CheckCircle weight="fill"/> Contexte marocain</span><span><CheckCircle weight="fill"/> Activités ludiques</span><span><CheckCircle weight="fill"/> Suivi des progrès</span></div></div>
         <div className="hero-visual"><div className="hero-image-frame"><ResponsiveImage fileName="generated-1773971894915.png" alt="Manuel illustré ouvert sur la kasbah et la cérémonie du thé" eager sizes="(max-width: 900px) 90vw, 590px"/></div><span className="floating-pill pill-a"><Headphones weight="fill"/> Audios inclus</span><span className="floating-pill pill-b"><GameController weight="fill"/> Jeux interactifs</span><span className="floating-pill pill-c"><Medal weight="fill"/> Progrès valorisés</span><span className="hero-score">5e<small>pilote en préparation</small></span></div>
       </section>
       <section className="metrics" aria-label="Les usages de Jet d’Encre">{[[BookOpenText,"Lire","des textes et des histoires"],[Headphones,"Écouter","des audios et des vidéos"],[GameController,"Jouer","pour pratiquer le français"],[Users,"Partager","un objectif entre école et maison"]].map(([Icon,value,label])=><article key={label}><Icon weight="duotone"/><strong>{value}</strong><span>{label}</span></article>)}</section>
-      <section id="methode" className="section how-section zellige-section"><SectionHeading eyebrow="Simple comme 1, 2, 3" title={<>Comment ça <em>marche&nbsp;?</em></>} copy="Du manuel papier à l’expérience numérique, chaque étape est claire pour l’enfant et rassurante pour l’adulte."/><div className="steps-grid">{[["01",Books,"Choisis ton manuel","Retrouve ton niveau et découvre un univers conçu pour ton âge."],["02",Key,"Active ton code","Entre le code unique imprimé dans le manuel pour ouvrir ton espace."],["03",RocketLaunch,"Explore et progresse","Écoute, joue, réalise tes devoirs et collectionne tes réussites."]].map(([n,Icon,title,copy])=><article className="step-card" key={n}><span className="step-number">{n}</span><span className="step-icon"><Icon weight="duotone"/></span><h3>{title}</h3><p>{copy}</p></article>)}</div></section>
+      <section id="methode" className="section how-section zellige-section"><SectionHeading eyebrow="Simple comme 1, 2, 3" title={<>Comment ça <em>marche&nbsp;?</em></>} copy="Les comptes scolaires sont créés par l’administration Jet d’Encre, à la demande de l’établissement. Aucun choix de rôle ni achat de manuel ne crée un accès scolaire sur cette page."/><div className="steps-grid">{[["01",Books,"Reçois ton accès","L’école te remet ton identifiant et les consignes de connexion en privé."],["02",Key,"Connecte-toi","Utilise le bouton Connexion avec le compte qui t’a été attribué."],["03",RocketLaunch,"Retrouve ton espace","Vérifie ton profil et consulte les activités disponibles pour ta classe."]].map(([n,Icon,title,copy])=><article className="step-card" key={n}><span className="step-number">{n}</span><span className="step-icon"><Icon weight="duotone"/></span><h3>{title}</h3><p>{copy}</p></article>)}</div></section>
       <section id="collection" className="section collection-section"><SectionHeading eyebrow="La collection en préparation" title={<>Un premier pilote en 5e AEP,<br/><em>une collection à construire</em></>} copy="Les couvertures présentent les six niveaux envisagés. Elles ne signifient pas que six parcours complets sont déjà disponibles."/><div className="levels-grid">{levelCards.map(([level,grade,title,badge,color],index)=><article className="level-card" key={level} style={{"--level-color":color}}><div className="level-cover"><span className="level-index">{index+1}</span><span className="level-shape"><BookOpenText weight="duotone"/></span><strong>{level}</strong><small>Le français facile</small></div><div className="level-info"><span>{grade}</span><h3>{title}</h3><small>{index===4?"Pilote en préparation":"Projet de collection"}</small></div></article>)}</div></section>
       <section id="univers" className="section universe-section zellige-section"><SectionHeading eyebrow="Notre pédagogie 360°" title={<>Du papier à l’écran,<br/><em>une expérience qui donne envie</em></>} copy="Les forces du livre, du numérique et du jeu réunies dans un seul parcours cohérent."/><div className="feature-stack"><Feature image="generated-1773971894915.png" tag="1 · Culture & lecture" tone="gold" title="Le manuel papier" copy="Des textes ancrés dans la culture marocaine et ouverts sur le monde. Chaque chapitre développe l’oral, la lecture et l’écriture à travers une tâche motivante." chips={["Culture","Patrimoine","Communication"]}/><Feature reverse image="generated-1774007681359.png" tag="2 · Écoute & découverte" tone="teal" title="La plateforme numérique" copy="Audios, vidéos, documentaires et exercices autocorrectifs prolongent le manuel et donnent une vraie place à l’oral." chips={["Podcasts","Vidéos","Prononciation"]}/><Feature image="generated-1774007656775.png" tag="3 · Défis & jeux" tone="coral" title="La pratique ludique" copy="Des mini-défis, badges et séries d’apprentissage transforment l’effort en plaisir sans perdre l’objectif pédagogique." chips={["Jeux","Badges","Motivation"]}/></div></section>
       <section id="blog" className="section blog-teaser-section"><div className="blog-teaser-heading"><div><span className="eyebrow">Le Mag Jet d’Encre</span><h2>Des idées pour faire vivre<br/><em>le français au quotidien</em></h2><p>Conseils aux parents, pratiques de classe et découvertes culturelles pensées pour le contexte marocain.</p></div><RouteLink to="/blog" className="button button-dark">Voir tous les articles <ArrowRight/></RouteLink></div><div className="landing-blog-grid"><BlogCard article={blogArticles[0]} featured/>{blogArticles.slice(1,4).map(article=><BlogCard article={article} compact key={article.slug}/>)}</div></section>
-      <section id="faq" className="section faq-section"><div className="faq-intro"><span className="eyebrow">Questions fréquentes</span><h2>Tout ce qu’il faut savoir</h2><p>Une question sur l’activation, les niveaux ou l’utilisation en classe ? Nous sommes là pour vous accompagner.</p><RouteLink to="/connexion" className="button button-dark">Accéder à mon espace <ArrowRight/></RouteLink></div><div className="faq-list">{faqs.map(([q,a],index)=><article className={faq===index?"faq-item is-open":"faq-item"} key={q}><button onClick={()=>setFaq(faq===index?-1:index)} aria-expanded={faq===index}><span>{q}</span><CaretDown weight="bold"/></button>{faq===index&&<p>{a}</p>}</article>)}</div></section>
-      <section className="proof-section"><SectionHeading light eyebrow="Notre cap pour le pilote" title="Une expérience utile à chacun"/><div className="quotes-grid"><blockquote>Préparer une activité courte, observer les réponses et proposer un retour précis.<footer>Objectif enseignant</footer></blockquote><blockquote>Comprendre ce que l’enfant a réussi et savoir comment l’accompagner à la maison.<footer>Objectif famille</footer></blockquote><blockquote>Aider les classes à démarrer et résoudre les difficultés d’accès avant d’élargir le pilote.<footer>Objectif école</footer></blockquote></div><div className="final-cta"><div><span className="eyebrow"><Sparkle weight="fill"/> Démonstration à explorer</span><h2>Débloquez l’univers Jet d’Encre</h2><p>Explorez le parcours avec un code fictif. Les données de démonstration restent sur cet appareil.</p></div><RouteLink to="/activation" className="button button-gold">Activer mon code <ArrowRight weight="bold"/></RouteLink></div></section>
+      <section id="faq" className="section faq-section"><div className="faq-intro"><span className="eyebrow">Questions fréquentes</span><h2>Tout ce qu’il faut savoir</h2><p>Première connexion, mot de passe oublié ou appareil partagé : retrouvez les étapes utiles dans le guide de l’école.</p><RouteLink to="/guide-ecole" className="button button-dark">Lire le guide d’accueil <ArrowRight/></RouteLink></div><div className="faq-list">{faqs.map(([q,a],index)=><article className={faq===index?"faq-item is-open":"faq-item"} key={q}><button onClick={()=>setFaq(faq===index?-1:index)} aria-expanded={faq===index}><span>{q}</span><CaretDown weight="bold"/></button>{faq===index&&<p>{a}</p>}</article>)}</div></section>
+      <section className="proof-section"><SectionHeading light eyebrow="Notre cap pour le pilote" title="Une expérience utile à chacun"/><div className="quotes-grid"><blockquote>Préparer une activité courte, observer les réponses et proposer un retour précis.<footer>Objectif enseignant</footer></blockquote><blockquote>Comprendre ce que l’enfant a réussi et savoir comment l’accompagner à la maison.<footer>Objectif famille</footer></blockquote><blockquote>Aider les classes à démarrer et résoudre les difficultés d’accès avant d’élargir le pilote.<footer>Objectif école</footer></blockquote></div><div className="final-cta"><div><span className="eyebrow"><Sparkle weight="fill"/> Démonstration à explorer</span><h2>Découvrez les écrans de démonstration</h2><p>Explorez des profils fictifs sans compte scolaire. Les essais de démonstration restent sur cet appareil et ne rejoignent pas le pilote.</p></div><RouteLink to="/connexion" className="button button-gold">Essayer la démonstration <ArrowRight weight="bold"/></RouteLink></div></section>
     </main>
-    <footer className="public-footer"><Brand inverse/><div><strong>Découvrir</strong><button onClick={()=>scrollToId("collection")}>Nos manuels</button><button onClick={()=>scrollToId("univers")}>Ressources numériques</button><RouteLink to="/blog">Blog éducation</RouteLink><RouteLink to="/connexion">Se connecter</RouteLink></div><div><strong>Établissements</strong><RouteLink to="/connexion/enseignant">Espace enseignant</RouteLink><RouteLink to="/connexion/directeur">Espace direction</RouteLink><RouteLink to="/connexion/admin">Administration</RouteLink></div><div><strong>Informations</strong><RouteLink to="/mentions-legales">Mentions légales</RouteLink><RouteLink to="/confidentialite">Confidentialité</RouteLink><RouteLink to="/conditions-utilisation">Conditions d’utilisation</RouteLink><RouteLink to="/accessibilite">Accessibilité</RouteLink></div><p className="copyright">© 2026 Jet d’Encre Éditions · Prototype de démonstration · Coordonnées de démonstration · Maroc</p></footer>
+    <footer className="public-footer"><Brand inverse/><div><strong>Découvrir</strong><button onClick={()=>scrollToId("collection")}>Nos manuels</button><button onClick={()=>scrollToId("univers")}>Ressources numériques</button><RouteLink to="/blog">Blog éducation</RouteLink><RouteLink to="/pilote">Se connecter</RouteLink></div><div><strong>Établissements</strong><RouteLink to="/pilote">Espace enseignant</RouteLink><RouteLink to="/guide-ecole">Guide d’accueil</RouteLink><RouteLink to="/connexion/directeur">Direction · démonstration</RouteLink><RouteLink to="/admin/ecoles-acces">Administration des accès</RouteLink></div><div><strong>Informations</strong><RouteLink to="/mentions-legales">Mentions légales</RouteLink><RouteLink to="/confidentialite">Confidentialité</RouteLink><RouteLink to="/conditions-utilisation">Conditions d’utilisation</RouteLink><RouteLink to="/accessibilite">Accessibilité</RouteLink></div><p className="copyright">© 2026 Jet d’Encre Éditions · Site de test · Coordonnées officielles à valider · Maroc</p></footer>
   </div>;
 }
 
@@ -322,7 +254,7 @@ function Feature({image,tag,tone,title,copy,chips,reverse=false}){return <articl
 
 function PublicSubHeader({active="blog"}){
   const [menuOpen,setMenuOpen]=useState(false);
-  return <header className="public-header blog-public-header"><RouteLink to="/" className="public-logo" aria-label="Jet d’Encre — accueil"><ResponsiveImage fileName="jet-dencre-logo-horizontal-light.png" alt="Jet d’Encre Éditions" eager sizes="198px"/></RouteLink><button className="menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Ouvrir le menu" aria-expanded={menuOpen}>{menuOpen?<X/>:<List/>}</button><nav className={menuOpen?"public-nav is-open":"public-nav"} aria-label="Navigation principale"><RouteLink to="/">Accueil</RouteLink><RouteLink to="/methode">Méthode</RouteLink><RouteLink to="/familles">Familles</RouteLink><RouteLink to="/ecoles">Écoles</RouteLink><RouteLink to="/blog" className={active==="blog"?"active":""}>Le Mag</RouteLink><RouteLink to="/activation">Activer un manuel</RouteLink><RouteLink to="/connexion">Espaces utilisateurs</RouteLink></nav><RouteLink to="/connexion" className="button button-dark header-login"><UserCircle weight="bold"/> Connexion</RouteLink></header>
+  return <header className="public-header blog-public-header"><RouteLink to="/" className="public-logo" aria-label="Jet d’Encre — accueil"><ResponsiveImage fileName="jet-dencre-logo-horizontal-light.png" alt="Jet d’Encre Éditions" eager sizes="198px"/></RouteLink><button className="menu-button" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Ouvrir le menu" aria-expanded={menuOpen}>{menuOpen?<X/>:<List/>}</button><nav className={menuOpen?"public-nav is-open":"public-nav"} aria-label="Navigation principale"><RouteLink to="/">Accueil</RouteLink><RouteLink to="/methode">Méthode</RouteLink><RouteLink to="/familles">Familles</RouteLink><RouteLink to="/ecoles">Écoles</RouteLink><RouteLink to="/blog" className={active==="blog"?"active":""}>Le Mag</RouteLink><RouteLink to="/guide-ecole">Guide d’accueil</RouteLink><RouteLink to="/connexion">Démonstration</RouteLink></nav><RouteLink to="/pilote" className="button button-dark header-login"><UserCircle weight="bold"/> Connexion</RouteLink></header>
 }
 
 function BlogCard({article,featured=false,compact=false}){
@@ -332,6 +264,10 @@ function BlogCard({article,featured=false,compact=false}){
 
 function BlogPage(){
   const publicArticles=usePublicArticles();
+  return <BlogPageContent publicArticles={publicArticles}/>;
+}
+
+function BlogPageContent({publicArticles}){
   const [query,setQuery]=useState(""); const [category,setCategory]=useState("Tous");
   const filtered=publicArticles.filter(article=>(category==="Tous"||article.category===category)&&`${article.title} ${article.excerpt} ${article.theme}`.toLowerCase().includes(query.toLowerCase()));
   const defaultView=category==="Tous"&&!query;
@@ -341,16 +277,20 @@ function BlogPage(){
 
 function BlogArticlePage({slug}){
   const publicArticles=usePublicArticles();
-  const article=publicArticles.find(item=>item.slug===slug); if(!article)return <NotFound/>;
-  const related=publicArticles.filter(item=>item.slug!==slug).slice(0,3);
-  return <div className="blog-page article-page"><PublicSubHeader/><p className="prototype-banner" role="note"><strong>Article de démonstration.</strong> Signature fictive et contenu à relire avant publication.</p><main><section className="article-hero zellige-section"><div className="article-hero-copy"><nav className="breadcrumb" aria-label="Fil d’Ariane"><RouteLink to="/">Accueil</RouteLink><CaretRight/><RouteLink to="/blog">Blog</RouteLink><CaretRight/><span>{article.category}</span></nav><span className="article-category">{article.category} · {article.theme}</span><h1>{article.title}</h1><p>{article.excerpt}</p><div className="article-author"><span>{article.author.split(" ").map(x=>x[0]).join("").slice(0,2)}</span><div><strong>{article.author}</strong><small>{article.date} · {article.readTime} de lecture</small></div></div></div><ResponsiveImage fileName={article.image.split("/").at(-1)} alt={article.imageAlt} eager sizes="(max-width: 900px) 100vw, 48vw"/></section><div className="article-layout"><article className="article-body"><p className="article-lead">Au Maroc, le français se construit dans des environnements plurilingues, entre la maison, l’école et la vie quotidienne. Cette proposition vise une progression réaliste : faire participer davantage, sans transformer chaque échange en évaluation.</p>{article.sections.map(([title,copy],index)=><section id={`partie-${index+1}`} key={title}><span>0{index+1}</span><h2>{title}</h2><p>{copy}</p>{index===0&&<div className="article-tip"><Sparkle weight="fill"/><div><strong>À retenir</strong><p>{article.takeaway}</p></div></div>}</section>)}<div className="article-share"><div><strong>Cet article vous a été utile ?</strong><span>Partagez l’idée avec votre équipe ou votre famille.</span></div><button className="button button-light" disabled title="Partage système disponible après mise en production"><PaperPlaneTilt/> Partager</button></div></article><aside className="article-aside"><div className="article-toc"><strong>Dans cet article</strong>{article.sections.map(([title],index)=><button key={title} onClick={()=>scrollToId(`partie-${index+1}`)}><span>0{index+1}</span>{title}</button>)}</div><div className="article-side-cta"><BookOpenText weight="duotone"/><h3>Prolongez l’expérience</h3><p>Explorez un extrait pédagogique de démonstration pour prolonger la lecture.</p><RouteLink to="/activation" className="button button-gold button-wide">Activer un manuel</RouteLink></div></aside></div><section className="related-section"><div className="blog-section-title"><div><span className="eyebrow">Pour continuer</span><h2>Articles associés</h2></div><RouteLink to="/blog" className="read-link">Retour au Blog <ArrowRight/></RouteLink></div><div className="blog-grid">{related.map(item=><BlogCard article={item} compact key={item.slug}/>)}</div></section></main><BlogFooter/></div>
+  return <BlogArticleContent slug={slug} publicArticles={publicArticles}/>;
 }
 
-function BlogFooter(){return <footer className="public-footer blog-footer"><Brand inverse/><div><strong>Le Mag</strong><RouteLink to="/blog">Tous les articles</RouteLink><RouteLink to="/blog/7-jeux-parler-francais-maison">Pour les parents</RouteLink><RouteLink to="/blog/plurilinguisme-force-classe">Pour les enseignants</RouteLink></div><div><strong>Jet d’Encre</strong><RouteLink to="/">Découvrir la méthode</RouteLink><RouteLink to="/activation">Activer un manuel</RouteLink><RouteLink to="/connexion">Se connecter</RouteLink></div><div><strong>Informations</strong><RouteLink to="/mentions-legales">Mentions légales</RouteLink><RouteLink to="/confidentialite">Confidentialité</RouteLink><RouteLink to="/cookies">Cookies</RouteLink><RouteLink to="/accessibilite">Accessibilité</RouteLink></div><p className="copyright">© 2026 Jet d’Encre Éditions · Le Mag de démonstration · Coordonnées fictives dans les mentions</p></footer>}
+function BlogArticleContent({slug,publicArticles}){
+  const article=publicArticles.find(item=>item.slug===slug); if(!article)return <NotFound/>;
+  const related=publicArticles.filter(item=>item.slug!==slug).slice(0,3);
+  return <div className="blog-page article-page"><PublicSubHeader/><p className="prototype-banner" role="note"><strong>Article de démonstration.</strong> Signature fictive et contenu à relire avant publication.</p><main><section className="article-hero zellige-section"><div className="article-hero-copy"><nav className="breadcrumb" aria-label="Fil d’Ariane"><RouteLink to="/">Accueil</RouteLink><CaretRight/><RouteLink to="/blog">Blog</RouteLink><CaretRight/><span>{article.category}</span></nav><span className="article-category">{article.category} · {article.theme}</span><h1>{article.title}</h1><p>{article.excerpt}</p><div className="article-author"><span>{article.author.split(" ").map(x=>x[0]).join("").slice(0,2)}</span><div><strong>{article.author}</strong><small>{article.date} · {article.readTime} de lecture</small></div></div></div><ResponsiveImage fileName={article.image.split("/").at(-1)} alt={article.imageAlt} eager sizes="(max-width: 900px) 100vw, 48vw"/></section><div className="article-layout"><article className="article-body"><p className="article-lead">Au Maroc, le français se construit dans des environnements plurilingues, entre la maison, l’école et la vie quotidienne. Cette proposition vise une progression réaliste : faire participer davantage, sans transformer chaque échange en évaluation.</p>{article.sections.map(([title,copy],index)=><section id={`partie-${index+1}`} key={title}><span>0{index+1}</span><h2>{title}</h2><p>{copy}</p>{index===0&&<div className="article-tip"><Sparkle weight="fill"/><div><strong>À retenir</strong><p>{article.takeaway}</p></div></div>}</section>)}<div className="article-share"><div><strong>Cet article vous a été utile ?</strong><span>Partagez l’idée avec votre équipe ou votre famille.</span></div><button className="button button-light" disabled title="Partage système disponible après mise en production"><PaperPlaneTilt/> Partager</button></div></article><aside className="article-aside"><div className="article-toc"><strong>Dans cet article</strong>{article.sections.map(([title],index)=><button key={title} onClick={()=>scrollToId(`partie-${index+1}`)}><span>0{index+1}</span>{title}</button>)}</div><div className="article-side-cta"><BookOpenText weight="duotone"/><h3>Prolongez l’expérience</h3><p>Explorez un extrait pédagogique de démonstration pour prolonger la lecture.</p><RouteLink to="/decouvrir" className="button button-gold button-wide">Lire un extrait</RouteLink></div></aside></div><section className="related-section"><div className="blog-section-title"><div><span className="eyebrow">Pour continuer</span><h2>Articles associés</h2></div><RouteLink to="/blog" className="read-link">Retour au Blog <ArrowRight/></RouteLink></div><div className="blog-grid">{related.map(item=><BlogCard article={item} compact key={item.slug}/>)}</div></section></main><BlogFooter/></div>
+}
+
+function BlogFooter(){return <footer className="public-footer blog-footer"><Brand inverse/><div><strong>Le Mag</strong><RouteLink to="/blog">Tous les articles</RouteLink><RouteLink to="/blog/7-jeux-parler-francais-maison">Pour les parents</RouteLink><RouteLink to="/blog/plurilinguisme-force-classe">Pour les enseignants</RouteLink></div><div><strong>Jet d’Encre</strong><RouteLink to="/">Découvrir la méthode</RouteLink><RouteLink to="/connexion">Essayer la démonstration</RouteLink><RouteLink to="/guide-ecole">Guide d’accueil</RouteLink><RouteLink to="/pilote">Se connecter</RouteLink></div><div><strong>Informations</strong><RouteLink to="/mentions-legales">Mentions légales</RouteLink><RouteLink to="/confidentialite">Confidentialité</RouteLink><RouteLink to="/cookies">Cookies</RouteLink><RouteLink to="/accessibilite">Accessibilité</RouteLink></div><p className="copyright">© 2026 Jet d’Encre Éditions · Le Mag de démonstration · Coordonnées fictives dans les mentions</p></footer>}
 
 function AuthLayout({children,title,intro}){return <div className="auth-page zellige-section"><SkipLink targetId="auth-main">Aller au contenu principal</SkipLink><div className="auth-top"><RouteLink to="/"><Brand/></RouteLink><RouteLink to="/" className="back-link"><ArrowLeft/> Retour à l’accueil</RouteLink></div><main id="auth-main" className="auth-card" tabIndex="-1"><div className="auth-heading"><DemoBadge/><h1>{title}</h1><p>{intro}</p></div>{children}</main><p className="auth-note"><ShieldCheck weight="fill"/> Version BETA de démonstration · Les données restent sur cet appareil</p></div>}
 
-function ConnectionPage(){const roles=[["eleve",Student,"Élève","Je retrouve mon manuel, mes devoirs et mes progrès."],["parent",Users,"Parent","Je suis le parcours de mon enfant et ses échéances."],["enseignant",ChalkboardTeacher,"Enseignant","Je prépare mes cours et j’accompagne mes classes."],["directeur",Buildings,"Direction","Je pilote l’adoption pédagogique de mon établissement."],["admin",ShieldCheck,"Administration","Je gère les contenus, licences et opérations."]];return <AuthLayout title="Qui se connecte aujourd’hui ?" intro="Choisissez votre profil pour ouvrir l’espace de démonstration correspondant."><div className="role-grid">{roles.map(([role,Icon,title,copy])=><RouteLink to={`/connexion/${role}`} className={`role-card role-${role}`} key={role}><span className="role-icon"><Icon weight="duotone"/></span><span><strong>{title}</strong><small>{copy}</small></span><CaretRight weight="bold"/></RouteLink>)}</div><div className="auth-divider"><span>ou</span></div><RouteLink to="/activation" className="button button-gold button-wide"><Key weight="bold"/> Activer un nouveau manuel</RouteLink></AuthLayout>}
+function ConnectionPage(){const roles=[["eleve",Student,"Élève","Je retrouve mon manuel, mes devoirs et mes progrès."],["parent",Users,"Parent","Je suis le parcours de mon enfant et ses échéances."],["enseignant",ChalkboardTeacher,"Enseignant","Je prépare mes cours et j’accompagne mes classes."],["directeur",Buildings,"Direction","Je pilote l’adoption pédagogique de mon établissement."],["admin",ShieldCheck,"Administration","Je gère les contenus, licences et opérations."]];return <AuthLayout title="Choisir une démonstration" intro="Ces profils utilisent des données fictives enregistrées dans ce navigateur. Ils ne donnent aucun accès à un compte scolaire."><RouteLink to="/pilote" className="button button-dark button-wide">Ouvrir mon espace scolaire <ArrowRight/></RouteLink><div className="auth-divider"><span>ou explorer un profil fictif</span></div><div className="role-grid">{roles.map(([role,Icon,title,copy])=><RouteLink to={`/connexion/${role}`} className={`role-card role-${role}`} key={role}><span className="role-icon"><Icon weight="duotone"/></span><span><strong>{title}</strong><small>{copy}</small></span><CaretRight weight="bold"/></RouteLink>)}</div><div className="auth-divider"><span>ou</span></div><RouteLink to="/activation" className="button button-gold button-wide"><Key weight="bold"/> Tester l’activation d’un manuel</RouteLink></AuthLayout>}
 
 function LoginPage({role}){
   const config=roleConfigs[role]||roleConfigs.eleve;

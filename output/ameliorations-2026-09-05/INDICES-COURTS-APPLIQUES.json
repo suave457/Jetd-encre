@@ -1,0 +1,458 @@
+[
+  {
+    "gridId": "jet-encre-mf-facile-02",
+    "entryId": "F02-10",
+    "answer": "MATIN",
+    "oldCellClue": "Avant midi",
+    "newCellClue": "Début du jour",
+    "reason": "Désigne la partie initiale de la journée ; la limite à midi reste précisée dans la définition."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-04",
+    "entryId": "N04-08",
+    "answer": "TISSAGE",
+    "oldCellClue": "Entrelacement de fils",
+    "newCellClue": "Croiser des fils",
+    "reason": "Conserve l’action constitutive du tissage avec des mots courts."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-01",
+    "answer": "PHYSICIENS",
+    "oldCellClue": "Scientifiques de la matière",
+    "newCellClue": "Étudient la matière",
+    "reason": "Garde le domaine d’étude et le pluriel, sans le long mot « scientifiques »."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-09",
+    "answer": "IMAGE",
+    "oldCellClue": "Représentation visuelle",
+    "newCellClue": "Photo ou dessin",
+    "reason": "Donne deux exemples usuels de représentation visuelle."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-03",
+    "answer": "OPINION",
+    "oldCellClue": "Avis personnel",
+    "newCellClue": "Point de vue",
+    "reason": "Expression usuelle équivalente à un avis personnel."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-13",
+    "answer": "RÉPONSES",
+    "oldCellClue": "Informations données",
+    "newCellClue": "Après une question",
+    "reason": "Indice elliptique usuel ; l’indice complet précise ce qui est donné après des questions."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-04",
+    "entryId": "D04-04",
+    "answer": "AXE",
+    "oldCellClue": "Ligne principale",
+    "newCellClue": "Ligne repère",
+    "reason": "Conserve l’idée de direction de référence."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-04",
+    "entryId": "D04-01",
+    "answer": "RECYCLAGES",
+    "oldCellClue": "Transformations de déchets",
+    "newCellClue": "Nouvelles vies des déchets",
+    "reason": "Conserve une action sur les déchets ; leur transformation en ressources reste précisée à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-04",
+    "entryId": "D04-10",
+    "answer": "VENTS",
+    "oldCellClue": "Air en mouvement",
+    "newCellClue": "Souffles d’air",
+    "reason": "Conserve le mouvement de l’air et le pluriel."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-02",
+    "answer": "STUDIO",
+    "oldCellClue": "Lieu d’enregistrement",
+    "newCellClue": "Salle de radio",
+    "reason": "Évoque un usage courant de ce local, sans le mot long « enregistrement »."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-11",
+    "answer": "INDICES",
+    "oldCellClue": "Aident à comprendre",
+    "newCellClue": "Signes utiles",
+    "reason": "Conserve le rôle de signes qui orientent la compréhension ; l’aide complète précise leur fonction."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-01",
+    "entryId": "N05",
+    "answer": "TAJINE",
+    "oldCellClue": "Plat au couvercle conique",
+    "newCellClue": "Plat mijoté",
+    "reason": "Conserve la nature culinaire et la cuisson lente ; le couvercle conique reste dans l’aide complète."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-01",
+    "entryId": "N13",
+    "answer": "REMPART",
+    "oldCellClue": "Mur qui protège une ville",
+    "newCellClue": "Mur de défense",
+    "reason": "Garde la fonction protectrice du mur."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-01",
+    "entryId": "N01",
+    "answer": "MOSQUÉE",
+    "oldCellClue": "Lieu de prière musulman",
+    "newCellClue": "Lieu de prière",
+    "reason": "Conserve la fonction du lieu ; le culte concerné reste explicite à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-01",
+    "entryId": "N04",
+    "answer": "OASIS",
+    "oldCellClue": "Lieu vert dans le désert",
+    "newCellClue": "Îlot de verdure",
+    "reason": "Expression naturelle pour un espace fertile entouré de désert."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-01",
+    "entryId": "N03",
+    "answer": "ARGAN",
+    "oldCellClue": "Fruit d’un arbre marocain",
+    "newCellClue": "Fruit à huile",
+    "reason": "Garde le fruit et son utilisation ; l’origine marocaine reste dans l’indice complet."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-13",
+    "answer": "CITRON",
+    "oldCellClue": "Fruit jaune au goût acide",
+    "newCellClue": "Agrume acide",
+    "reason": "Associe une catégorie courante à une propriété gustative pertinente."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-05",
+    "answer": "LAIT",
+    "oldCellClue": "Boisson blanche nutritive",
+    "newCellClue": "Boisson blanche",
+    "reason": "Garde les deux caractéristiques directement compréhensibles."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-03",
+    "answer": "BLÉ",
+    "oldCellClue": "Céréale pour la farine",
+    "newCellClue": "Céréale du pain",
+    "reason": "Rattache la céréale à un aliment courant, sans lui réserver cet usage."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-07",
+    "answer": "MERGUEZ",
+    "oldCellClue": "Saucisse rouge épicée",
+    "newCellClue": "Saucisse épicée",
+    "reason": "Conserve la catégorie et un caractère distinctif."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-10",
+    "answer": "PÂTES",
+    "oldCellClue": "Aliments à base de farine",
+    "newCellClue": "Penne et nouilles",
+    "reason": "Donne deux exemples de ces aliments sans reprendre la réponse."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-02",
+    "entryId": "N02-11",
+    "answer": "MELON",
+    "oldCellClue": "Gros fruit rond et sucré",
+    "newCellClue": "Fruit d’été",
+    "reason": "Indice saisonnier courant ; la forme et la chair restent décrites à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-03",
+    "entryId": "N03-05",
+    "answer": "RIAD",
+    "oldCellClue": "Maison autour d’une cour",
+    "newCellClue": "Maison avec cour",
+    "reason": "Conserve la maison et son organisation autour d’un espace ouvert."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-03",
+    "entryId": "N03-07",
+    "answer": "TERRAIN",
+    "oldCellClue": "Espace de terre délimité",
+    "newCellClue": "Parcelle de terre",
+    "reason": "Désigne naturellement un espace de terre délimité."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-03",
+    "entryId": "N03-06",
+    "answer": "TAXI",
+    "oldCellClue": "Voiture avec chauffeur",
+    "newCellClue": "Avec chauffeur",
+    "reason": "Évoque la course facturée ; l’indice complet maintient la voiture avec chauffeur."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-03",
+    "entryId": "N03-08",
+    "answer": "VILLAGE",
+    "oldCellClue": "Petit ensemble de maisons",
+    "newCellClue": "Petit bourg",
+    "reason": "Emploie un indice de lieu habité, avec l’échelle réduite attendue."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-04",
+    "entryId": "N04-01",
+    "answer": "ÉTOFFE",
+    "oldCellClue": "Matière servant à coudre",
+    "newCellClue": "Tissu à coudre",
+    "reason": "Conserve la matière textile et son usage."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-04",
+    "entryId": "N04-09",
+    "answer": "TENUE",
+    "oldCellClue": "Ensemble de vêtements",
+    "newCellClue": "Habits portés",
+    "reason": "Garde le sens d’ensemble vestimentaire."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-05",
+    "entryId": "N05-02",
+    "answer": "NOUBA",
+    "oldCellClue": "Suite musicale andalouse",
+    "newCellClue": "Musique andalouse",
+    "reason": "Conserve la forme et la tradition culturelle ; la musique reste explicite dans l’aide complète."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-05",
+    "entryId": "N05-13",
+    "answer": "SACHET",
+    "oldCellClue": "Petit contenant souple",
+    "newCellClue": "Petit sac",
+    "reason": "Conserve la fonction et la petite taille, avec un mot courant."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-05",
+    "entryId": "N05-05",
+    "answer": "FÊTE",
+    "oldCellClue": "Moment joyeux partagé",
+    "newCellClue": "Moment de joie",
+    "reason": "Garde l’idée de célébration joyeuse sans la limiter à une journée."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-05",
+    "entryId": "N05-03",
+    "answer": "SON",
+    "oldCellClue": "Ce que l’oreille perçoit",
+    "newCellClue": "Ce qu’on entend",
+    "reason": "Formulation orale simple, centrée sur la perception auditive."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-05",
+    "entryId": "N05-06",
+    "answer": "CAPE",
+    "oldCellClue": "Vêtement sans manches",
+    "newCellClue": "Sans manches",
+    "reason": "Conserve un trait du vêtement, sans longue formulation."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-06",
+    "entryId": "N06-05",
+    "answer": "QUIZ",
+    "oldCellClue": "Jeu de questions courtes",
+    "newCellClue": "Jeu de questions",
+    "reason": "Conserve le principe du jeu, sans imposer la rapidité."
+  },
+  {
+    "gridId": "jet-encre-mf-normal-06",
+    "entryId": "N06-08",
+    "answer": "ÉCOLIER",
+    "oldCellClue": "Enfant qui suit les cours",
+    "newCellClue": "Jeune élève",
+    "reason": "Conserve la personne et sa situation scolaire."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-01",
+    "entryId": "D01",
+    "answer": "CLIMAT",
+    "oldCellClue": "Temps habituel d’une région",
+    "newCellClue": "Temps habituel",
+    "reason": "Indice thématique bref ; le caractère habituel et la longue durée restent explicites à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-01",
+    "entryId": "D07",
+    "answer": "DROIT",
+    "oldCellClue": "Ce que garantit la loi",
+    "newCellClue": "Garanti par la loi",
+    "reason": "Conserve la garantie légale sans utiliser de mot dérivé de la réponse."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-01",
+    "entryId": "D05",
+    "answer": "OZONE",
+    "oldCellClue": "Gaz qui absorbe les UV",
+    "newCellClue": "Gaz anti-UV",
+    "reason": "Garde l’effet évoqué ; la localisation dans la stratosphère reste donnée dans l’indice complet."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-06",
+    "answer": "OSMOSE",
+    "oldCellClue": "Eau traversant une membrane",
+    "newCellClue": "Eau via une membrane",
+    "reason": "Conserve le déplacement de l’eau ; membrane sélective et sens du passage restent définis à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-02",
+    "answer": "SPHÈRE",
+    "oldCellClue": "Surface d’une boule",
+    "newCellClue": "Surface de boule",
+    "reason": "Conserve la distinction entre surface et volume, avec une formulation nominale compacte."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-13",
+    "answer": "VITESSES",
+    "oldCellClue": "Rapports distance-durée",
+    "newCellClue": "Allures",
+    "reason": "Synonyme courant au pluriel ; la définition précise les rapports entre distances et durées."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-02",
+    "entryId": "D02-08",
+    "answer": "BOBINE",
+    "oldCellClue": "Fil électrique enroulé",
+    "newCellClue": "Fil enroulé",
+    "reason": "Conserve la forme caractéristique ; le rôle électrique reste dans l’indice complet."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-05",
+    "answer": "LIBÉRÉ",
+    "oldCellClue": "Délivré d’une contrainte",
+    "newCellClue": "Délivré",
+    "reason": "Synonyme au masculin singulier, cohérent avec la réponse."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-04",
+    "answer": "RUE",
+    "oldCellClue": "Voie entre des bâtiments",
+    "newCellClue": "Voie en ville",
+    "reason": "Conserve la voie de circulation et son cadre urbain."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-01",
+    "answer": "SOLIDARITÉ",
+    "oldCellClue": "Entraide dans un groupe",
+    "newCellClue": "Entraide",
+    "reason": "Nom usuel qui conserve l’idée de soutien mutuel."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-09",
+    "answer": "RÉUNI",
+    "oldCellClue": "Rassemblé avec d’autres",
+    "newCellClue": "Groupé",
+    "reason": "Synonyme au masculin singulier, sans modifier la forme attendue."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-12",
+    "answer": "AGENT",
+    "oldCellClue": "Chargé d’une mission",
+    "newCellClue": "En mission",
+    "reason": "Évoque la fonction de la personne ; son rôle reste précisé dans l’aide complète."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-03",
+    "entryId": "D03-08",
+    "answer": "LIBRES",
+    "oldCellClue": "Sans contrainte injuste",
+    "newCellClue": "Sans entrave",
+    "reason": "Conserve l’absence de contrainte sans le long mot « contrainte »."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-04",
+    "entryId": "D04-05",
+    "answer": "PLUIES",
+    "oldCellClue": "Eau tombée des nuages",
+    "newCellClue": "Averses",
+    "reason": "Indice météorologique usuel au pluriel."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-04",
+    "entryId": "D04-06",
+    "answer": "JUNGLE",
+    "oldCellClue": "Forêt tropicale dense",
+    "newCellClue": "Forêt dense",
+    "reason": "Conserve la densité de la végétation ; le milieu tropical reste précisé à la sélection."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-05",
+    "entryId": "D05-07",
+    "answer": "SCÈNE",
+    "oldCellClue": "Espace des artistes",
+    "newCellClue": "Plateau de théâtre",
+    "reason": "Désigne l’espace où jouent les artistes."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-05",
+    "entryId": "D05-08",
+    "answer": "POÉSIE",
+    "oldCellClue": "Art du rythme des mots",
+    "newCellClue": "Art des vers",
+    "reason": "Indice littéraire usuel ; la définition complète conserve aussi les sons, les images et le rythme."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-06",
+    "answer": "CAMÉRA",
+    "oldCellClue": "Enregistre des images",
+    "newCellClue": "Pour filmer",
+    "reason": "Conserve la fonction essentielle de l’appareil."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-07",
+    "answer": "ICÔNE",
+    "oldCellClue": "Symbole sur un écran",
+    "newCellClue": "Symbole à l’écran",
+    "reason": "Garde la représentation visuelle et son contexte numérique."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-12",
+    "answer": "LOCAL",
+    "oldCellClue": "Concerne un lieu proche",
+    "newCellClue": "Du coin",
+    "reason": "Conserve le sens de proximité territoriale."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-08",
+    "answer": "BILANS",
+    "oldCellClue": "Synthèses de résultats",
+    "newCellClue": "États des lieux",
+    "reason": "Expression usuelle pour des synthèses de situation, au pluriel."
+  },
+  {
+    "gridId": "jet-encre-mf-difficile-06",
+    "entryId": "D06-10",
+    "answer": "LIGNE",
+    "oldCellClue": "Relie plusieurs points",
+    "newCellClue": "Trait continu",
+    "reason": "Conserve la continuité du tracé."
+  }
+]

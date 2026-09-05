@@ -1,0 +1,150 @@
+{
+  "completeness": "partial",
+  "deferred": [
+    {
+      "id": "partial_monoliths",
+      "paths": [
+        "src/App.jsx",
+        "src/demoStoreCore.js",
+        "src/routeCore.js",
+        "src/features/mediatheque/PdfReader.jsx",
+        "src/features/mediatheque/StudentMediaLibrary.jsx",
+        "src/features/mediatheque/mediaLibraryCore.js",
+        "worker/pilot/api.js",
+        "worker/pilot/games.js"
+      ],
+      "reason": "Seuls les chemins source\u2192contr\u00f4le\u2192consommateur cit\u00e9s dans les surfaces ont \u00e9t\u00e9 examin\u00e9s ; aucune affirmation de revue int\u00e9grale de ces fichiers."
+    },
+    {
+      "id": "other_unreviewed_implementations",
+      "paths": [
+        "src/PenAlignedPages.jsx",
+        "src/LegalPages.jsx",
+        "src/features/achievements",
+        "src/features/beta-admin",
+        "src/features/beta-data",
+        "src/features/beta-roles",
+        "src/features/question-bank",
+        "src/features/games/class-challenges",
+        "src/features/games/DailyChallenge.jsx",
+        "src/features/games/dailyChallengeData.js",
+        "src/features/games/market-shop",
+        "src/features/games/mots-fleches",
+        "src/features/games/word-choice",
+        "src/features/games/mission-zellige",
+        "tests",
+        "db",
+        "drizzle",
+        "worker/index.js",
+        "worker/pilot/admin.js",
+        "worker/pilot/oidc.js"
+      ],
+      "reason": "Le mandat borne le compl\u00e9ment. Ces autres impl\u00e9mentations diff\u00e9r\u00e9es ne sont pas closes ; les examens ant\u00e9rieurs ou tests par d\u2019autres t\u00e2ches ne remplacent pas une revue source dans ce scan."
+    },
+    {
+      "id": "runtime_and_release",
+      "paths": [
+        "wrangler.test.example.jsonc",
+        "PUBLIC-LAUNCH-READINESS.md"
+      ],
+      "reason": "Pas de validation dynamique locale ou distante dans ce compl\u00e9ment ; final tests et publication restent \u00e0 la t\u00e2che principale. Configuration r\u00e9elle, comptes, consentements, charge et services OIDC/D1 non observ\u00e9s."
+    }
+  ],
+  "documentType": "codex-security.coverage",
+  "excludePaths": [],
+  "explicitExclusions": [
+    {
+      "pattern": ".env*, *.local.jsonc, .local-data/**, .local-media/**",
+      "reason": "Secrets et \u00e9tat priv\u00e9 non n\u00e9cessaires, ni lus ni reproduits."
+    },
+    {
+      "pattern": "node_modules/**, dist/**, src/features/mediatheque/vendor/**, public/assets/**",
+      "reason": "D\u00e9pendances, sorties de build, parseurs PDF embarqu\u00e9s et binaires non audit\u00e9s dans ce compl\u00e9ment."
+    },
+    {
+      "pattern": "output/audit-2026-09-05/securite/**",
+      "reason": "Scan ant\u00e9rieur scell\u00e9 conserv\u00e9 sans modification ; seule sa couverture est lue comme contexte, sans reprise de ses conclusions comme preuve de cette revue."
+    }
+  ],
+  "fullyReviewedFiles": [
+    "scripts/prerender-public.mjs",
+    "src/main.jsx",
+    "src/demoStore.jsx",
+    "src/ParentPages.jsx",
+    "src/parentDataCore.js",
+    "src/learningActivityCore.js",
+    "src/StudentCultureQuiz.jsx",
+    "src/features/games/quizEngine.js",
+    "src/localDataReset.js",
+    "src/AppErrorBoundary.jsx",
+    "src/mediaAssets.js",
+    "src/accessibilityPreferences.js",
+    "src/PublicInfoPage.jsx",
+    "src/publicContent.js",
+    "src/publicContentArticles.js",
+    "src/features/pilote/PilotApp.jsx",
+    "src/features/pilote/PilotCrosswords.jsx",
+    "src/features/pilote/gameSync.js",
+    "src/features/mediatheque/pdfReadingState.js",
+    "src/features/mediatheque/pdfReaderCore.js",
+    "src/features/mediatheque/useTranscriptPreference.js",
+    "src/features/mediatheque/localPdfCore.js",
+    "worker/pilot/session.js",
+    "tests/local-data-reset.test.mjs"
+  ],
+  "includePaths": [
+    "."
+  ],
+  "inventoryStrategy": "repository",
+  "mode": "repository",
+  "openQuestions": [
+    {
+      "followUpPrompt": "Faire valider la pr\u00e9paration de lancement et le p\u00e9rim\u00e8tre du pilote par les responsables ; ce scan de source local ne v\u00e9rifie pas ces pr\u00e9requis.",
+      "question": "Les conditions d\u2019accueil de donn\u00e9es r\u00e9elles, l\u2019origine finale, le fournisseur d\u2019identit\u00e9 et les r\u00e9glages Cloudflare/OIDC seront-ils valid\u00e9s s\u00e9par\u00e9ment avant ouverture ?"
+    },
+    {
+      "followUpPrompt": "V\u00e9rifier la provenance/version et les avis de s\u00e9curit\u00e9 dans une t\u00e2che autoris\u00e9e distincte ; aucun avis externe consult\u00e9 ici.",
+      "question": "Quel processus garantira la mise \u00e0 jour et la revue de s\u00e9curit\u00e9 des biblioth\u00e8ques PDF.js embarqu\u00e9es ?"
+    },
+    {
+      "followUpPrompt": "Partir des chemins deferred de ce compl\u00e9ment et du pr\u00e9c\u00e9dent sans marquer les tests ou recherches ponctuelles comme audits complets.",
+      "question": "Quelles impl\u00e9mentations du reste de la couverture partielle feront l\u2019objet d\u2019une prochaine revue cibl\u00e9e ?"
+    }
+  ],
+  "scanId": "a8ecc449-af04-41e2-925a-4775ba6ae5a9",
+  "schemaVersion": "1.0",
+  "surfaces": [
+    {
+      "disposition": "no_issue_found",
+      "id": "demo_school_authority",
+      "label": "S\u00e9paration des identit\u00e9s d\u00e9mo et scolaires et cache de grilles",
+      "notes": "src/main.jsx:17-21 s\u00e9pare DemoProvider des applications scolaires ; src/demoStoreCore.js:622-627,657-684,762-849 authentifie uniquement les comptes fictifs en stockage local. worker/pilot/api.js:127-136 forme le contexte depuis authenticate/membership ; worker/pilot/session.js:21-25,59-69 impose cookie d\u2019assurance attendu, origine et CSRF. GameSync v\u00e9rifie userId/schoolId aux fronti\u00e8res (gameSync.js:15,65), ne lit pas le store d\u00e9mo. Observation op\u00e9rationnelle de reset r\u00e9solue par le parent : gameSync.js:9 utilise jde-school.crosswords.v1:, hors pr\u00e9fixes localDataReset.js:1 ; tests/local-data-reset.test.mjs:35,43,57-58 pr\u00e9servent les deux stockages. Aucun franchissement d\u2019autorit\u00e9 confirm\u00e9 ; pas une vuln\u00e9rabilit\u00e9 retenue.",
+      "receiptRefs": [],
+      "riskArea": "Authentication and storage boundaries"
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "parent_student_rendering",
+      "label": "Affichage parent/\u00e9l\u00e8ve et \u00e9quivalence d\u2019acc\u00e8s du r\u00e9sum\u00e9 scolaire",
+      "notes": "ParentPages.jsx:184-190 utilise l\u2019\u00e9l\u00e8ve fictif du store ; profils born\u00e9s \u00e0 une allowlist (parentDataCore.js:4-18), textes de messages/devoirs rendus en React (ParentPages.jsx:107,156-158). Le parcours connect\u00e9 n\u2019utilise pas ces fonctions pour accorder des droits : worker/pilot/games.js:149-186 v\u00e9rifie famille/\u00e9cole/membership/classe actifs et interdit au parent les cases et \u00e9critures. PilotGameSummary contr\u00f4le userId et schoolId (PilotCrosswords.jsx:56-65). PilotApp.jsx:63-81,94-111,125-129 purge et invalide l\u2019\u00e9tat au changement d\u2019identit\u00e9/erreurs d\u2019acc\u00e8s. StudentCultureQuiz.jsx et quizEngine.js produisent des points locaux par callbacks, sans fetch ; App.jsx:697-716,879 raccorde seulement le store d\u00e9mo. Les fonctions restantes du monolithe ne sont pas d\u00e9clar\u00e9es relues.",
+      "receiptRefs": [],
+      "riskArea": "Tenant isolation and output encoding"
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "public_prerender",
+      "label": "Pr\u00e9-rendu public, m\u00e9tadonn\u00e9es et contenu \u00e9ditorial",
+      "notes": "scripts/prerender-public.mjs:18-35 appelle PublicPreview ; src/App.jsx:210-214 consomme blogArticles statiques et PublicInfoPage, sans DemoProvider, session ou fetch. Chemins seulement PUBLIC_PREVIEW_PATHS embarqu\u00e9s (publicContent.js:73), valeurs metadata \u00e9chapp\u00e9es (prerender-public.mjs:15,24-30), titres/corps rendus comme texte React (PublicInfoPage.jsx:10-15 ; App.jsx:286). src/publicContent.js:74-81 limite l\u2019origine canonique \u00e0 HTTPS sans userinfo ni chemin ; opt-in explicite et refus des h\u00f4tes de staging aux lignes109-125. Pas de source distante ni de publication d\u2019\u00e9tat du navigateur constat\u00e9e. Les imports de tout App.jsx ne sont pas une preuve d\u2019audit int\u00e9gral du monolithe.",
+      "receiptRefs": [],
+      "riskArea": "Public disclosure and HTML injection"
+    },
+    {
+      "disposition": "no_issue_found",
+      "id": "media_pdf_state",
+      "label": "Sources m\u00e9dia et nouvelle persistance du lecteur PDF",
+      "notes": "StudentMediaLibrary.jsx:28,269-295 limite le catalogue au contenu embarqu\u00e9 et au PDF explicitement choisi ; blob URL lib\u00e9r\u00e9e \u00e0279, identit\u00e9 lecteur provenant du profil \u00e9l\u00e8ve d\u00e9mo \u00e0262-264. localPdfCore.js:22-33 v\u00e9rifie taille/type/signature, sans upload. PdfReader.jsx:223 charge PDF.js local avec \u00e9valuation et XFA d\u00e9sactiv\u00e9s ; \u00e9tat r\u00e9tabli seulement apr\u00e8s document valide \u00e0235-244. pdfReadingState.js:12-18 refuse utilisateur/livre absents et source blob/data ; JSON de lecture <=512 caract\u00e8res, page/zoom/mode normalis\u00e9s \u00e021-48. pdfReaderCore.js:48-65 borne le bitmap \u00e06M pixels/dimension4096. Les URL source des liens PDF proviennent de ce catalogue/blob, pas d\u2019un champ arbitraire re\u00e7u d\u2019un autre utilisateur. Pas de conclusion sur les vuln\u00e9rabilit\u00e9s internes de PDF.js.",
+      "receiptRefs": [],
+      "riskArea": "Local file handling and bounded browser state"
+    }
+  ]
+}

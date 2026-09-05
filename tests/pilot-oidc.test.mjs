@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHash, KeyObject, sign, webcrypto } from "node:crypto";
-import { handleOidc } from "../worker/pilot/oidc.js";
+import { handleOidc, limitAuthStarts } from "../worker/pilot/oidc.js";
 import { issueSession, hash } from "../worker/pilot/session.js";
 import { openPilotDatabase, seedLocalPilot } from "../scripts/pilot-local-store.mjs";
 const keyOptions = { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" };
@@ -205,7 +205,41 @@ test("OIDC réel : signatures, transactions, cookies, rejouement et limites", { 
     assert.equal(h.countFlows(), 12);
     const buckets = h.sqlite.prepare("SELECT bucket,attempts FROM pilot_auth_limits").all();
     assert.equal(buckets.find(row => row.bucket !== "global").attempts, 12);
+    assert.equal(buckets.find(row => row.bucket === "global").attempts, 12);
     assert.ok(buckets.every(row => row.bucket === "global" || /^[a-f0-9]{64}$/.test(row.bucket)));
+    for (let i = 13; i < 300; i++) assert.equal((await h.begin()).response.status, 429);
+    assert.equal(h.sqlite.prepare("SELECT attempts FROM pilot_auth_limits WHERE bucket='global'").get().attempts, 12);
+    assert.equal((await h.begin({"CF-Connecting-IP":"192.0.2.21"})).response.status, 303);
+  });
+
+  await t.test("les appels concurrents conservent les plafonds individuel et global", async t => {
+    const h=setup(t);t.mock.method(Date,"now",()=>1800000000000);
+    const admit=async peer=>{try{await limitAuthStarts(h.env.DB,new Request(h.origin+"/api/pilot/auth/start",{headers:{"CF-Connecting-IP":peer}}),h.env);return 200;}catch(error){if(error instanceof Response)return error.status;throw error;}};
+    const same=await Promise.all(Array.from({length:40},()=>admit("192.0.2.30")));
+    assert.equal(same.filter(status=>status===200).length,12);
+    assert.equal(same.filter(status=>status===429).length,28);
+    assert.equal(h.sqlite.prepare("SELECT attempts FROM pilot_auth_limits WHERE bucket='global'").get().attempts,12);
+    h.sqlite.prepare("UPDATE pilot_auth_limits SET attempts=299 WHERE bucket='global'").run();
+    const distinct=await Promise.all(Array.from({length:8},(_,i)=>admit(`192.0.2.${40+i}`)));
+    assert.equal(distinct.filter(status=>status===200).length,1);
+    assert.equal(distinct.filter(status=>status===429).length,7);
+    assert.equal(h.sqlite.prepare("SELECT attempts FROM pilot_auth_limits WHERE bucket='global'").get().attempts,300);
+    assert.equal(h.sqlite.prepare("SELECT COUNT(*) AS n FROM pilot_auth_limits WHERE bucket<>'global'").get().n,2);
+    await Promise.all(Array.from({length:400},(_,i)=>admit(`2001:db8::${i.toString(16)}`)));
+    assert.equal(h.sqlite.prepare("SELECT COUNT(*) AS n FROM pilot_auth_limits WHERE bucket<>'global'").get().n,2);
+  });
+
+  await t.test("une demande retardée ne remet pas un compteur à une ancienne minute", async t => {
+    const h=setup(t);let clock=1800000000000;t.mock.method(Date,"now",()=>clock);
+    let release,paused;const pause=new Promise(resolve=>{paused=resolve;});const gate=new Promise(resolve=>{release=resolve;});
+    const delayedDb={batch:statements=>h.env.DB.batch(statements),prepare(sql){const statement=h.env.DB.prepare(sql);if(!sql.startsWith("DELETE FROM pilot_auth_limits"))return statement;return {bind(...values){const bound=statement.bind(...values);return {async run(){paused();await gate;return bound.run();}};}};}};
+    const request=new Request(h.origin+"/api/pilot/auth/start",{headers:{"CF-Connecting-IP":"192.0.2.50"}});
+    const delayed=limitAuthStarts(delayedDb,request,h.env).then(()=>200,error=>{if(error instanceof Response)return error.status;throw error;});
+    await pause;clock+=60000;
+    await limitAuthStarts(h.env.DB,request,h.env);
+    const before=h.sqlite.prepare("SELECT bucket,window,attempts FROM pilot_auth_limits ORDER BY bucket").all();
+    release();assert.equal(await delayed,429);
+    assert.deepEqual(h.sqlite.prepare("SELECT bucket,window,attempts FROM pilot_auth_limits ORDER BY bucket").all(),before);
   });
 
   await t.test("le compteur par pair repart dans la fenêtre suivante", async t => {

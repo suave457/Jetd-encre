@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { MOTS_FLECHES_GRIDS, MOTS_FLECHES_TOTAL_XP } from "../src/features/games/mots-fleches/motsFlechesData.js";
 import {
   applyTypedLetter,
@@ -20,9 +21,20 @@ import {
   revealEntryLetter,
   resolveMotsFlechesReward,
 } from "../src/features/games/mots-fleches/motsFlechesEngine.js";
+import { applyEntryText, getMotsFlechesLetters, isMotsFlechesShortcut } from "../src/features/games/mots-fleches/motsFlechesInput.js";
 import { createDemoStore, createMemoryStorage, DEMO_ACCOUNTS } from "../src/demoStoreCore.js";
 
 const fixedClock = () => new Date("2026-09-01T12:00:00.000Z");
+
+function extractGameHandlers(names) {
+  const source = readFileSync(new URL("../src/features/games/mots-fleches/MotsFlechesGame.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  return names.map((name) => {
+    const start = source.indexOf(`  function ${name}(`);
+    const end = source.indexOf("\n  }\n", start);
+    assert.ok(start >= 0 && end > start, name);
+    return source.slice(start, end + 5);
+  }).join("\n");
+}
 
 const CLEAN_MAGAZINE_GRID = {
   rows: 7,
@@ -295,6 +307,92 @@ test("la comparaison accepte une saisie sans accent", () => {
 test("une lettre juste sans accent reprend la graphie canonique", () => {
   const progress = applyTypedLetter({}, "0:0", "e", "É");
   assert.equal(progress["0:0"], "É");
+});
+
+test("une saisie groupée remplit le mot horizontal ou vertical en conservant les accents", () => {
+  const model = buildGridModel(MOTS_FLECHES_GRIDS[0]);
+  for (const entryId of ["F01", "F02"]) {
+    const entry = model.entries.get(entryId);
+    const empty = createEmptyProgress(model);
+    const typed = entryId === "F01" ? "e\u0301cole" : "livre";
+    const result = applyEntryText(empty, model, entry, entry.cells[0].key, typed);
+    assert.equal(getEntryValidation(entry, result.progress, model).status, "correct");
+    assert.equal(result.nextIndex, entry.cells.length - 1);
+    assert.equal(Object.values(empty).some(Boolean), false, "la progression source reste intacte");
+  }
+});
+
+test("une saisie groupée s'arrête à la fin du mot sans écraser sa dernière lettre", () => {
+  const model = buildGridModel(MOTS_FLECHES_GRIDS[0]);
+  const entry = model.entries.get("F01");
+  const empty = createEmptyProgress(model);
+  const result = applyEntryText(empty, model, entry, entry.cells[3].key, "le surplus");
+  assert.equal(result.acceptedCount, 2);
+  assert.equal(result.progress[entry.cells[3].key], "L");
+  assert.equal(result.progress[entry.cells[4].key], "E");
+  assert.equal(Object.values(result.progress).filter(Boolean).length, 2);
+  assert.equal(applyEntryText(empty, model, entry, "0:0", "EC").progress, empty);
+});
+
+test("les raccourcis système et une composition en cours ne deviennent pas des lettres", () => {
+  for (const guard of ["ctrlKey", "metaKey", "altKey", "isComposing"]) {
+    assert.equal(isMotsFlechesShortcut({ key: "a", [guard]: true }), true, guard);
+  }
+  assert.equal(isMotsFlechesShortcut({ key: "a", nativeEvent: { isComposing: true } }), true);
+  assert.equal(isMotsFlechesShortcut({ key: "a", keyCode: 229 }), true);
+  assert.equal(isMotsFlechesShortcut({ key: "É", shiftKey: true }), false);
+  assert.deepEqual(getMotsFlechesLetters("e\u0301 ç œ 123 !"), ["é", "ç", "œ"]);
+});
+
+test("des frappes consécutives atteignent cinq cases avant toute animation du navigateur", () => {
+  const model = buildGridModel(MOTS_FLECHES_GRIDS[0]);
+  const entry = model.entries.get("F01");
+  const handlers = extractGameHandlers(["focusCell", "goToEntryCell", "typeInEntry", "handleCellKeyDown"]);
+  let focusedKey = entry.cells[0].key;
+  const frames = [];
+  const context = {
+    model, activeEntryId: entry.id, progress: createEmptyProgress(model),
+    applyEntryText, getMotsFlechesLetters, isMotsFlechesShortcut, cellKey,
+    inputCursorRef: { current: { entryId: entry.id, key: focusedKey } },
+    window: { requestAnimationFrame: (callback) => frames.push(callback) },
+    cellRefs: { current: { get: (key) => ({ focus: () => { focusedKey = key; } }) } },
+    setActiveCellKey() {}, setIncorrectKeys() {}, setFeedback() {},
+  };
+  context.updateProgress = (updater) => { context.progress = updater(context.progress); };
+  runInNewContext(handlers, context);
+  for (const key of "ECOLE") {
+    context.handleCellKeyDown({ key, preventDefault() {} }, model.cells.get(focusedKey));
+  }
+  assert.equal(getEntryValidation(entry, context.progress, model).status, "correct");
+  assert.equal(entry.cells.map(({ key }) => context.progress[key]).join(""), "ÉCOLE");
+  assert.equal(focusedKey, entry.cells.at(-1).key);
+});
+
+test("une composition tactile est validée une seule fois avec ou sans événement input final", () => {
+  const model = buildGridModel(MOTS_FLECHES_GRIDS[0]);
+  const entry = model.entries.get("F01");
+  const handlers = extractGameHandlers(["commitDirectInput", "handleDirectInput", "handleCompositionEnd"]);
+  for (const withFinalInput of [true, false]) {
+    const input = { value: "é", isConnected: true };
+    const frames = [];
+    const committed = [];
+    const context = {
+      model,
+      inputCursorRef: { current: { entryId: entry.id, key: entry.cells[0].key } },
+      isComposingRef: { current: true }, compositionFrameRef: { current: null },
+      window: { requestAnimationFrame: (callback) => frames.push(callback), cancelAnimationFrame() {} },
+      typeInEntry: (text) => committed.push(text),
+    };
+    runInNewContext(handlers, context);
+    context.handleDirectInput({ currentTarget: input, nativeEvent: { isComposing: true } });
+    assert.equal(input.value, "é");
+    assert.equal(committed.length, 0);
+    context.handleCompositionEnd({ currentTarget: input });
+    if (withFinalInput) context.handleDirectInput({ currentTarget: input, nativeEvent: { isComposing: false } });
+    for (const callback of frames) callback();
+    assert.deepEqual(committed, ["é"]);
+    assert.equal(input.value, "");
+  }
 });
 
 test("une grille incomplète ou fautive ne peut pas être terminée", () => {

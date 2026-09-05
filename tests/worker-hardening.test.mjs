@@ -7,6 +7,15 @@ import worker from "../worker/index.js";
 const base = "https://example.test";
 const authorization = "Bearer private-token";
 const bytes = (value) => new TextEncoder().encode(value);
+test('pilot server errors share a support reference without exposing exception data', async t => {
+  const logs=[];t.mock.method(console,'error',value=>logs.push(JSON.parse(value)));
+  const env={PILOT_ENABLED:'true',PILOT_ORIGIN:base,OIDC_ISSUER:'https://identity.example.test',OIDC_CLIENT_ID:'fixture-client',OIDC_CLIENT_SECRET:'fixture-secret-not-real',DB:{prepare(){throw new Error('private exception must not escape');}}};
+  const response=await worker.fetch(new Request(base+'/api/pilot/auth/start'),env);
+  const body=await response.json();
+  assert.equal(response.status,503);assert.equal(response.headers.get('X-Request-ID'),body.reference);
+  assert.deepEqual(logs,[{reference:body.reference,operation:'pilot',code:'request_failed'}]);
+  assert.equal(JSON.stringify(body).includes('private exception'),false);
+});
 const pdf = bytes("%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj\n%%EOF\n");
 function harness(mimeType = "application/pdf", status = "uploading") {
   const writes = []; const queries = [];
@@ -140,6 +149,11 @@ test("real SQLite migrations satisfy readiness; missing schema returns unavailab
     assert.equal((await response.json()).storage.schema, "checked");
     assert.equal(sqlite.prepare("PRAGMA integrity_check").get().integrity_check, "ok");
     assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+    const pilotEnv={DB,PILOT_ENABLED:'true',PILOT_ORIGIN:base,OIDC_ISSUER:'https://identity.example.test',OIDC_CLIENT_ID:'fixture',OIDC_CLIENT_SECRET:'fixture-not-real'};
+    const pilotReady=await worker.fetch(new Request(`${base}/api/v1/ready`),pilotEnv);
+    assert.equal(pilotReady.status,200);assert.equal((await pilotReady.json()).identityAssurance,'oidc');
+    sqlite.exec('DROP TABLE pilot_game_awards');
+    assert.equal((await worker.fetch(new Request(`${base}/api/v1/ready`),pilotEnv)).status,503);
     sqlite.exec("DROP TABLE beta_media_assets");
     assert.equal((await worker.fetch(new Request(`${base}/api/v1/ready`), { DB })).status, 503);
   } finally { sqlite.close(); }

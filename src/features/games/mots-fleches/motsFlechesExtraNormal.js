@@ -89,7 +89,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "BLÉ",
         clue: "Céréale utilisée pour fabriquer de la farine",
-        cellClue: "Céréale pour la farine",
+        cellClue: "Céréale du pain",
         definition: "Céréale cultivée pour ses grains, principalement transformés en farine.",
         lexicalLabel: "nom masculin",
         example: "Le blé mûrit dans les champs avant la récolte.",
@@ -107,7 +107,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "LAIT",
         clue: "Liquide blanc produit par certains animaux",
-        cellClue: "Boisson blanche nutritive",
+        cellClue: "Boisson blanche",
         definition: "Liquide blanc et nourrissant produit par les femelles de certains mammifères.",
         lexicalLabel: "nom masculin",
         example: "Le lait chaud accompagne parfois le petit déjeuner.",
@@ -125,7 +125,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "MERGUEZ",
         clue: "Fine saucisse rouge généralement bien épicée",
-        cellClue: "Saucisse rouge épicée",
+        cellClue: "Saucisse épicée",
         definition: "Fine saucisse rouge préparée avec de la viande et plusieurs épices.",
         lexicalLabel: "nom féminin",
         example: "La merguez cuit doucement sur le gril familial.",
@@ -152,7 +152,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "PÂTES",
         clue: "Aliments préparés avec de la farine et de l’eau",
-        cellClue: "Aliments à base de farine",
+        cellClue: "Penne et nouilles",
         definition: "Aliments obtenus avec une préparation de farine et d’eau, puis découpés en formes variées.",
         lexicalLabel: "nom féminin pluriel",
         example: "Les pâtes cuisent dans une grande casserole d’eau.",
@@ -161,7 +161,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "MELON",
         clue: "Gros fruit rond à la chair très juteuse",
-        cellClue: "Gros fruit rond et sucré",
+        cellClue: "Fruit d’été",
         definition: "Gros fruit rond à peau épaisse, dont la chair sucrée contient beaucoup d’eau.",
         lexicalLabel: "nom masculin",
         example: "Le melon frais est partagé après le déjeuner.",
@@ -179,7 +179,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "CITRON",
         clue: "Fruit jaune dont le jus a un goût très acide",
-        cellClue: "Fruit jaune au goût acide",
+        cellClue: "Agrume acide",
         definition: "Fruit jaune de forme ovale, riche en jus et reconnaissable à son goût acide.",
         lexicalLabel: "nom masculin",
         example: "On presse un citron sur la salade marocaine.",
@@ -232,7 +232,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "RIAD",
         clue: "Maison marocaine organisée autour d’une cour intérieure",
-        cellClue: "Maison autour d’une cour",
+        cellClue: "Maison avec cour",
         definition: "Maison traditionnelle marocaine construite autour d’une cour ou d’un jardin intérieur.",
         lexicalLabel: "nom masculin",
         example: "Le riad possède une cour calme avec une fontaine.",
@@ -241,7 +241,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "TAXI",
         clue: "Voiture avec chauffeur que l’on paie pour un trajet",
-        cellClue: "Voiture avec chauffeur",
+        cellClue: "Avec chauffeur",
         definition: "Voiture conduite par un professionnel qui transporte des passagers contre paiement.",
         lexicalLabel: "nom masculin",
         example: "Nous prenons un taxi pour rejoindre la médina.",
@@ -250,7 +250,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "TERRAIN",
         clue: "Espace de terre délimité pour un usage précis",
-        cellClue: "Espace de terre délimité",
+        cellClue: "Parcelle de terre",
         definition: "Espace de terre défini par des limites et destiné à une activité particulière.",
         lexicalLabel: "nom masculin",
         example: "Le terrain près du douar sert aux jeux des enfants.",
@@ -259,7 +259,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "VILLAGE",
         clue: "Petit ensemble de maisons situé à la campagne",
-        cellClue: "Petit ensemble de maisons",
+        cellClue: "Petit bourg",
         definition: "Petite agglomération rurale composée de maisons et de quelques services.",
         lexicalLabel: "nom masculin",
         example: "Le village se réunit chaque semaine autour du marché.",
@@ -270,8 +270,8 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
         clue: "Grande plante aux feuilles épaisses terminées en pointe",
         cellClue: "Plante aux feuilles épaisses",
         definition: "Grande plante des régions chaudes portant de longues feuilles épaisses et pointues.",
-        lexicalLabel: "nom féminin",
-        example: "Une agave pousse au bord de la route côtière.",
+        lexicalLabel: "nom masculin",
+        example: "Un agave pousse au bord de la route côtière.",
         sourceSlug: "agave",
       },
       {
@@ -321,7 +321,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "ÉTOFFE",
         clue: "Matière souple fabriquée avec des fils et utilisée pour coudre",
-        cellClue: "Matière servant à coudre",
+        cellClue: "Tissu à coudre",
         definition: "Matière textile souple obtenue par l’assemblage de fils et destinée à la couture.",
         lexicalLabel: "nom féminin",
         example: "Cette étoffe colorée servira à confectionner un coussin.",
@@ -384,7 +384,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "TISSAGE",
         clue: "Action d’entrelacer des fils pour former un textile",
-        cellClue: "Entrelacement de fils",
+        cellClue: "Croiser des fils",
         definition: "Action d’entrecroiser des fils tendus afin de fabriquer une matière textile.",
         lexicalLabel: "nom masculin",
         example: "Le tissage de ce motif demande beaucoup de patience.",
@@ -393,7 +393,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "TENUE",
         clue: "Ensemble de vêtements portés au même moment",
-        cellClue: "Ensemble de vêtements",
+        cellClue: "Habits portés",
         definition: "Ensemble des vêtements choisis et portés par une personne à une occasion donnée.",
         lexicalLabel: "nom féminin",
         example: "Sa tenue de fête comporte une ceinture brodée.",
@@ -431,7 +431,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
         clue: "Artisan qui façonne des objets avec de l’argile",
         cellClue: "Artisan qui travaille l’argile",
         definition: "Artisan qui modèle puis fait cuire l’argile pour créer des objets utiles ou décoratifs.",
-        lexicalLabel: "nom masculin ou féminin",
+        lexicalLabel: "nom masculin",
         example: "Le potier tourne un grand plat dans son atelier.",
         sourceSlug: "potier",
       },
@@ -456,7 +456,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "NOUBA",
         clue: "Suite de chants et de morceaux de la musique andalouse",
-        cellClue: "Suite musicale andalouse",
+        cellClue: "Musique andalouse",
         definition: "Suite organisée de pièces vocales et instrumentales issue de la tradition andalouse.",
         lexicalLabel: "nom féminin",
         example: "L’orchestre interprète une nouba lors du concert.",
@@ -465,7 +465,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "SON",
         clue: "Ce que l’oreille perçoit lorsqu’un objet vibre",
-        cellClue: "Ce que l’oreille perçoit",
+        cellClue: "Ce qu’on entend",
         definition: "Ce que l’oreille perçoit lorsqu’une vibration se propage dans l’air ou dans une matière.",
         lexicalLabel: "nom masculin",
         example: "Le son du tambour annonce le début du spectacle.",
@@ -483,7 +483,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "FÊTE",
         clue: "Moment joyeux partagé pour célébrer un événement",
-        cellClue: "Moment joyeux partagé",
+        cellClue: "Moment de joie",
         definition: "Moment collectif organisé pour célébrer un événement dans une atmosphère joyeuse.",
         lexicalLabel: "nom féminin",
         example: "Toute la famille se réunit pour la fête du village.",
@@ -492,7 +492,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "CAPE",
         clue: "Vêtement sans manches posé sur les épaules",
-        cellClue: "Vêtement sans manches",
+        cellClue: "Sans manches",
         definition: "Vêtement ample et sans manches qui couvre les épaules et une partie du corps.",
         lexicalLabel: "nom féminin",
         example: "La cape brodée complète le costume de scène.",
@@ -555,7 +555,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "SACHET",
         clue: "Petit contenant souple fermé sur les côtés",
-        cellClue: "Petit contenant souple",
+        cellClue: "Petit sac",
         definition: "Petit contenant léger et souple utilisé pour conserver ou transporter une petite quantité.",
         lexicalLabel: "nom masculin",
         example: "Le marchand remplit un sachet de pétales parfumés.",
@@ -608,8 +608,8 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "QUIZ",
         clue: "Jeu composé de plusieurs questions courtes",
-        cellClue: "Jeu de questions courtes",
-        definition: "Jeu ou exercice formé de questions brèves auxquelles il faut répondre rapidement.",
+        cellClue: "Jeu de questions",
+        definition: "Jeu ou exercice formé de questions courtes pour vérifier ou enrichir ses connaissances.",
         lexicalLabel: "nom masculin",
         example: "Le quiz permet de revoir le vocabulaire de la semaine.",
         sourceSlug: "quiz",
@@ -635,7 +635,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "ÉCOLIER",
         clue: "Enfant qui apprend dans une classe primaire",
-        cellClue: "Enfant qui suit les cours",
+        cellClue: "Jeune élève",
         definition: "Enfant qui fréquente un établissement d’enseignement primaire.",
         lexicalLabel: "nom masculin",
         example: "Chaque écolier prépare son cahier avant la leçon.",
@@ -644,7 +644,7 @@ export const EXTRA_NORMAL_GRIDS = Object.freeze([
       {
         answer: "FILLE",
         clue: "Enfant ou jeune personne de sexe féminin",
-        cellClue: "Jeune personne féminine",
+        cellClue: "Féminin de « garçon »",
         definition: "Enfant ou jeune personne de sexe féminin, par opposition à un garçon.",
         lexicalLabel: "nom féminin",
         example: "La fille présente le résultat au reste de la classe.",

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { createServer, loadEnv } from "vite";
-import { PUBLIC_PREVIEW_PATHS, getPageMetadata, getSiteOrigin } from "../src/publicContent.js";
+import { PUBLIC_PREVIEW_PATHS, getPageMetadata, getSiteOrigin, isPublicIndexingEnabled, buildPublicSitemap, buildPublicRobots } from "../src/publicContent.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const client = join(root, "dist", "client");
@@ -12,7 +12,7 @@ const template = await readFile(join(client, "index.html"), "utf8");
 if (!template.includes('<div id="root"></div>')) throw new Error("Rebuild before prerender: missing empty application root.");
 const environment = { ...loadEnv("production", root, "VITE_"), ...process.env };
 const origin = getSiteOrigin(environment.VITE_PUBLIC_SITE_URL);
-const indexable = environment.VITE_PUBLIC_INDEXING_ENABLED === "true" && Boolean(origin);
+const indexable = isPublicIndexingEnabled({ origin, indexable: environment.VITE_PUBLIC_INDEXING_ENABLED === "true" });
 const escape = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const server = await createServer({ root, mode: "production", server: { middlewareMode: true, hmr: false, watch: null, preTransformRequests: false }, optimizeDeps: { noDiscovery: true, include: [] }, appType: "custom" });
 try {
@@ -32,10 +32,8 @@ try {
     await mkdir(dirname(file), { recursive: true });
     await writeFile(file, html);
   }
-  const urls = indexable ? PUBLIC_PREVIEW_PATHS.map(path => "<url><loc>" + escape(origin + path) + "</loc></url>").join("") : "";
-  await writeFile(join(client, "sitemap.xml"), '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + "</urlset>");
-  const rules = indexable ? "User-agent: *\nAllow: /\n" + ["/pilote", "/eleve", "/parent", "/enseignant", "/directeur", "/admin", "/connexion", "/activation", "/api", "/__local-media"].map(path => "Disallow: " + path + "\n").join("") + "Sitemap: " + origin + "/sitemap.xml\n" : "User-agent: *\nDisallow: /\n";
-  await writeFile(join(client, "robots.txt"), rules);
+  await writeFile(join(client, "sitemap.xml"), buildPublicSitemap({ origin, indexable }));
+  await writeFile(join(client, "robots.txt"), buildPublicRobots({ origin, indexable }));
   console.log("Public prerender: " + PUBLIC_PREVIEW_PATHS.length + " pages; indexing " + (indexable ? "enabled" : "disabled (demonstration)") + ".");
 } finally {
   await server.close();

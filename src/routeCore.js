@@ -478,11 +478,16 @@ export function getNotFoundHome(routeOrPath, sessionRole = null) {
   return "/";
 }
 
+export function usesSchoolDocumentNavigation(path) {
+  return path === "/pilote" || path.startsWith("/pilote/") || path === "/admin/ecoles-acces";
+}
+
 export function parseRoute(input = "/") {
   const path = normalizeRoute(input);
 
   if (path === "/") return publicRoute({ kind: "landing", path }, "public.landing");
   if (path === "/pilote") return publicRoute({ kind: "pilot", path }, "pilot.entry");
+  if (path === "/pilote/jeux/mots-fleches") return publicRoute({ kind: "pilot", path }, "pilot.game.mots-fleches", { game: "mots-fleches" });
   if (path === "/blog") return publicRoute({ kind: "blog-index", path }, "public.blog-index");
   if (Object.hasOwn(PUBLIC_PAGES, path)) return publicRoute({ kind: "public-info", path }, "public.info");
   if (path === "/connexion") {

@@ -1,4 +1,5 @@
 import "./legal-pages.css";
+import { usesSchoolDocumentNavigation } from './routeCore.js';
 
 export const LEGAL_PAGE_PATHS = Object.freeze({
   "mentions-legales": "/mentions-legales",
@@ -46,16 +47,17 @@ const DEFAULT_OPERATOR = Object.freeze({
   contactEmail: "assistance@jetdencre.invalid",
   privacyEmail: "confidentialite@jetdencre.invalid",
   phone: "Aucun numéro réel dans cette démonstration",
-  hostName: "Prototype privé Sites ; hébergement de production à confirmer",
+  hostName: "Site de test Cloudflare Workers et D1 ; connexion Auth0 ; production à confirmer",
   hostAddress: "Coordonnées contractuelles à renseigner avant ouverture réelle",
   cndpReference: "Aucune formalité déclarée accomplie — référence à valider avant traitement réel",
 });
 
-const LAST_UPDATED = "4 septembre 2026";
+const LAST_UPDATED = "5 septembre 2026";
 
 function HashLink({ to, children, ...props }) {
   return <a href={to} onClick={(event) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (usesSchoolDocumentNavigation(to)) return;
     event.preventDefault();
     window.history.pushState({}, "", to);
     window.dispatchEvent(new Event("jde:navigate"));
@@ -98,7 +100,7 @@ function MentionsLegales({ operator }) {
       ]} />
     </LegalSection>
     <LegalSection id="hebergement" title="2. Hébergement">
-      <p>Le service de production devra être hébergé auprès du prestataire déclaré ci-dessous. Le prototype actuel ne constitue pas un service de production et conserve ses données de démonstration dans le navigateur.</p>
+      <p>Le site de test utilise Cloudflare Workers et la base D1 ; Auth0 assure la connexion du parcours scolaire. La démonstration conserve ses essais dans le navigateur, tandis que le parcours scolaire conserve ses comptes de test, travaux et progrès sur le serveur. Ce site ne constitue pas encore un service ouvert à de vrais élèves.</p>
       <DefinitionList items={[["Hébergeur", operator.hostName], ["Adresse", operator.hostAddress]]} />
     </LegalSection>
     <LegalSection id="propriete" title="3. Propriété intellectuelle">
@@ -160,9 +162,10 @@ function Confidentialite({ operator }) {
     </LegalSection>
     <LegalSection id="destinataires" title="6. Destinataires et sous-traitants">
       <p>Les données sont accessibles, selon leurs habilitations, à l’élève concerné, à son représentant légal, aux enseignants autorisés, à la direction de l’établissement et aux personnels techniques strictement habilités. Les prestataires d’hébergement, de maintenance ou d’envoi de messages ne reçoivent que les informations nécessaires à leur mission et doivent être encadrés par contrat.</p>
-      <p>Aucun transfert hors du Maroc ne doit être activé sans analyse préalable, information des personnes et accomplissement des formalités requises auprès de la CNDP. Le prototype charge actuellement ses polices depuis Google Fonts ; l’auto-hébergement des polices est recommandé avant la production.</p>
+      <p>Le pilote technique utilise Cloudflare et Auth0, ainsi que Google Fonts pour les polices. Avant de traiter des données scolaires réelles, l’éditeur doit faire examiner les prestataires, les lieux de traitement, les responsabilités et les formalités applicables. Aucune conformité juridique ni formalité accomplie n’est attestée par cette page.</p>
     </LegalSection>
     <LegalSection id="conservation" title="7. Durées de conservation prévues">
+      <p>Les durées ci-dessous sont des propositions à valider ; elles ne sont pas une politique de purge déjà activée. Les travaux et progrès fictifs du pilote restent en base jusqu’à une opération administrative contrôlée. Aucun accueil de données scolaires réelles n’est autorisé par ce document.</p>
       <ul>
         <li>compte : pendant sa période d’activité, puis au maximum douze mois après sa désactivation ;</li>
         <li>progression, devoirs et corrections : deux années scolaires après l’année concernée, sauf durée plus courte définie avec l’établissement ;</li>
@@ -180,7 +183,7 @@ function Confidentialite({ operator }) {
       <p>Si la réponse apportée ne convient pas, la personne peut contacter la <ExternalLink href="https://www.cndp.ma/">Commission Nationale de contrôle de la protection des Données à caractère Personnel (CNDP)</ExternalLink>.</p>
     </LegalSection>
     <LegalSection id="prototype" title="10. Données de démonstration">
-      <p>Dans le prototype actuel, les essais sont enregistrés localement dans le navigateur et peuvent être effacés par la fonction « Réinitialiser la démonstration » ou par la suppression des données du site dans le navigateur. N’y saisissez aucune donnée réelle, confidentielle ou permettant d’identifier un élève.</p>
+      <p>Dans la démonstration, les essais sont locaux et peuvent être effacés par « Réinitialiser la démonstration ». Dans l’espace scolaire connecté, les devoirs, corrections, grilles et XP sont enregistrés sur le serveur pour les comptes de test autorisés. Effacer les données du navigateur ou réinitialiser la démonstration ne supprime pas ces enregistrements serveur. Les réponses de mots fléchés non encore confirmées sont conservées dans l’onglet pendant la session ; gardez cet onglet ouvert en cas de coupure réseau.</p>
     </LegalSection>
   </>;
 }
@@ -192,7 +195,7 @@ function ConditionsUtilisation({ operator }) {
       <p>Les présentes conditions encadrent l’accès à Jet d’Encre, plateforme de français destinée aux élèves, familles, enseignants, directions et administrateurs. L’utilisation du service implique leur respect ainsi que celui de la <HashLink to={LEGAL_PAGE_PATHS.confidentialite}>politique de confidentialité</HashLink>.</p>
     </LegalSection>
     <LegalSection id="acces" title="2. Accès au service">
-      <p>L’accès aux espaces protégés dépend d’un compte attribué par Jet d’Encre ou par un établissement autorisé et, pour certains contenus, d’une licence ou d’un code manuel valide. Chaque utilisateur doit employer le rôle qui lui est attribué et conserver ses identifiants confidentiels.</p>
+      <p>Les administrateurs Jet d’Encre créent manuellement les écoles, les classes et les accès scolaires. Le référent de l’établissement organise la remise confidentielle des identifiants. Le serveur détermine le rôle attribué ; aucun code de démonstration ni choix de profil ne crée un accès scolaire.</p>
       <p>Les comptes de démonstration servent uniquement à tester le prototype. Ils ne donnent aucun droit sur un futur service de production et ne doivent contenir aucune donnée réelle.</p>
     </LegalSection>
     <LegalSection id="mineurs-cgu" title="3. Utilisateurs mineurs">
@@ -237,7 +240,7 @@ function Cookies() {
       <p>Un cookie est un petit fichier déposé par un site dans le navigateur. D’autres mécanismes, comme le stockage local, peuvent mémoriser des informations de façon similaire. Cette page couvre les deux.</p>
     </LegalSection>
     <LegalSection id="utilisation" title="2. Utilisation dans le prototype">
-      <p>Le prototype Jet d’Encre utilise le stockage local pour conserver la session de démonstration, les préférences, les activations, la progression et les actions de test sur l’appareil. Ces informations ne sont pas envoyées à un serveur Jet d’Encre.</p>
+      <p>La démonstration utilise le stockage local pour ses profils, préférences, activations et essais. La liseuse y mémorise aussi la dernière page et le zoom, par profil et par livre. Le parcours scolaire utilise un cookie de session nécessaire à l’accès protégé et envoie au serveur les travaux, corrections, réponses aux grilles et récompenses confirmées. Ses brouillons de mots fléchés en attente restent dans le stockage de l’onglet, séparés par compte et école.</p>
       <p>Le prototype n’utilise actuellement ni cookie publicitaire, ni mesure d’audience tierce, ni suivi entre plusieurs sites. Il charge toutefois une typographie depuis Google Fonts, ce qui peut transmettre au fournisseur des informations techniques de connexion.</p>
     </LegalSection>
     <LegalSection id="categories" title="3. Catégories prévues pour la production">
@@ -249,11 +252,11 @@ function Cookies() {
       ]} />
     </LegalSection>
     <LegalSection id="choix" title="4. Gérer vos choix">
-      <p>Dans le prototype, utilisez « Réinitialiser la démonstration » pour effacer les essais Jet d’Encre. Vous pouvez aussi supprimer les données du site dans les réglages de votre navigateur. Cette suppression vous déconnecte et réinitialise les préférences et progressions locales.</p>
+      <p>Utilisez « Réinitialiser la démonstration » uniquement pour les essais locaux. La suppression des données du navigateur ne supprime pas les travaux ou XP scolaires déjà enregistrés sur le serveur. Sur un appareil partagé, utilisez d’abord « Se déconnecter » dans l’espace scolaire pour révoquer la session. Auth0 gère également les informations nécessaires à son propre écran de connexion.</p>
       <p>Avant l’ajout de tout outil facultatif en production, un panneau de choix devra permettre d’accepter, de refuser et de modifier séparément les catégories non essentielles.</p>
     </LegalSection>
     <LegalSection id="duree-cookies" title="5. Durée et mise à jour">
-      <p>Les données locales de démonstration restent sur l’appareil jusqu’à leur réinitialisation ou leur suppression par le navigateur. Les durées des futurs cookies de production seront indiquées précisément dans ce document avant leur activation.</p>
+      <p>Le cookie de session du pilote a une durée maximale de trois heures ; le cookie de transaction de connexion expire après dix minutes. Une suspension ou une déconnexion révoque l’accès serveur. Les essais de démonstration et marques de lecture restent locaux jusqu’à leur suppression. Les brouillons de grilles en attente survivent au rechargement de leur onglet, mais seule une sauvegarde confirmée par le serveur garantit de les retrouver après fermeture.</p>
     </LegalSection>
   </>;
 }
@@ -321,7 +324,7 @@ export function LegalPages({ page = "mentions-legales", operator: operatorOverri
       <nav aria-label="Navigation secondaire">
         <HashLink to="/">Accueil</HashLink>
         <HashLink to="/blog">Blog</HashLink>
-        <HashLink to="/connexion" className="legal-login-link">Connexion</HashLink>
+        <a href="/pilote" className="legal-login-link">Connexion</a>
       </nav>
     </header>
     <section className="legal-hero">

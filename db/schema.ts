@@ -214,3 +214,29 @@ export const pilotReviews = sqliteTable("pilot_reviews", {
 }, t => [foreignKey({ columns:[t.submissionId,t.schoolId], foreignColumns:[pilotSubmissions.id,pilotSubmissions.schoolId] }),
   foreignKey({ columns:[t.schoolId,t.teacherId], foreignColumns:[pilotMemberships.schoolId,pilotMemberships.userId] }),
   check("pilot_review_score", sql`${t.score} >= 0 and ${t.score} <= 20`)]);
+
+export const pilotGameProgress = sqliteTable("pilot_game_progress", {
+  schoolId: text("school_id").notNull(), studentId: text("student_id").notNull(),
+  gameId: text("game_id").notNull(), gridId: text("grid_id").notNull(),
+  progressJson: text("progress_json").notNull(), hintCount: integer("hint_count").notNull(),
+  revision: integer("revision").notNull(), lastRequestId: text("last_request_id").notNull(),
+  lastRequestHash: text("last_request_hash").notNull(), updatedAt: integer("updated_at").notNull(),
+}, t => [
+  primaryKey({ columns: [t.schoolId, t.studentId, t.gameId, t.gridId] }),
+  foreignKey({ columns: [t.schoolId, t.studentId], foreignColumns: [pilotMemberships.schoolId, pilotMemberships.userId] }),
+  check("pilot_game_progress_json", sql`json_valid(${t.progressJson}) and json_type(${t.progressJson}) = 'object'`),
+  check("pilot_game_progress_hints", sql`${t.hintCount} between 0 and 10000`),
+  check("pilot_game_progress_revision", sql`${t.revision} >= 1`),
+  check("pilot_game_progress_request", sql`length(${t.lastRequestId}) = 36 and length(${t.lastRequestHash}) = 64`),
+]);
+
+export const pilotGameAwards = sqliteTable("pilot_game_awards", {
+  schoolId: text("school_id").notNull(), studentId: text("student_id").notNull(),
+  gameId: text("game_id").notNull(), gridId: text("grid_id").notNull(),
+  xp: integer("xp").notNull(), completedAt: integer("completed_at").notNull(),
+}, t => [
+  primaryKey({ columns: [t.schoolId, t.studentId, t.gameId, t.gridId] }),
+  foreignKey({ columns: [t.schoolId, t.studentId], foreignColumns: [pilotMemberships.schoolId, pilotMemberships.userId] }),
+  foreignKey({ columns: [t.schoolId, t.studentId, t.gameId, t.gridId], foreignColumns: [pilotGameProgress.schoolId, pilotGameProgress.studentId, pilotGameProgress.gameId, pilotGameProgress.gridId] }),
+  check("pilot_game_award_xp", sql`${t.xp} in (20,35,50)`),
+]);

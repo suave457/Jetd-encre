@@ -17,7 +17,7 @@ function createWebStorage(entries = {}, failingKeys = new Set()) {
   };
 }
 
-test("efface toutes les données Jet d’Encre sans toucher aux autres clés de l’origine", () => {
+test("efface la démonstration sans toucher aux brouillons scolaires ni aux autres produits", () => {
   const localStorage = createWebStorage({
     "jde.demo.store.v3": "store",
     "jde.reader.notes": "note libre",
@@ -32,6 +32,7 @@ test("efface toutes les données Jet d’Encre sans toucher aux autres clés de 
     "projet-debat-v01-preferences-enseignant": "teacher names",
     "projet-debat-v01-cards": "cards",
     "other.product.preference": "must remain",
+    'jde-school.crosswords.v1:["school-a","student-a"]': 'school draft',
   });
   const sessionStorage = createWebStorage({
     "jde.returnTo": "/eleve/progression",
@@ -39,6 +40,7 @@ test("efface toutes les données Jet d’Encre sans toucher aux autres clés de 
     "projet-debat-v01-session-eleve": "game",
     "projet-debat-v01-session-enseignant": "teacher game",
     "other.product.session": "must remain",
+    'jde-school.crosswords.v1:["school-a","student-a"]': 'school tab draft',
   });
 
   const report = clearJetDencreLocalData({ localStorage, sessionStorage });
@@ -52,6 +54,8 @@ test("efface toutes les données Jet d’Encre sans toucher aux autres clés de 
   assert.equal(sessionStorage.getItem("projet-debat-v01-session-enseignant"), null);
   assert.equal(localStorage.getItem("other.product.preference"), "must remain");
   assert.equal(sessionStorage.getItem("other.product.session"), "must remain");
+  assert.equal(localStorage.getItem('jde-school.crosswords.v1:["school-a","student-a"]'), 'school draft');
+  assert.equal(sessionStorage.getItem('jde-school.crosswords.v1:["school-a","student-a"]'), 'school tab draft');
 });
 
 test("signale un stockage bloqué sans interrompre les autres suppressions", () => {

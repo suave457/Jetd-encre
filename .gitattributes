@@ -1,0 +1,14 @@
+# Preserve byte offsets and signatures of documents/media on Windows checkouts.
+*.pdf binary
+*.mp3 binary
+*.webm binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+
+# Preserve sealed security evidence byte for byte on every platform.
+output/ameliorations-2026-09-05/securite-complement/** -text

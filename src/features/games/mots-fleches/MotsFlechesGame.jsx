@@ -15,7 +15,6 @@ import {
 } from "@phosphor-icons/react/ssr";
 import { MOTS_FLECHES_GRIDS, MOTS_FLECHES_TOTAL_XP } from "./motsFlechesData.js";
 import {
-  applyTypedLetter,
   buildGridModel,
   buildMotsFlechesAttemptId,
   buildMotsFlechesAwardId,
@@ -34,6 +33,7 @@ import {
   resolveMotsFlechesReward,
   sanitizeProgress,
 } from "./motsFlechesEngine.js";
+import { applyEntryText, getMotsFlechesLetters, isMotsFlechesShortcut } from "./motsFlechesInput.js";
 import "./mots-fleches.css";
 
 const STORAGE_VERSION = 3;
@@ -93,19 +93,28 @@ export default function MotsFlechesGame({
   onAwardXp = () => ({ ok: true, awarded: true }),
   onComplete = () => ({ ok: true, recorded: true }),
   onExit = defaultExit,
+  initialProgressByGrid,
+  initialHintCounts,
+  persistLocally = true,
+  onProgressChange,
+  onConfirmGrid,
+  connectionStatus = null,
 }) {
   const completedGridIds = useMemo(
     () => new Set(MOTS_FLECHES_GRIDS.filter((grid) => awardHistory.some((award) => isGridReward(award, studentId, grid))).map((grid) => grid.id)),
     [awardHistory, studentId],
   );
   const [selectedGridId, setSelectedGridId] = useState(() => MOTS_FLECHES_GRIDS.find((grid) => !completedGridIds.has(grid.id))?.id || MOTS_FLECHES_GRIDS[0].id);
-  const [progressByGrid, setProgressByGrid] = useState(() => readSavedProgress(studentId));
+  const [progressByGrid, setProgressByGrid] = useState(() => initialProgressByGrid ?? readSavedProgress(studentId));
   const [activeEntryId, setActiveEntryId] = useState(null);
   const [activeCellKey, setActiveCellKey] = useState(null);
   const [incorrectKeys, setIncorrectKeys] = useState([]);
   const [feedback, setFeedback] = useState(null);
-  const [hintCounts, setHintCounts] = useState(() => readSavedHintCounts(studentId));
+  const [hintCounts, setHintCounts] = useState(() => initialHintCounts ?? readSavedHintCounts(studentId));
   const [completion, setCompletion] = useState(null);
+  const [confirming, setConfirming] = useState(false);
+  const confirmingRef = useRef(false);
+  const mountedRef = useRef(true);
   const cellRefs = useRef(new Map());
   const levelTabRefs = useRef(new Map());
   const shellRef = useRef(null);
@@ -114,6 +123,9 @@ export default function MotsFlechesGame({
   const previousFocusRef = useRef(null);
   const directInputRef = useRef(null);
   const pendingLevelFocusRef = useRef(null);
+  const inputCursorRef = useRef({ entryId: null, key: null });
+  const isComposingRef = useRef(false);
+  const compositionFrameRef = useRef(null);
 
   const grid = MOTS_FLECHES_GRIDS.find((item) => item.id === selectedGridId) || MOTS_FLECHES_GRIDS[0];
   const activeLevelGrids = LEVEL_GRIDS.get(grid.levelId) || [grid];
@@ -146,6 +158,8 @@ export default function MotsFlechesGame({
     const firstCell = firstEntry?.cells.find((item) => !progress[item.key]) || firstEntry?.cells[0] || null;
     setActiveEntryId(firstEntry?.id || null);
     setActiveCellKey(firstCell?.key || null);
+    inputCursorRef.current = { entryId: firstEntry?.id || null, key: firstCell?.key || null };
+    isComposingRef.current = false;
     setIncorrectKeys([]);
     setFeedback(null);
     setCompletion(null);
@@ -155,8 +169,12 @@ export default function MotsFlechesGame({
     }
   }, [grid.id, grid.levelId, model]);
 
+  useEffect(() => () => window.cancelAnimationFrame(compositionFrameRef.current), []);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  useEffect(() => { onProgressChange?.(progressByGrid, hintCounts); }, [progressByGrid, hintCounts, onProgressChange]);
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!persistLocally || typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
         `jde.mots-fleches:v${STORAGE_VERSION}:${studentId || "eleve"}`,
@@ -165,10 +183,10 @@ export default function MotsFlechesGame({
     } catch {
       // Le jeu continue en mémoire si le stockage local est bloqué.
     }
-  }, [progressByGrid, studentId]);
+  }, [progressByGrid, studentId, persistLocally]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!persistLocally || typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
         `jde.mots-fleches:hints:v${STORAGE_VERSION}:${studentId || "eleve"}`,
@@ -177,7 +195,7 @@ export default function MotsFlechesGame({
     } catch {
       // Le jeu continue en mémoire si le stockage local est bloqué.
     }
-  }, [hintCounts, studentId]);
+  }, [hintCounts, studentId, persistLocally]);
 
   useEffect(() => {
     if (!completion) return undefined;
@@ -229,7 +247,8 @@ export default function MotsFlechesGame({
 
   function focusCell(key) {
     if (!key) return;
-    window.requestAnimationFrame(() => cellRefs.current.get(key)?.focus());
+    // Les cases existent déjà : la prochaine frappe doit atteindre la suivante immédiatement.
+    cellRefs.current.get(key)?.focus({ preventScroll: true });
   }
 
   function selectEntry(entryId, preferredKey = null, options = {}) {
@@ -239,6 +258,7 @@ export default function MotsFlechesGame({
     const { clearMessages = true, focusTarget = "cell" } = options;
     setActiveEntryId(entryId);
     setActiveCellKey(nextKey || null);
+    inputCursorRef.current = { entryId, key: nextKey || null };
     if (clearMessages) {
       setIncorrectKeys([]);
       setFeedback(null);
@@ -260,6 +280,7 @@ export default function MotsFlechesGame({
   }
 
   function handleLevelKeyDown(event, index) {
+    if (isMotsFlechesShortcut(event)) return;
     const offsets = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
     let nextIndex = index;
     if (Object.prototype.hasOwnProperty.call(offsets, event.key)) {
@@ -278,8 +299,9 @@ export default function MotsFlechesGame({
     const key = entry.cells[bounded]?.key;
     if (!key) return;
     setActiveCellKey(key);
+    inputCursorRef.current = { entryId: entry.id, key };
     if (focusTarget === "input") {
-      window.requestAnimationFrame(() => directInputRef.current?.focus({ preventScroll: true }));
+      directInputRef.current?.focus({ preventScroll: true });
     } else if (focusTarget === "cell") {
       focusCell(key);
     }
@@ -294,16 +316,14 @@ export default function MotsFlechesGame({
   }
 
   function handleCellKeyDown(event, cell) {
+    if (isMotsFlechesShortcut(event)) return;
     const entry = model.entries.get(activeEntryId) || model.entries.get(cell.entryIds[0]);
     if (!entry) return;
     const index = entry.cells.findIndex((item) => item.key === cellKey(cell.row, cell.col));
 
-    if (/^[a-zA-ZÀ-ÖØ-öø-ÿŒœÇç]$/u.test(event.key)) {
+    if (getMotsFlechesLetters(event.key).length === 1 && Array.from(event.key.normalize("NFC")).length === 1) {
       event.preventDefault();
-      updateProgress((current) => applyTypedLetter(current, cellKey(cell.row, cell.col), event.key, cell.solution));
-      setIncorrectKeys([]);
-      setFeedback(null);
-      goToEntryCell(entry, Math.min(entry.cells.length - 1, index + 1));
+      typeInEntry(event.key, entry, cellKey(cell.row, cell.col), "cell");
       return;
     }
 
@@ -348,34 +368,55 @@ export default function MotsFlechesGame({
     }
   }
 
-  function handleDirectInput(event) {
-    const typedLetters = Array.from(event.currentTarget.value || "").filter((letter) => /^[a-zA-ZÀ-ÖØ-öø-ÿŒœÇç]$/u.test(letter));
-    event.currentTarget.value = "";
-    const typed = typedLetters.at(-1);
-    if (!typed || !activeEntry || activeCell?.type !== "letter") return;
-    const index = activeEntry.cells.findIndex((item) => item.key === activeCellKey);
-    if (index < 0) return;
-    updateProgress((current) => applyTypedLetter(current, activeCellKey, typed, activeCell.solution));
+  function typeInEntry(text, entry, key, focusTarget) {
+    const result = applyEntryText(progress, model, entry, key, text);
+    if (!result.acceptedCount) return;
+    updateProgress((current) => applyEntryText(current, model, entry, key, text).progress);
     setIncorrectKeys([]);
     setFeedback(null);
-    goToEntryCell(activeEntry, Math.min(activeEntry.cells.length - 1, index + 1), "input");
+    goToEntryCell(entry, result.nextIndex, focusTarget);
+  }
+
+  function commitDirectInput(input) {
+    const text = input.value;
+    if (!text) return;
+    input.value = "";
+    const { entryId, key } = inputCursorRef.current;
+    typeInEntry(text, model.entries.get(entryId), key, "input");
+  }
+
+  function handleDirectInput(event) {
+    if (isComposingRef.current || event.nativeEvent?.isComposing) return;
+    commitDirectInput(event.currentTarget);
+  }
+
+  function handleCompositionEnd(event) {
+    isComposingRef.current = false;
+    const input = event.currentTarget;
+    window.cancelAnimationFrame(compositionFrameRef.current);
+    // Certains claviers émettent un dernier input, d'autres uniquement compositionend.
+    compositionFrameRef.current = window.requestAnimationFrame(() => {
+      if (input.isConnected && !isComposingRef.current) commitDirectInput(input);
+    });
   }
 
   function handleDirectInputKeyDown(event) {
+    if (isMotsFlechesShortcut(event) || isComposingRef.current) return;
     if (event.key !== "Backspace" && event.key !== "Delete") return;
     event.preventDefault();
-    if (!activeEntry || activeCell?.type !== "letter") return;
-    const index = activeEntry.cells.findIndex((item) => item.key === activeCellKey);
+    const { entryId, key: currentKey } = inputCursorRef.current;
+    const entry = model.entries.get(entryId);
+    if (!entry) return;
+    const index = entry.cells.findIndex((item) => item.key === currentKey);
     if (index < 0) return;
-    const currentKey = activeCellKey;
     const currentHasLetter = Boolean(progress[currentKey]);
     const targetIndex = event.key === "Backspace" && !currentHasLetter ? Math.max(0, index - 1) : index;
-    const targetKey = activeEntry.cells[targetIndex]?.key;
+    const targetKey = entry.cells[targetIndex]?.key;
     if (!targetKey) return;
     updateProgress((current) => ({ ...current, [targetKey]: "" }));
     setIncorrectKeys([]);
     setFeedback(null);
-    goToEntryCell(activeEntry, targetIndex, "input");
+    goToEntryCell(entry, targetIndex, "input");
   }
 
   function focusValidationCell(key, preferredEntryId = activeEntry?.id) {
@@ -384,6 +425,7 @@ export default function MotsFlechesGame({
     const nextEntryId = cell.entryIds.includes(preferredEntryId) ? preferredEntryId : cell.entryIds[0];
     if (nextEntryId) setActiveEntryId(nextEntryId);
     setActiveCellKey(key);
+    inputCursorRef.current = { entryId: nextEntryId, key };
     focusCell(key);
   }
 
@@ -392,6 +434,7 @@ export default function MotsFlechesGame({
     updateProgress((current) => clearEntry(current, activeEntry, model));
     const firstKey = activeEntry.cells[0]?.key;
     setActiveCellKey(firstKey || null);
+    inputCursorRef.current = { entryId: activeEntry.id, key: firstKey || null };
     setIncorrectKeys([]);
     setFeedback({ tone: "neutral", text: "Le mot a été effacé. Les lettres validées aux croisements sont conservées." });
     focusCell(firstKey);
@@ -407,13 +450,14 @@ export default function MotsFlechesGame({
     updateProgress(() => result.progress);
     setHintCounts((previous) => ({ ...previous, [grid.id]: Number(previous[grid.id] || 0) + 1 }));
     setActiveCellKey(result.revealedKey);
+    inputCursorRef.current = { entryId: activeEntry.id, key: result.revealedKey };
     setIncorrectKeys([]);
     setFeedback({ tone: "neutral", text: "Une lettre a été placée. La récompense de la grille ne change pas." });
     focusCell(result.revealedKey);
   }
 
-  function verifyGrid() {
-    if (!activeEntry) return;
+  async function verifyGrid() {
+    if (!activeEntry || confirmingRef.current) return;
 
     if (activeEntryValidation.status === "incomplete") {
       setIncorrectKeys([]);
@@ -434,7 +478,7 @@ export default function MotsFlechesGame({
       if (gridCheck.emptyKeys.length) {
         const remainingWords = model.entries.size - progressSummary.found;
         setIncorrectKeys([]);
-        setFeedback({ tone: "success", text: `Bravo, ce mot est correct. Il reste ${remainingWords} mot${remainingWords > 1 ? "s" : ""} à trouver.` });
+        setFeedback({ tone: "success", text: `Bravo, ce mot est correct. Il reste ${remainingWords} mot${remainingWords === 1 ? "" : "s"} à trouver.` });
         return;
       }
       setIncorrectKeys(gridCheck.incorrectKeys);
@@ -445,7 +489,14 @@ export default function MotsFlechesGame({
 
     const attemptId = buildMotsFlechesAttemptId(studentId, grid);
     const eventId = buildMotsFlechesAwardId(studentId, grid);
-    const reward = onAwardXp(grid.xp, {
+    let reward;
+    if (onConfirmGrid) {
+      confirmingRef.current = true; setConfirming(true);
+      try { reward = await onConfirmGrid({gridId:grid.id,progress,hintCount:currentHintCount}); }
+      catch { reward = {ok:false}; }
+      finally { confirmingRef.current = false; if(mountedRef.current)setConfirming(false); }
+      if(!mountedRef.current)return;
+    } else reward = onAwardXp(grid.xp, {
       eventId,
       attemptId,
       questionId: grid.id,
@@ -606,7 +657,8 @@ export default function MotsFlechesGame({
 
   return (
     <div className="mots-fleches-game">
-      <div className="mf-shell" ref={shellRef}>
+      {confirming && <div className="mf-server-confirmation" role="status">Vérification de la grille et enregistrement des XP…</div>}
+      <div className="mf-shell" ref={shellRef} inert={confirming || completion ? true : undefined}>
       <header className="mf-topbar">
         <button type="button" className="mf-brand" onClick={onExit} aria-label="Retour à mes jeux">
           <img src="/assets/jet-dencre-monogram-light.png" alt="" width="48" height="48" />
@@ -615,7 +667,7 @@ export default function MotsFlechesGame({
         <span className="mf-space-label">ESPACE ÉLÈVE</span>
         <div className="mf-profile-tools">
           <span className="mf-xp"><Sparkle weight="fill"/><strong>{currentXp} XP</strong></span>
-          <span className="mf-school-year">Année scolaire 2026–2027</span>
+          {connectionStatus || <span className="mf-school-year">Année scolaire 2026–2027</span>}
           <span className="mf-avatar" aria-hidden="true">{studentInitials}</span>
           <span className="mf-student"><strong>{studentName}</strong><small>Élève</small></span>
         </div>
@@ -638,7 +690,7 @@ export default function MotsFlechesGame({
             <p>Sélectionne un indice, lis le mini-dictionnaire, puis écris le mot dans le sens de la flèche.</p>
             <span className="mf-sr-only" id="mf-keyboard-help">Au clavier, utilise les flèches pour changer de case, la barre d’espace pour changer de direction à un croisement, et Retour arrière pour effacer.</span>
           </div>
-          <div className="mf-progress-card" aria-label={`${progressSummary.found} mots trouvés sur ${progressSummary.total}`}>
+          <div className="mf-progress-card" aria-label={`${progressSummary.found} mot${progressSummary.found === 1 ? " trouvé" : "s trouvés"} sur ${progressSummary.total}`}>
             <small>{progressSummary.filledLetters > 0 && progressSummary.found < progressSummary.total ? "PARTIE REPRISE" : "MOTS TROUVÉS"}</small>
             <strong>{progressSummary.found}/{progressSummary.total}</strong>
             <span><i style={{ width: `${progressSummary.percent}%` }}/></span>
@@ -657,7 +709,7 @@ export default function MotsFlechesGame({
                 id={`mf-level-tab-${item.levelId}`}
                 aria-controls="mf-level-panel"
                 aria-selected={selected}
-                aria-label={`${item.level}, ${item.cefr}, ${item.grids.length} grilles, ${completedCount} terminées, ${item.xp} XP par grille`}
+                aria-label={`${item.level}, ${item.cefr}, ${item.grids.length} grilles, ${completedCount} terminée${completedCount === 1 ? "" : "s"}, ${item.xp} XP par grille`}
                 className={selected ? "is-selected" : ""}
                 key={item.levelId}
                 onClick={() => selectLevel(item.levelId)}
@@ -758,18 +810,19 @@ export default function MotsFlechesGame({
                     autoComplete="off"
                     spellCheck="false"
                     enterKeyHint="next"
-                    maxLength={2}
                     disabled={dictionaryEntry.found}
-                    aria-label={`Écrire une lettre dans le mot sélectionné, ${Array.from(activeEntry.answer).length} lettres`}
-                    placeholder={dictionaryEntry.found ? "Mot trouvé" : "Écris une lettre"}
+                    aria-label={`Écrire dans le mot sélectionné, ${Array.from(activeEntry.answer).length} lettres`}
+                    placeholder={dictionaryEntry.found ? "Mot trouvé" : "Écris ici"}
                     onInput={handleDirectInput}
                     onKeyDown={handleDirectInputKeyDown}
+                    onCompositionStart={() => { isComposingRef.current = true; }}
+                    onCompositionEnd={handleCompositionEnd}
                   />
                 </label>
 
                 {foundEntries.length > 0 && (
-                  <div className="mf-word-notebook" aria-label={`${foundEntries.length} mots dans le carnet`}>
-                    <small>CARNET DE MOTS · {foundEntries.length}</small>
+                  <div className="mf-word-notebook" aria-label={`${foundEntries.length} mot${foundEntries.length === 1 ? "" : "s"} dans le carnet`}>
+                    <small>CARNET · {foundEntries.length} MOT{foundEntries.length === 1 ? "" : "S"}</small>
                     <div>{foundEntries.slice(-4).map((entry) => <span key={entry.id}>{entry.answer}</span>)}</div>
                   </div>
                 )}

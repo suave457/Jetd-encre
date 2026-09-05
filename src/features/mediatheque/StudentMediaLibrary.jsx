@@ -13,6 +13,7 @@ import {
   Sparkle,
 } from "@phosphor-icons/react/ssr";
 import PdfReader from "./PdfReader.jsx";
+import { useDemoStore } from "../../demoStore.jsx";
 import {
   DEMO_MEDIA_CONTENTS,
   MEDIA_SECTION,
@@ -214,7 +215,7 @@ function VideoDetail({ content, RouteLink }) {
   );
 }
 
-function BookDetail({ content, onNavigate }) {
+function BookDetail({ content, onNavigate, userId }) {
   const [pageRequest, setPageRequest] = useState(null);
   const book = {
     ...content,
@@ -227,6 +228,7 @@ function BookDetail({ content, onNavigate }) {
       <h1 className="mediatheque-sr-only">Lire {content.title}</h1>
       <PdfReader
         book={book}
+        userId={userId}
         onBack={() => onNavigate("/eleve/mediatheque")}
         pageRequest={pageRequest}
       />
@@ -257,6 +259,8 @@ function BookDetail({ content, onNavigate }) {
 }
 
 export default function StudentMediaLibrary({ detail, onNavigate, ui }) {
+  const { currentUser } = useDemoStore();
+  const readerUserId = currentUser?.role === "eleve" ? currentUser.id : null;
   const [section, setSection] = useState(ALL_MEDIA);
   const [localBook, setLocalBook] = useState(null);
   const [importError, setImportError] = useState("");
@@ -307,7 +311,7 @@ export default function StudentMediaLibrary({ detail, onNavigate, ui }) {
 
   if (content?.section === MEDIA_SECTION.AUDIO) return <AudioDetail content={content} RouteLink={RouteLink} />;
   if (content?.section === MEDIA_SECTION.VIDEOS) return <VideoDetail content={content} RouteLink={RouteLink} />;
-  if (content?.section === MEDIA_SECTION.BOOKS) return <BookDetail key={content.id} content={content} onNavigate={onNavigate} />;
+  if (content?.section === MEDIA_SECTION.BOOKS) return <BookDetail key={JSON.stringify([readerUserId, content.id])} content={content} onNavigate={onNavigate} userId={readerUserId} />;
 
   return (
     <div className="mediatheque">

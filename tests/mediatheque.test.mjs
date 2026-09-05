@@ -16,7 +16,8 @@ import {
   normalizeMediaSection,
   normalizeMediaType,
 } from "../src/features/mediatheque/mediaLibraryCore.js";
-import { getPdfFitScale, INITIAL_PDF_NAVIGATION, pdfNavigationReducer } from "../src/features/mediatheque/pdfReaderCore.js";
+import { getPdfCanvasSize, getPdfFitScale, INITIAL_PDF_NAVIGATION, pdfNavigationReducer } from "../src/features/mediatheque/pdfReaderCore.js";
+import { getPdfReadingStorageKey, normalizePdfReadingState, readPdfReadingState, writePdfReadingState } from "../src/features/mediatheque/pdfReadingState.js";
 import { createLocalPdfBook, getLocalTestBook, MAX_LOCAL_PDF_BYTES, validateLocalPdfFile } from "../src/features/mediatheque/localPdfCore.js";
 
 const localFile = (relativePath) => fileURLToPath(new URL(relativePath, new URL("../", import.meta.url)));
@@ -265,6 +266,60 @@ test("la page entière tient dans la zone de lecture ; Largeur agrandit un A4", 
   const landscape = getPdfFitScale({ ...options, pageWidth: 842, pageHeight: 595, viewportWidth: 650 });
   assert.ok(842 * landscape <= 650);
   assert.ok(595 * landscape <= 480);
+});
+
+test("reprend page, zoom et affichage pour le bon compte et le bon livre", () => {
+  const data = new Map();
+  const storage = { getItem: (key) => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) };
+  const book = getMediaContentById("bouquin-petites-histoires-du-maroc");
+  const key = getPdfReadingStorageKey("eleve-a", book);
+  assert.ok(writePdfReadingState(key, { page: 6, zoom: 1.5, fitMode: "width" }, 8, storage));
+  const restored = readPdfReadingState(key, 8, storage);
+  assert.deepEqual(restored, { version: 1, page: 6, zoom: 1.5, fitMode: "width" });
+  assert.equal(readPdfReadingState(getPdfReadingStorageKey("eleve-b", book), 8, storage), null);
+  assert.equal(readPdfReadingState(getPdfReadingStorageKey("eleve-a", { ...book, id: "autre-livre" }), 8, storage), null);
+  assert.notEqual(getPdfReadingStorageKey("a:b", { ...book, id: "c" }), getPdfReadingStorageKey("a", { ...book, id: "b:c" }));
+  const shorterBookState = readPdfReadingState(key, 4, storage);
+  const navigation = pdfNavigationReducer(INITIAL_PDF_NAVIGATION, { type: "restore", page: shorterBookState.page, total: 4 });
+  assert.equal(navigation.page, 4, "une nouvelle version plus courte du PDF borne le repère");
+  assert.equal(navigation.direction, "none", "la reprise ne simule pas un feuilletage");
+  assert.ok(writePdfReadingState(key, { ...restored, page: 1 }, 8, storage));
+  assert.equal(readPdfReadingState(key, 8, storage).page, 1, "le retour à la première page remplace le repère");
+});
+
+test("ignore les repères corrompus et conserve des limites sûres", () => {
+  const read = (raw) => readPdfReadingState("jde.test-reader", 8, { getItem: () => raw });
+  for (const raw of [null, "", "{", "null", "[]", '{"version":2,"page":4}', " ".repeat(513)]) assert.equal(read(raw), null);
+  assert.deepEqual(read('{"version":1,"page":900,"zoom":300,"fitMode":"width"}'), { version: 1, page: 8, zoom: 1.75, fitMode: "width" });
+  assert.deepEqual(read('{"version":1,"page":-3,"zoom":0,"fitMode":"unknown"}'), { version: 1, page: 1, zoom: 0.75, fitMode: "page" });
+  assert.deepEqual(read('{"version":1,"page":"6","zoom":{},"fitMode":null}'), { version: 1, page: 1, zoom: 1, fitMode: "page" });
+  assert.deepEqual(normalizePdfReadingState({ version: 1, page: Infinity, zoom: NaN }, 8), { version: 1, page: 1, zoom: 1, fitMode: "page" });
+  assert.equal(normalizePdfReadingState({ version: 1, page: 3 }, Infinity), null);
+});
+
+test("la lecture reste disponible sans stockage et sans repère anonyme ou fichier temporaire", () => {
+  const unavailable = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("quota"); } };
+  const book = getMediaContentById("bouquin-petites-histoires-du-maroc");
+  assert.equal(readPdfReadingState("jde.test-reader", 8, unavailable), null);
+  assert.equal(writePdfReadingState("jde.test-reader", { page: 4 }, 8, unavailable), false);
+  assert.equal(getPdfReadingStorageKey(null, book), null);
+  assert.equal(getPdfReadingStorageKey("eleve-a", { ...book, id: "" }), null);
+  assert.equal(getPdfReadingStorageKey("eleve-a", { ...book, pdfUrl: "blob:private-local-file" }), null);
+  assert.ok(getPdfReadingStorageKey("eleve-a", getLocalTestBook()), "le document fixe de développement reste identifiable");
+  assert.equal(writePdfReadingState(null, { page: 4 }, 8, unavailable), false);
+});
+
+test("borne réellement le bitmap même lorsque la page exige une très forte réduction", () => {
+  for (const viewport of [{ width: 920, height: 1302 }, { width: 100_000_000, height: 100_000_000 }, { width: 1, height: 1e100 }]) {
+    const bitmap = getPdfCanvasSize(viewport, 3);
+    assert.ok(bitmap.width >= 1 && bitmap.height >= 1);
+    assert.ok(bitmap.width <= 4096 && bitmap.height <= 4096);
+    assert.ok(bitmap.width * bitmap.height <= 6_000_000);
+    assert.ok(Number.isFinite(bitmap.outputScale) && bitmap.outputScale > 0);
+  }
+  for (const viewport of [null, { width: 0, height: 500 }, { width: NaN, height: 500 }, { width: 600, height: Infinity }]) assert.equal(getPdfCanvasSize(viewport), null);
+  assert.equal(getPdfFitScale({ pageWidth: Infinity, pageHeight: 800, viewportWidth: 900 }), 1);
+  assert.equal(pdfNavigationReducer(INITIAL_PDF_NAVIGATION, { type: "restore", page: 3, total: Infinity }), INITIAL_PDF_NAVIGATION);
 });
 
 test("le PDF fourni reste un document de test local sans attribution scolaire", () => {

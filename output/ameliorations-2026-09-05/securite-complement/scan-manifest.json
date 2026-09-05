@@ -1,0 +1,99 @@
+{
+  "documentType": "codex-security.scan-manifest",
+  "scan": {
+    "artifacts": [
+      {
+        "mediaType": "application/json",
+        "path": "findings.json",
+        "sha256": "58715e8395df2873a630c5d1a8910a4c9a8c163dfdfab71b98fa0f3905becc2c"
+      },
+      {
+        "mediaType": "application/json",
+        "path": "coverage.json",
+        "sha256": "0ed9dcc12593e5cb86f60569dacc2322bca49c6e09719e8550f2c34037569d84"
+      }
+    ],
+    "completedAt": "2026-09-05T22:55:49.713732Z",
+    "coverageRef": "coverage.json",
+    "findingsRef": "findings.json",
+    "id": "a8ecc449-af04-41e2-925a-4775ba6ae5a9",
+    "preservedSources": {
+      "checkpoints/4da69671344142e43517c6d70853d556cee95dccb563c674b8e108ffc2f25897.json": "4da69671344142e43517c6d70853d556cee95dccb563c674b8e108ffc2f25897",
+      "checkpoints/abd09ff6b10b90e21cd10849b94ed5b6d3ca992bc65e2e33959bcaf01de70856.json": "f5eef641e91ef5888d960d41ea6be35b43c30c160ba515fc59362fcd8bb89a6c",
+      "checkpoints/c9ca39e59dcc167cde4e31439d520d384f4b49565aca4226b43daceb0673ce79.json": "7671b1aef1253609a88ba2a407fd1152e47b4ad105685dc16b9a8ed8ad0d2e2b"
+    },
+    "producer": {
+      "name": "codex-security-plugin",
+      "version": "0.1.23"
+    },
+    "scope": {
+      "artifactsReviewed": [
+        "output/audit-2026-09-05/securite/coverage.json"
+      ],
+      "context": "Scan distinct a8ecc449-af04-41e2-925a-4775ba6ae5a9 ; ancien scan ada82bd0-2b9c-49f9-8470-70d8d38a5b30 conserv\u00e9 sans modification.",
+      "excludePaths": [],
+      "includePaths": [
+        "."
+      ],
+      "limitations": [
+        "Couverture partielle du d\u00e9p\u00f4t ; 24 fichiers int\u00e9gralement relus plus extraits cibl\u00e9s. App.jsx, demoStoreCore.js, routeCore.js, PdfReader.jsx, StudentMediaLibrary.jsx, worker/pilot/api.js et worker/pilot/games.js ne sont pas compt\u00e9s comme enti\u00e8rement audit\u00e9s dans ce compl\u00e9ment.",
+        "Aucun nouvel agent autoris\u00e9 : architecture et investigation s\u00e9quentielles, sans seconde revue ind\u00e9pendante.",
+        "Pr\u00e9flight ready avec avertissements de d\u00e9l\u00e9gation ; interpr\u00e9teur Python fourni par l\u2019application utilis\u00e9 apr\u00e8s \u00e9chec de l\u2019alias syst\u00e8me. Aucune configuration persistante modifi\u00e9e.",
+        "TAC : connecteur non connect\u00e9 (USER_NOT_LOGGED_IN) ; \u00e9tat et niveaux d\u2019octroi non v\u00e9rifiables, affichage prot\u00e9g\u00e9 potentiellement indisponible.",
+        "Sources de travail susceptibles de changer pendant la revue. Le parent a corrig\u00e9 le pr\u00e9fixe du cache scolaire ; la version courante et le test associ\u00e9 ont \u00e9t\u00e9 relus apr\u00e8s correction.",
+        "Ni secrets, ni bases priv\u00e9es, ni comptes r\u00e9els, ni services externes examin\u00e9s ; aucun d\u00e9ploiement. Mesure s\u00e9par\u00e9e de tokens indisponible."
+      ],
+      "runtimeStatus": "Aucune application ni requ\u00eate r\u00e9seau du projet ex\u00e9cut\u00e9e dans ce compl\u00e9ment. Tests finaux d\u00e9l\u00e9gu\u00e9s \u00e0 la t\u00e2che principale, qui a annonc\u00e9 16/16 pour reset/synchronisation ; assertions du reset relues ici, sans assimiler cette annonce \u00e0 une reproduction ind\u00e9pendante.",
+      "summary": "Revue compl\u00e9mentaire born\u00e9e, statique et locale des transitions d\u00e9mo/serveur, des parcours \u00e9l\u00e8ve/parent, du pr\u00e9-rendu public et des nouvelles fonctions de lecture PDF. Elle ne cl\u00f4t pas la couverture partielle du scan ant\u00e9rieur.",
+      "validationMode": "static_source_review"
+    },
+    "sealedAt": "2026-09-05T22:55:49.713732Z",
+    "startedAt": "2026-09-05T22:45:58.013304Z",
+    "status": "completed",
+    "target": {
+      "displayName": "admin-navigation-prototype",
+      "kind": "git_worktree",
+      "revision": "040c0507432544ac98939a701393e3cfc6870a8f",
+      "snapshotDigest": "codex-security-snapshot/v1:sha256:f111f9d1ab3d54f07c9d9def869209bbc44860872d78aec2d6c5d89c3ea8ca5a",
+      "targetId": "target_sha256_0e2ccb9edcb9a2c216667a78a474ac3f8269b42f2c16e3ba76db6ca4b74050ee"
+    },
+    "threatModel": {
+      "assets": [
+        "Identit\u00e9 et r\u00f4le scolaires, travaux d\u2019\u00e9l\u00e8ves, rattachements parent-enfant et progression/XP conserv\u00e9s dans D1 (worker/pilot/api.js:6-14,127-136 ; worker/pilot/games.js:149-189).",
+        "Confidentialit\u00e9 des r\u00e9ponses scolaires et absence de promotion des profils fictifs en droits scolaires (src/main.jsx:17-21).",
+        "Int\u00e9grit\u00e9 des brouillons scolaires locaux par \u00e9cole/utilisateur et s\u00e9paration de la remise \u00e0 z\u00e9ro de la d\u00e9monstration (src/features/pilote/gameSync.js:9,15-45 ; src/localDataReset.js:1,23).",
+        "Contenu public pr\u00e9-rendu sans donn\u00e9es de session et param\u00e8tres de lecture PDF born\u00e9s (src/App.jsx:210-214 ; scripts/prerender-public.mjs:18-35 ; src/features/mediatheque/pdfReadingState.js:12-48)."
+      ],
+      "assumptions": [
+        "Contexte fourni : pilote de test, donn\u00e9es fictives, aucune ouverture \u00e0 de vrais dossiers d\u2019\u00e9l\u00e8ves autoris\u00e9e dans cette t\u00e2che.",
+        "Les deux interfaces partagent l\u2019origine du navigateur ; leur stockage ne constitue pas une enclave contre un script d\u00e9j\u00e0 ex\u00e9cut\u00e9 sur cette origine ou une personne contr\u00f4lant le m\u00eame profil navigateur.",
+        "Aucun SECURITY.md applicable trouv\u00e9 par le r\u00e9solveur pour racine, src, src/features/pilote, src/features/mediatheque, scripts et worker/pilot.",
+        "Les composants d\u2019entr\u00e9e importants sont examin\u00e9s ici, pas l\u2019ensemble des impl\u00e9mentations diff\u00e9r\u00e9es du scan scell\u00e9 ant\u00e9rieur.",
+        "La d\u00e9sindexation prot\u00e8ge le r\u00e9f\u00e9rencement, pas l\u2019acc\u00e8s ; la confidentialit\u00e9 scolaire d\u00e9pend des contr\u00f4les serveur et non des robots/meta.",
+        "Le parseur PDF.js embarqu\u00e9, son worker, les fichiers binaires et la configuration effective de Cloudflare/OIDC restent hors de ce compl\u00e9ment.",
+        "Une collision de pr\u00e9fixe initiale permettait au reset d\u00e9mo de supprimer le cache scolaire du m\u00eame navigateur. Parent l\u2019a r\u00e9solue en cours de revue par jde-school.crosswords.v1: ; sources et assertions relues, pas d\u2019attaquant distinct ni de violation D1 \u00e9tablis."
+      ],
+      "attackerCapabilities": [
+        "Un visiteur peut choisir un profil fictif, modifier son propre localStorage/sessionStorage et taper du texte dans la d\u00e9monstration ; cela n\u2019\u00e9tablit aucun droit sur D1.",
+        "Un \u00e9l\u00e8ve/parent scolaire peut envoyer des requ\u00eates avec son propre cookie et le CSRF de sa session, sans pouvoir choisir le r\u00f4le ni l\u2019\u00e9cole dans le contexte d\u2019API.",
+        "Un utilisateur peut s\u00e9lectionner un PDF sur son appareil. Aucun upload serveur de ce PDF n\u2019est \u00e9tabli dans les composants examin\u00e9s.",
+        "Les sources \u00e9ditoriales et variables de build ne sont pas trait\u00e9es comme contr\u00f4lables par un visiteur non privil\u00e9gi\u00e9 ; le build n\u2019est pas un endpoint public."
+      ],
+      "securityObjectives": [
+        "Conserver l\u2019\u00e9cole, l\u2019identit\u00e9 et le rattachement familial comme autorit\u00e9s serveur ; ne jamais convertir XP/donn\u00e9es de d\u00e9monstration en \u00e9critures scolaires.",
+        "Rendre les r\u00e9ponses/textes comme texte React et ne pas exporter de sessions ou brouillons dans les HTML publics.",
+        "\u00c9viter qu\u2019une remise \u00e0 z\u00e9ro de la d\u00e9monstration efface le cache scolaire en attente.",
+        "Limiter l\u2019\u00e9tat PDF persistant aux page/zoom/mode et ne pas persister les fichiers blob/data ni une identit\u00e9 anonyme partag\u00e9e."
+      ],
+      "summary": "Jet d\u2019Encre expose une d\u00e9monstration React stock\u00e9e dans le navigateur et une application scolaire distincte appuy\u00e9e sur l\u2019API Worker/D1. Le rendu public de build consomme des articles \u00e9ditoriaux embarqu\u00e9s. Le lecteur PDF re\u00e7oit un catalogue embarqu\u00e9 ou un blob choisi explicitement par l\u2019utilisateur ; son \u00e9tat de lecture reste local. Architecture v\u00e9rifi\u00e9e s\u00e9quentiellement, sans revue ind\u00e9pendante.",
+      "trustBoundaries": [
+        "Visiteur et r\u00f4le fictif \u2192 session scolaire : DemoProvider ne monte pas les chemins pilotes. L\u2019API utilise authenticate(), le cookie HttpOnly __Host-jde_pilot avec Secure/SameSite=Lax et l\u2019affectation active provenant de D1, jamais le r\u00f4le du stockage local (src/main.jsx:17-21 ; worker/pilot/session.js:21-25,59-69 ; worker/pilot/api.js:6-14,127-136).",
+        "Parent authentifi\u00e9 \u2192 donn\u00e9es d\u2019enfant : r\u00e9sum\u00e9 limit\u00e9 par \u00e9cole, lien familial actif, \u00e9l\u00e8ve/membership/classe actifs ; la route d\u00e9taill\u00e9e des cases reste r\u00e9serv\u00e9e \u00e0 l\u2019\u00e9l\u00e8ve (worker/pilot/games.js:149-186). ParentPages re\u00e7oit uniquement la d\u00e9monstration (src/ParentPages.jsx:184-190).",
+        "Session navigateur \u2192 brouillons scolaires : cl\u00e9 JSON [schoolId,userId], contr\u00f4le d\u2019identit\u00e9 initiale et de r\u00e9ponse, CSRF issu de /session, annulation/invalidation au changement de session (src/features/pilote/gameSync.js:9-16,62-70 ; src/features/pilote/PilotCrosswords.jsx:8-38).",
+        "Source \u00e9ditoriale/build privil\u00e9gi\u00e9 \u2192 HTML public : liste de chemins embarqu\u00e9s, \u00e9chappement attributs/m\u00e9tadonn\u00e9es, renderToString de PublicPreview sans store ni r\u00e9ponse d\u2019API (scripts/prerender-public.mjs:15-35 ; src/App.jsx:210-214 ; src/publicContent.js:73-105).",
+        "Fichier choisi/catalogue \u2192 PDF.js navigateur : source blob ou chemin de catalogue ; limite locale 100 Mio/signature %PDF-, URL blob lib\u00e9r\u00e9e, isEvalSupported:false et enableXfa:false, bitmap born\u00e9 (src/features/mediatheque/localPdfCore.js:22-50 ; src/features/mediatheque/StudentMediaLibrary.jsx:282-295 ; src/features/mediatheque/PdfReader.jsx:223 ; src/features/mediatheque/pdfReaderCore.js:48-65)."
+      ]
+    }
+  },
+  "schemaVersion": "1.0"
+}
