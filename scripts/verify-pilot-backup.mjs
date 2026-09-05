@@ -100,6 +100,10 @@ function supported(statement) {
   }
   if ((word(0, "BEGIN") || word(0, "COMMIT") || word(0, "END"))
     && (tokens.length === 1 || (tokens.length === 2 && word(1, "TRANSACTION")))) return false;
+  // D1 exports reset SQLite's AUTOINCREMENT bookkeeping before restoring its values.
+  // This exact metadata-only statement is allowed solely in the temporary copy.
+  if (word(0, "DELETE") && word(1, "FROM") && tokens.length === 3
+    && ["word", "identifier"].includes(tokens[2].kind) && tokens[2].value.toLowerCase() === "sqlite_sequence") return true;
   if (word(0, "CREATE") && (word(1, "TABLE") || word(1, "INDEX") || (word(1, "UNIQUE") && word(2, "INDEX")))) {
     if (tokens.some((token) => token.kind === "word" && ["SELECT", "VIRTUAL", "TRIGGER", "VIEW"].includes(token.value))) reject("sql_not_supported");
     return true;
@@ -150,6 +154,7 @@ function restoreAuthorizer(tables) {
     if (action === sqlite.SQLITE_FUNCTION) return SAFE_FUNCTIONS.has(arg2?.toLowerCase()) ? sqlite.SQLITE_OK : sqlite.SQLITE_DENY;
     if ([sqlite.SQLITE_CREATE_TABLE, sqlite.SQLITE_INSERT, sqlite.SQLITE_READ].includes(action)) return allowedTables.has(arg1) ? sqlite.SQLITE_OK : sqlite.SQLITE_DENY;
     if (action === sqlite.SQLITE_UPDATE) return ["sqlite_master", "sqlite_schema"].includes(arg1) ? sqlite.SQLITE_OK : sqlite.SQLITE_DENY;
+    if (action === sqlite.SQLITE_DELETE) return arg1 === "sqlite_sequence" ? sqlite.SQLITE_OK : sqlite.SQLITE_DENY;
     if (action === sqlite.SQLITE_CREATE_INDEX) return tables.has(arg2) || METADATA_TABLES.has(arg2) ? sqlite.SQLITE_OK : sqlite.SQLITE_DENY;
     if ([sqlite.SQLITE_SELECT, sqlite.SQLITE_REINDEX].includes(action)) return sqlite.SQLITE_OK;
     return sqlite.SQLITE_DENY;

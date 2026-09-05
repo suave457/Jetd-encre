@@ -42,6 +42,10 @@ function exportFixture({ mutate, omitMigration } = {}) {
         }
       }
     }
+    output.push("DELETE FROM sqlite_sequence;");
+    for (const row of store.sqlite.prepare("SELECT name,seq FROM sqlite_sequence").all()) {
+      output.push(`INSERT INTO sqlite_sequence VALUES (${literal(row.name)},${literal(row.seq)});`);
+    }
     output.push("COMMIT;");
     return output.join("\n");
   } finally { store.close(); }
@@ -111,6 +115,10 @@ test("sauvegarde : ATTACH, VACUUM, extensions et SQL actif rejetés sans toucher
     "CREATE TRIGGER bad AFTER INSERT ON pilot_users BEGIN SELECT 1; END;",
     "INSERT INTO pilot_users SELECT 1;",
     "INSERT INTO pilot_users VALUES(load_extension('private-extension'));",
+    "DELETE FROM pilot_users;",
+    "DELETE FROM sqlite_sequence WHERE name='pilot_users';",
+    "DELETE FROM main.sqlite_sequence;",
+    "DELETE FROM 'sqlite_sequence';",
     "/* innocent */ ATTaCH /* comment */ DATABASE 'private-name' AS copied;",
   ];
   for (const [index, sql] of attacks.entries()) {

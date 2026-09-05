@@ -2,6 +2,8 @@
 
 Le vérificateur restaure un **export SQL complet** dans une nouvelle base SQLite temporaire, hors du projet. Il compare la structure aux migrations du code courant, contrôle les clés étrangères et l’intégrité, puis supprime sa copie temporaire. Il ne se connecte pas à Cloudflare et ne modifie ni l’export, ni la base de développement, ni D1.
 
+**Validation sur export D1 réel, 6 septembre 2026 :** les exports de la base de test avant et après la migration 0004 ont été restaurés localement et contrôlés avec leur schéma respectif. Le format D1 inclut `DELETE FROM sqlite_sequence` avant de rétablir les compteurs AUTOINCREMENT : cette instruction exacte est maintenant acceptée uniquement pour cette table interne de la copie temporaire. Toute suppression de table applicative, clause supplémentaire ou accès à une autre base reste refusé, avec tests de non-régression. Aucun export n’est stocké dans le dépôt. Cela ne constitue toujours pas une restauration vers une base D1 distante.
+
 ## Vérifier un export déjà disponible
 
 Depuis le dossier `admin-navigation-prototype`, indiquer le chemin du fichier SQL existant dans `$backupFile` :
@@ -54,7 +56,7 @@ Le fichier reste dans un dossier privé hors du dépôt et de OneDrive. Il conti
 - La table `d1_migrations` doit contenir exactement les noms des migrations SQL du code courant. Un export ancien, antérieur à une migration locale, échoue à ce contrôle : il doit être vérifié avec la version correspondante du code pour être évalué comme sauvegarde historique.
 - `PRAGMA integrity_check` et `PRAGMA foreign_key_check` contrôlent la copie. Les tables ne sont pas corrigées automatiquement et aucune migration n’est appliquée à l’export pour masquer un décalage.
 - Les exports UTF-8 jusqu’à **32 Mio** sont acceptés. La copie SQLite est limitée à environ **64 Mio**. Les fichiers binaires SQLite, exports partiels, vues, triggers, tables virtuelles et instructions hors du format autorisé sont refusés.
-- Le format autorisé comprend `CREATE TABLE`, `CREATE INDEX`, `CREATE UNIQUE INDEX` et `INSERT INTO … VALUES` avec valeurs littérales. Les pragmas de clés étrangères et les enveloppes `BEGIN TRANSACTION` / `COMMIT` usuels sont neutralisés ; le vérificateur gère sa propre transaction. `ATTACH`, `DETACH`, `VACUUM`, chargement d’extensions et SQL dynamique sont interdits.
+- Le format autorisé comprend `CREATE TABLE`, `CREATE INDEX`, `CREATE UNIQUE INDEX` et `INSERT INTO … VALUES` avec valeurs littérales, ainsi que l’instruction exacte `DELETE FROM sqlite_sequence` pour les compteurs internes de la copie. Les pragmas de clés étrangères et les enveloppes `BEGIN TRANSACTION` / `COMMIT` usuels sont neutralisés ; le vérificateur gère sa propre transaction. `ATTACH`, `DETACH`, `VACUUM`, chargement d’extensions, suppressions applicatives et SQL dynamique sont interdits.
 
 ## Portée du résultat
 
