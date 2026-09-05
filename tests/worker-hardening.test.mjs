@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 import worker from "../worker/index.js";
+import { PUBLIC_PREVIEW_PATHS } from "../src/publicContent.js";
 
 const base = "https://example.test";
 const authorization = "Bearer private-token";
@@ -176,6 +177,20 @@ test("serves exact prerendered public routes; unknown public paths and local PDF
   const env = { ASSETS: { fetch: async (request) => { calls.push(new URL(request.url).pathname); return new Response("static", { status: new URL(request.url).pathname.endsWith("index.html") ? 200 : 404 }); } } };
   assert.equal((await worker.fetch(new Request(`${base}/methode`, { headers: { accept: "text/html" } }), env)).status, 200);
   assert.deepEqual(calls, ["/methode/index.html"]);
+  for (const path of PUBLIC_PREVIEW_PATHS) {
+    const expected = path === "/" ? "/index.html" : `${path}/index.html`;
+    assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 200, path);
+    assert.equal(calls.at(-1), expected, path);
+  }
+  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/mots-fleches/"]) {
+    const response = await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env);
+    assert.equal(response.status, 200, path);
+    assert.equal(calls.at(-1), "/index.html", path);
+    assert.equal(response.headers.get("X-Robots-Tag"), "noindex, nofollow");
+  }
+  for (const path of ["/pilote/jeux/inconnu", "/pilote/jeux/mots-fleches/extra", "/guide-ecole/inconnu"]) {
+    assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 404, path);
+  }
   assert.equal((await worker.fetch(new Request(`${base}/page-inventee`, { headers: { accept: "text/html" } }), env)).status, 404);
   for (const path of ["/connexion", "/connexion/parent", "/activation", "/mentions-legales", "/blog"]) assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 200);
   assert.equal((await worker.fetch(new Request(`${base}/connexion/invente`, { headers: { accept: "text/html" } }), env)).status, 404);

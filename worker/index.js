@@ -1,5 +1,6 @@
 import { handlePilot } from "./pilot/api.js";
 import { authSettings } from "./pilot/oidc.js";
+import { PUBLIC_PREVIEW_PATHS } from "../src/publicContent.js";
 
 const SECURITY_HEADERS = Object.freeze({
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -61,7 +62,8 @@ const MAX_JSON_BYTES = 64 * 1024;
 const MAX_EVENT_BATCH = 50;
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const MAX_CONTENT_VERSION = 1_000_000;
-const PUBLIC_PAGES = new Set(["/", "/methode", "/familles", "/ecoles", "/niveau/5e-aep", "/decouvrir"]);
+const PUBLIC_PAGES = new Set(PUBLIC_PREVIEW_PATHS);
+const PILOT_DOCUMENT_PATHS = new Set(["/pilote", "/pilote/jeux/mots-fleches"]);
 const APP_ROOTS = new Set(["eleve", "parent", "enseignant", "directeur", "admin"]);
 const PUBLIC_APP_PATHS = new Set(["/blog", "/connexion", "/activation", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/cookies", "/accessibilite", "/mot-de-passe-oublie", "/reinitialisation", "/session-expiree", "/invitation"]);
 const PUBLIC_APP_PATTERNS = [
@@ -489,7 +491,7 @@ export default {
       pageUrl.search = "";
       return secure(await env.ASSETS.fetch(new Request(pageUrl, request)), request);
     }
-    if (documentRequest && canonicalPath === "/pilote") {
+    if (documentRequest && PILOT_DOCUMENT_PATHS.has(canonicalPath)) {
       const indexUrl = new URL("/index.html", request.url);
       const page = secure(await env.ASSETS.fetch(new Request(indexUrl, request)), request);
       page.headers.set("X-Robots-Tag", "noindex, nofollow");
