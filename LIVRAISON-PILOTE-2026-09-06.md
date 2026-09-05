@@ -31,6 +31,7 @@ La grille et ses réponses sont embarquées dans le logiciel : ce jeu sert à l�
 | --- | --- |
 | Tests automatisés | **321 réussis, 0 échec** sur Windows avec Node 24.20.0. Ils couvrent notamment droits, quotas, sauvegardes, récompenses uniques, concurrence, coupures, PDF et contenu des grilles. |
 | Construction | Réussie ; 14 pages publiques prérendues, indexation désactivée. L’export du schéma de base réussit. |
+| Reconstruction depuis Git | Clone autonome du commit `cb5c787a5c73b577efaabc7a15cc7224cd028e10`, installation avec verrou inchangé depuis le cache, compilation, 321 tests et export du schéma réussis. Arbre Git resté propre, PDF conservé octet pour octet, fichiers privés absents. Windows uniquement ; CI Linux non exécutée ici. |
 | Dépendances | L’audit des paquets ne signale aucune vulnérabilité connue. Cela ne remplace pas une revue du code ni des bibliothèques embarquées. |
 | Préparation Cloudflare | Simulation de publication réussie, **sans envoi ni migration distante**. |
 | Parcours de jeu | Navigateur isolé sur le serveur local : grille facile terminée, +20 XP, rechargement et confirmation serveur ; résumé parent concordant ; autre école sans progression visible. |
@@ -49,7 +50,7 @@ Les tests de navigateur de cette livraison sont **locaux**, avec profils fictifs
 
 | Lot du plan | État | Validation restante |
 | --- | --- | --- |
-| 1 — Stabilisation | Corrections locales réalisées | Publication, confirmation distante et reconstruction finale depuis Git. |
+| 1 — Stabilisation | Corrections et reconstruction depuis Git réalisées | Publication et confirmation distante. |
 | 2 — Entrée scolaire | Parcours public et guide intégrés | Remise privée et récupération des accès à valider avec une école. |
 | 3 — Premier jeu connecté | Serveur, interface et tests locaux réalisés | Migration D1 puis recette Auth0, second navigateur et persistance en ligne. |
 | 4 — Médiathèque et pédagogie | Reprise PDF et relecture réalisées | Catalogue autorisé, transcriptions, enseignant, vraie tablette et technologies d’assistance. |
@@ -79,3 +80,11 @@ Les tests de navigateur de cette livraison sont **locaux**, avec profils fictifs
 - Captures locales de recette : `output/playwright/launch/`.
 
 Les rapports d’audit scellés restent inchangés. Les notes d’identifiants fictifs, bases, exports, configurations privées et journaux de test sont exclus du dépôt.
+
+## 6. Version vérifiée et conservation
+
+Le point de reprise antérieur est `040c0507432544ac98939a701393e3cfc6870a8f`. Le code livré et reconstruit correspond à `cb5c787a5c73b577efaabc7a15cc7224cd028e10`. Le présent complément de compte rendu ne change pas ce code. Les commits sont **locaux ; aucun push Git n’a été effectué pendant cette livraison**.
+
+La reconstruction suit l’ordre de la CI : installation, compilation, puis tests, car plusieurs tests inspectent les fichiers construits. Une première tentative de vérification lancée avant la compilation a échoué sur ces fichiers absents ; la reconstruction complète a ensuite été reprise dans un nouveau clone propre et a réussi. L’installation hors ligne utilise le cache de ce poste : elle ne démontre pas le téléchargement sur une machine neuve.
+
+Le résultat synthétique est conservé dans `output/ameliorations-2026-09-05/RECONSTRUCTION-GIT-2026-09-06.json`. Une comparaison avec le point de reprise confirme aussi que les 222 réponses, la géométrie et les versions de récompense des 18 grilles n’ont pas changé. Les quatre artefacts scellés du complément de sécurité sont enregistrés sans conversion de fins de ligne et leurs octets ont été comparés à ceux du dépôt.
