@@ -1,5 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { localPdfPreview } from "./scripts/local-pdf-preview.mjs";
+import { pilotLocalApi } from "./scripts/pilot-local-api.mjs";
 
 export default defineConfig({
   build: {
@@ -15,14 +17,19 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    entries: ["index.html"],
     include: ["react", "react-dom/client"],
   },
   server: {
-    host: "0.0.0.0",
-    allowedHosts: ["terminal.local"],
+    host: "127.0.0.1",
+    port: 5173,
+    strictPort: true,
+    fs: {
+      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "**/.local-media/**", "**/.local-data/**"],
+    },
     warmup: {
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [react()],
+  plugins: [localPdfPreview(), pilotLocalApi(), react()],
 });

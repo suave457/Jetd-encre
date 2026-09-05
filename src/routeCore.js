@@ -1,3 +1,5 @@
+import { PUBLIC_PAGES } from "./publicContent.js";
+
 export const ROLES = Object.freeze(["eleve", "parent", "enseignant", "directeur", "admin"]);
 
 export const ROLE_PAGES = Object.freeze({
@@ -480,7 +482,9 @@ export function parseRoute(input = "/") {
   const path = normalizeRoute(input);
 
   if (path === "/") return publicRoute({ kind: "landing", path }, "public.landing");
+  if (path === "/pilote") return publicRoute({ kind: "pilot", path }, "pilot.entry");
   if (path === "/blog") return publicRoute({ kind: "blog-index", path }, "public.blog-index");
+  if (Object.hasOwn(PUBLIC_PAGES, path)) return publicRoute({ kind: "public-info", path }, "public.info");
   if (path === "/connexion") {
     return publicRoute({ kind: "connection", path }, "auth.profile-choice");
   }

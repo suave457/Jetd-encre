@@ -1,0 +1,23 @@
+
+/* Launch preparation: readable controls, explicit demo state, recoverable errors. */
+.prototype-banner { margin: 0; padding: 12px 24px; text-align: center; color: #173e3a; background: #e6f3ef; font-size: 14px; line-height: 1.6; border-bottom: 1px solid #b5d6ca; }
+.prototype-banner strong { margin-right: 8px; }
+.public-info-heading { max-width: 1040px; margin: auto; padding-bottom: 24px; }
+.public-info-heading h1 { font-family: Outfit, sans-serif; font-size: clamp(32px, 3.5vw, 50px); line-height: 1.15; margin: 18px 0; }
+.public-info-heading p { font-size: 20px; line-height: 1.6; max-width: 780px; }
+.public-info-sections { max-width: 1000px; margin: 0 auto; padding: 0 24px; display: grid; gap: 20px; }
+.public-info-sections .panel { padding: 30px; }
+.public-info-sections h2 { font-size: 25px; margin: 10px 0 16px; }
+.public-info-sections p { font-size: 18px; line-height: 1.8; margin: 0; max-width: 78ch; }
+.public-info-actions { max-width: 1040px; margin: auto; display: flex; gap: 12px; flex-wrap: wrap; }
+.app-recovery { max-width: 780px; margin: 10vh auto; padding: 32px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
+.app-recovery h1 { font-size: 32px; }
+.app-recovery p { line-height: 1.7; font-size: 18px; }
+.hero-score small { max-width: 80px; line-height: 1.2; white-space: normal; text-align: center; }
+html[data-text-size="confortable"] .app-content :is(p, label, li, textarea) { font-size: max(1em, 16px); line-height: 1.6; }
+html[data-text-size="grand"] .app-content :is(p, label, li, textarea) { font-size: max(1em, 18px); line-height: 1.65; }
+html[data-text-size="grand"] .app-content :is(.button, input, select) { font-size: 17px; min-height: 48px; }
+html[data-text-size="grand"] .app-content small { font-size: 14px; line-height: 1.5; }
+html[data-reduce-motion="true"], html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, html[data-reduce-motion="true"] *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+@media (max-width: 1100px) { .public-info-heading, .public-info-actions { padding: 32px 24px; } }
+

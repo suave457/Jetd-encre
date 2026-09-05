@@ -1,0 +1,39 @@
+// MODÈLE DE PRÉPARATION UNIQUEMENT — aucune publication autorisée.
+// Ce nom de fichier n'est pas chargé automatiquement par Wrangler.
+// Les identifiants ci-dessous sont volontairement incomplets, pas des ressources existantes.
+// Ne pas exécuter deploy, versions upload, dev --remote ou une migration distante.
+// workers_dev:false n'interdit PAS de modifier un Worker distant avec deploy.
+// Voir audit-lancement-2026-09-04/PREPARATION-CLOUDFLARE-AUTH0.md.
+{
+  "name": "remplacer-par-un-worker-de-test-dedie",
+  "account_id": "A_RENSEIGNER_APRES_AUTORISATION",
+  "main": "./dist/server/index.js",
+  "compatibility_date": "2026-09-04",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "remplacer-par-une-base-de-test-dediee",
+      "database_id": "A_CREER_APRES_AUTORISATION",
+      "migrations_dir": "./drizzle"
+    }
+  ],
+  "vars": {
+    "PILOT_ENABLED": "false",
+    "PILOT_ORIGIN": "",
+    "OIDC_ISSUER": "",
+    "OIDC_CLIENT_ID": "",
+    "OIDC_ALLOWED_ORIGINS": ""
+  }
+  // Aucun secret ici : OIDC_CLIENT_SECRET sera un secret serveur, après accord.
+  // Aucun R2 : ne pas activer sa souscription pour cette préparation.
+}

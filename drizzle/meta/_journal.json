@@ -8,6 +8,27 @@
       "when": 1787864244447,
       "tag": "0000_funny_stephen_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788559367861,
+      "tag": "0001_pilot_accounts_learning",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788559872140,
+      "tag": "0002_pilot_auth_throttle",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788634908771,
+      "tag": "0003_platform_admin",
+      "breakpoints": true
     }
   ]
 }

@@ -7,11 +7,16 @@ import {
 } from "./features/games/class-challenges/classChallengeEngine.js";
 import { BETA_MEDIA_ASSETS } from "./features/beta-data/betaFixtures.js";
 import { AEP_LEVELS, LEARNING_COMPETENCIES, LEARNING_DOMAINS } from "./features/beta-data/learningTaxonomy.js";
+import { ENVIRONMENT_ACTIVITY, gradeLearningActivity } from "./learningActivityCore.js";
 
 export const DEMO_SCHEMA_VERSION = 7;
 export const DEMO_STORAGE_KEY = "jde.demo.store.v3";
 export const DEMO_ROLES = Object.freeze(["eleve", "parent", "enseignant", "directeur", "admin"]);
 export const ACTIVATION_CODE_PATTERN = /^JDE-26-FR([1-6])-(\d{4})$/;
+
+export function isPublicDemoContent(item) {
+  return Boolean(item && item.status === "Publié" && item.visibility === "Public" && !item.archivedAt);
+}
 
 export const DEMO_ACCOUNTS = Object.freeze({
   eleve: Object.freeze({
@@ -1027,6 +1032,9 @@ export function createDemoStore(options = {}) {
       (item) => item.assignmentId === assignmentId && item.studentId === studentId,
     );
     const previous = existingIndex >= 0 ? state.submissions[existingIndex] : null;
+    if (previous?.answer === answer) {
+      return { ok: true, created: false, duplicate: true, submission: clone(previous) };
+    }
     const submission = {
       ...(previous || {}),
       id: previous?.id || createId("remise"),
@@ -1071,13 +1079,16 @@ export function createDemoStore(options = {}) {
     const submissionIndex = state.submissions.findIndex((item) => item.id === id);
     if (submissionIndex < 0) return resultError("submission_not_found", "Remise introuvable.");
     const score = Number(input.score);
-    if (!Number.isFinite(score) || score < 0 || score > 20) {
+    if (input.score == null || String(input.score).trim() === "" || !Number.isFinite(score) || score < 0 || score > 20) {
       return resultError("invalid_score", "La note doit être comprise entre 0 et 20.");
     }
     const feedback = String(input.feedback || "").trim();
     if (feedback.length < 8) return resultError("feedback_too_short", "Ajoutez un commentaire utile à l’élève.");
     const reviewedAt = asIso(now);
     const current = state.submissions[submissionIndex];
+    if (current.status === "Corrigé" && current.score === score && current.feedback === feedback) {
+      return { ok: true, duplicate: true, submission: clone(current) };
+    }
     const reviewed = { ...current, status: "Corrigé", score, feedback, reviewedAt, updatedAt: reviewedAt };
     const submissions = [...state.submissions];
     submissions[submissionIndex] = reviewed;
@@ -1179,8 +1190,9 @@ export function createDemoStore(options = {}) {
       masteryLabel: input.masteryLabel ? String(input.masteryLabel) : null,
       level: input.level ? String(input.level) : null,
       activationId: input.activationId || activeActivation?.id || null,
-      unitId: input.unitId || "unite-3",
-      lessonId: input.lessonId || "lecon-2",
+      // Games are practice. A client-supplied label is not evidence of a curriculum objective.
+      unitId: null,
+      lessonId: null,
       correctCount: Math.max(0, Number(input.correctCount || 0)),
       questionCount: Math.max(0, Number(input.questionCount || 0)),
       xpEarned: Math.max(0, Number(input.xpEarned || 0)),
@@ -1190,26 +1202,32 @@ export function createDemoStore(options = {}) {
       scorePercent: Math.max(0, Math.min(100, Number(input.scorePercent || 0))),
       completedAt: asIso(now),
     };
-    const progressIndex = state.manualProgress.findIndex(
-      (item) => item.userId === userId && item.activationId === attempt.activationId && item.unitId === attempt.unitId,
-    );
-    const currentProgress = progressIndex >= 0 ? state.manualProgress[progressIndex] : null;
-    const progress = {
-      ...(currentProgress || {}),
-      id: currentProgress?.id || createId("progression"),
-      activationId: attempt.activationId,
-      userId,
-      unitId: attempt.unitId,
-      lessonId: attempt.lessonId,
-      percent: Math.min(100, Math.max(0, currentProgress ? Number(currentProgress.percent || 0) : 0) + 10),
-      completedActivities: Number(currentProgress?.completedActivities || 0) + 1,
-      updatedAt: attempt.completedAt,
-    };
-    const manualProgress = [...state.manualProgress];
-    if (progressIndex >= 0) manualProgress[progressIndex] = progress;
-    else manualProgress.unshift(progress);
-    commit({ ...state, quizAttempts: [attempt, ...state.quizAttempts], manualProgress });
+    commit({ ...state, quizAttempts: [attempt, ...state.quizAttempts] });
     return { ok: true, recorded: true, duplicate: false, attempt: clone(attempt) };
+  }
+
+  function completeLearningActivity(input = {}) {
+    const userId = state.session.userId;
+    if (!state.session.authenticated || state.session.role !== "eleve") return resultError("student_session_required", "Connecte-toi avec le profil élève de démonstration.");
+    if (!state.users.some(user => user.id === userId && user.role === "eleve")) return resultError("student_not_found", "Profil élève introuvable.");
+    const attemptId = String(input.attemptId || "").trim();
+    if (!attemptId) return resultError("attempt_id_required", "Un identifiant de tentative est obligatoire.");
+    const previous = state.quizAttempts.find(item => item.id === attemptId);
+    if (previous) {
+      if (previous.userId !== userId || previous.quizId !== input.activityId || previous.experienceType !== "learning-activity") return resultError("attempt_conflict", "Cette tentative correspond à une autre activité.");
+      return { ok: true, duplicate: true, attempt: clone(previous) };
+    }
+    const result = gradeLearningActivity(input.activityId, input.answers);
+    if (!result.ok) return result;
+    const completedAt = asIso(now);
+    const awards = result.corrections.filter(item => item.correct).map(item => ({
+      id: `learning:${userId}:${ENVIRONMENT_ACTIVITY.id}:v${ENVIRONMENT_ACTIVITY.version}:${item.questionId}`,
+      userId, amount: 10, source: ENVIRONMENT_ACTIVITY.id, attemptId, questionId: item.questionId, awardedAt: completedAt,
+    })).filter(award => !state.quizAwards.some(item => item.id === award.id));
+    const xpEarned = awards.reduce((total, award) => total + award.amount, 0);
+    const attempt = { ...result, id: attemptId, userId, quizId: ENVIRONMENT_ACTIVITY.id, title: ENVIRONMENT_ACTIVITY.title, experienceType: "learning-activity", activityVersion: ENVIRONMENT_ACTIVITY.version, unitId: null, lessonId: null, xpEarned, answerXpEarned: xpEarned, completionXp: 0, completedAt };
+    commit({ ...state, users: state.users.map(user => user.id === userId ? { ...user, xp: Number(user.xp || 0) + xpEarned } : user), quizAwards: [...state.quizAwards, ...awards], quizAttempts: [attempt, ...state.quizAttempts] });
+    return { ok: true, duplicate: false, attempt: clone(attempt) };
   }
 
   function createClassChallenge(input = {}) {
@@ -1509,6 +1527,7 @@ export function createDemoStore(options = {}) {
     reviewSubmission,
     awardStudentXp,
     recordQuizAttempt,
+    completeLearningActivity,
     createClassChallenge,
     finishClassChallenge,
     recordClassChallengeResult,

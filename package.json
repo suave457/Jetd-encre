@@ -2,23 +2,29 @@
   "name": "admin-navigation-prototype",
   "version": "0.0.0",
   "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prepare-sites-build.mjs",
+    "build": "vite build && node scripts/prepare-sites-build.mjs && node scripts/prerender-public.mjs",
     "test": "node --test",
     "inject:prototype": "node scripts/inject-pencil-prototype.mjs",
     "preview": "vite preview",
     "test:prototype": "node --test tests/prototype-contract.test.mjs",
-    "test:sites": "node --test tests/sites-worker.test.mjs"
+    "test:sites": "node --test tests/sites-worker.test.mjs tests/worker-hardening.test.mjs",
+    "check:release": "pnpm run build && pnpm test && pnpm audit --audit-level=moderate"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@vitejs/plugin-react": "5.0.4",
     "drizzle-orm": "0.45.2",
+    "openid-client": "6.8.7",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "vite": "6.4.2"
+    "vite": "6.4.3"
   },
   "devDependencies": {
     "drizzle-kit": "0.31.10"

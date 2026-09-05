@@ -1,7 +1,23 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 import worker, { sanitizeApiEvent } from "../worker/index.js";
+
+test("pilot deployment bundles server dependencies without local sign-in or database fixtures", async () => {
+  const source=await readFile(new URL("../dist/server/index.js",import.meta.url),"utf8");
+  assert.doesNotMatch(source,/pilot-a-teacher|handleLocalPilot|seedLocalPilot|node:sqlite|\.local-data/);
+  assert.doesNotMatch(source,/from\s*["']openid-client["']/);
+  const {default:built}=await import(new URL("../dist/server/index.js",import.meta.url));
+  const response=await built.fetch(new Request("https://example.test/api/pilot/local/login",{method:"POST"}),{PILOT_ENABLED:"true",LOCAL_AUTH:"true"});
+  assert.equal(response.status,404);
+  assert.equal((await built.fetch(new Request("https://example.test/api/pilot/session"),{})).status,503);
+});
+
+test("pilot direct link works without making the page indexable", async () => {
+  const response=await worker.fetch(new Request("https://example.test/pilote",{headers:{accept:"text/html"}}),{ASSETS:{fetch:async request=>new Response("html",{status:new URL(request.url).pathname==="/index.html"?200:404})}});
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get("X-Robots-Tag"),"noindex, nofollow");
+});
 
 test("serves existing static assets without a fallback", async () => {
   const calls = [];
@@ -27,7 +43,7 @@ test("serves existing static assets without a fallback", async () => {
 test("falls back to index.html for an unknown app route", async () => {
   const calls = [];
   const response = await worker.fetch(
-    new Request("https://example.test/flow/step-two?source=share", {
+    new Request("https://example.test/eleve/jeux?source=share", {
       headers: { accept: "text/html" },
     }),
     {
@@ -44,7 +60,7 @@ test("falls back to index.html for an unknown app route", async () => {
   );
 
   assert.equal(response.status, 200);
-  assert.deepEqual(calls, ["/flow/step-two?source=share", "/index.html"]);
+  assert.deepEqual(calls, ["/eleve/jeux?source=share", "/index.html"]);
 });
 
 test("routes API before static assets and reports missing bindings cleanly", async () => {
@@ -66,19 +82,20 @@ test("does not turn write requests into the app shell", async () => {
   assert.equal(calls, 1);
 });
 
-test("exposes BETA health and read-only aggregate dashboard endpoints", async () => {
+test("fails readiness without DB and protects aggregate demonstration data", async () => {
   const assets = { fetch: async () => new Response("missing", { status: 404 }) };
   const health = await worker.fetch(new Request("https://example.test/api/v1/health"), { ASSETS: assets });
-  assert.equal(health.status, 200);
-  assert.deepEqual((await health.json()).storage, { database: false, media: false });
+  assert.equal(health.status, 503);
+  assert.equal((await health.json()).error.code, "database_unavailable");
 
   const counts = [27, 8, 3, 2, 31];
   let index = 0;
   const DB = { prepare: () => ({ first: async () => ({ count: counts[index++] }) }) };
-  const dashboard = await worker.fetch(new Request("https://example.test/api/v1/dashboard"), { ASSETS: assets, DB });
+  const dashboard = await worker.fetch(new Request("https://example.test/api/v1/dashboard", { headers: { authorization: "Bearer private-token" } }), { ASSETS: assets, DB, BETA_WRITE_TOKEN: "private-token" });
   assert.equal(dashboard.status, 200);
   const payload = await dashboard.json();
   assert.equal(payload.release, "BETA");
+  assert.equal(payload.sourceStatus, "demo_unverified");
   assert.deepEqual(payload.counts, { events: 27, contents: 8, media: 3, imports: 2, activeReferences: 31 });
 });
 
@@ -120,7 +137,7 @@ test("protects private editorial and media inventories before any D1 query", asy
   const blockedDB = { prepare: () => { prepareCalls += 1; throw new Error("D1 must not be queried"); } };
   const assets = { fetch: async () => new Response("missing", { status: 404 }) };
 
-  for (const path of ["/api/v1/editorial?status=published", "/api/v1/media"]) {
+  for (const path of ["/api/v1/editorial?status=published", "/api/v1/media", "/api/v1/dashboard"]) {
     const unauthorized = await worker.fetch(new Request(`https://example.test${path}`), {
       ASSETS: assets,
       DB: blockedDB,
@@ -144,7 +161,7 @@ test("protects private editorial and media inventories before any D1 query", asy
   assert.equal(prepareCalls, 0);
 });
 
-test("preserves authorized private inventory reads and the public dashboard", async () => {
+test("preserves authorized private inventory reads", async () => {
   const queries = [];
   const DB = {
     prepare(sql) {
@@ -255,7 +272,8 @@ test("pseudonymizes every analytics identifier before D1 and preserves deduplica
   assert.notEqual(boundRows[0].values[0], boundRows[0].values[4]);
   assert.doesNotMatch(JSON.stringify(boundRows), /child@example\.test|Classe de Lina|session de Lina|contenu de Lina|activité de Lina|tentative de Lina/);
   assert.deepEqual(JSON.parse(boundRows[0].values[13]), ["LEX-01"]);
-  assert.deepEqual(JSON.parse(boundRows[0].values[14]), { scorePercent: 80, source: "quiz", dataMode: "fixture" });
+  assert.equal(boundRows[0].values[5], "system");
+  assert.deepEqual(JSON.parse(boundRows[0].values[14]), { scorePercent: 80, source: "quiz", dataMode: "fixture", reportedRole: "eleve", identityAssurance: "unverified" });
 
   const rotatedResponse = await worker.fetch(new Request("https://example.test/api/v1/events/batch", {
     method: "POST",
@@ -282,4 +300,17 @@ test("emits the files required by Sites packaging", async () => {
   await access(new URL("../dist/server/index.js", import.meta.url));
   await access(new URL("../dist/.openai/hosting.json", import.meta.url));
   await access(new URL("../dist/.openai/drizzle/0000_funny_stephen_strange.sql", import.meta.url));
+  await access(new URL("../dist/client/assets/jet-dencre-logo-vertical-dark.png", import.meta.url));
+  await access(new URL("../dist/client/assets/jet-dencre-monogram-light.png", import.meta.url));
+  await access(new URL("../dist/client/games/projet-debat/embedded-init.js", import.meta.url));
+});
+
+test("production artifact excludes the local test PDF and its private catalog metadata", async () => {
+  const client = new URL("../dist/client/", import.meta.url);
+  const files = await readdir(client, { recursive: true });
+  assert.ok(files.every((file) => !/local-media|momo-chapitre-1/i.test(file)));
+  for (const file of files.filter((name) => /\.(js|html|xml)$/.test(name))) {
+    const content = await readFile(new URL(file.replaceAll("\\", "/"), client), "utf8");
+    assert.doesNotMatch(content, /test-momo-chapitre-1|momo-chapitre-1\.pdf|Momo part à l’aventure/, file);
+  }
 });

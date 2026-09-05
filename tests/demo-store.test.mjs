@@ -10,6 +10,7 @@ import {
   createSafeStorage,
   migrateDemoState,
   validateDemoCredentials,
+  isPublicDemoContent,
 } from "../src/demoStoreCore.js";
 
 const reactStoreSource = await readFile(new URL("../src/demoStore.jsx", import.meta.url), "utf8");
@@ -42,6 +43,14 @@ test("exports the React provider, hook and integration constants", () => {
   ]) {
     assert.match(reactStoreSource, new RegExp(`\\b${exportedName}\\b`), exportedName);
   }
+});
+
+test("publication does not make an audience-restricted demo content public", () => {
+  assert.equal(isPublicDemoContent({ status: "Publié", visibility: "Élèves et enseignants" }), false);
+  assert.equal(isPublicDemoContent({ status: "Publié" }), false);
+  assert.equal(isPublicDemoContent({ status: "Brouillon", visibility: "Public" }), false);
+  assert.equal(isPublicDemoContent({ status: "Publié", visibility: "Public", archivedAt: "2026-09-04" }), false);
+  assert.equal(isPublicDemoContent({ status: "Publié", visibility: "Public" }), true);
 });
 
 test("exposes one working demo session for every role", () => {
@@ -272,7 +281,7 @@ test("awards quiz XP once per question and persists the student total", () => {
   assert.equal(store.actions.recordQuizAttempt({ attemptId: "attempt-1" }).recorded, false);
   assert.equal(store.getState().quizAttempts.length, 1);
   assert.equal(store.getState().quizAttempts[0].activationId, "activation-lina-fr5");
-  assert.equal(store.getState().manualProgress.find((item) => item.activationId === "activation-lina-fr5").percent, 60);
+  assert.equal(store.getState().manualProgress.find((item) => item.activationId === "activation-lina-fr5").percent, 50);
 
   const restoredStore = createDemoStore({ storage, now });
   assert.equal(restoredStore.getState().users.find((user) => user.id === studentId).xp, 1250);
@@ -281,6 +290,51 @@ test("awards quiz XP once per question and persists the student total", () => {
   assert.equal(restoredStore.getState().users.find((user) => user.id === studentId).xp, 1240);
   assert.equal(restoredStore.getState().quizAwards.length, 0);
   assert.equal(restoredStore.getState().quizAttempts.length, 0);
+});
+
+test("free games, including five failed attempts, never complete an unrelated manual unit", () => {
+  const store = createDemoStore({ storage: createMemoryStorage(), now: testClock() });
+  signInAs(store, "eleve");
+  const before = structuredClone(store.getState().manualProgress);
+  for (let index = 0; index < 5; index += 1) {
+    const result = store.actions.recordQuizAttempt({ attemptId: `failed-${index}`, quizId: "culture-generale", unitId: "unite-3", lessonId: "lecon-2", correctCount: 0, questionCount: 10, xpEarned: 0 });
+    assert.equal(result.ok, true);
+    assert.equal(result.attempt.unitId, null);
+  }
+  store.actions.recordQuizAttempt({ attemptId: "perfect-free-game", quizId: "mots-fleches", correctCount: 11, questionCount: 11, scorePercent: 100 });
+  assert.deepEqual(store.getState().manualProgress, before);
+  assert.equal(store.getState().quizAttempts.length, 6);
+  assert.equal(store.getState().users.find(item => item.role === "eleve").xp, 1240);
+});
+
+test("learning activity grades actual answers, exposes the correction and awards only newly correct questions", () => {
+  const storage = createMemoryStorage();
+  const store = createDemoStore({ storage, now: testClock() });
+  assert.equal(store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-1", answers: [0, 0, 1, 0, 0] }).error, "student_session_required");
+  signInAs(store, "eleve");
+  const before = structuredClone(store.getState().manualProgress);
+  const wrong = store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-1", answers: [0, 0, 1, 0, 0], xpEarned: 9999, scorePercent: 100 });
+  assert.equal(wrong.attempt.correctCount, 0);
+  assert.equal(wrong.attempt.scorePercent, 0);
+  assert.equal(wrong.attempt.xpEarned, 0);
+  assert.equal(wrong.attempt.corrections[0].correctIndex, 1);
+  assert.match(wrong.attempt.corrections[0].explanation, /Ramasser les déchets/);
+  const incomplete = store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "missing", answers: [1] });
+  assert.equal(incomplete.error, "incomplete_answers");
+  assert.equal(store.getState().quizAttempts.length, 1);
+  const partial = store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-2", answers: [1, 2, 1, 0, 0] });
+  assert.equal(partial.attempt.correctCount, 2);
+  assert.equal(partial.attempt.xpEarned, 20);
+  const correct = store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-3", answers: [1, 2, 0, 3, 1] });
+  assert.equal(correct.attempt.correctCount, 5);
+  assert.equal(correct.attempt.xpEarned, 30);
+  assert.equal(store.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-3", answers: [1, 2, 0, 3, 1] }).duplicate, true);
+  assert.equal(store.getState().quizAttempts.length, 3);
+  const replay = createDemoStore({ storage, now: testClock() });
+  assert.equal(replay.actions.completeLearningActivity({ activityId: "mots-environnement", attemptId: "learning-4", answers: [1, 2, 0, 3, 1] }).attempt.xpEarned, 0);
+  assert.equal(replay.getState().users.find(item => item.role === "eleve").xp, 1290);
+  assert.equal(replay.getState().quizAwards.length, 5);
+  assert.deepEqual(replay.getState().manualProgress, before);
 });
 
 test("migrates legacy collections and falls back to memory when localStorage fails", () => {

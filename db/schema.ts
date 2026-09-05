@@ -1,4 +1,5 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, foreignKey, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 export const betaEditorialItems = sqliteTable("beta_editorial_items", {
   id: text("id").primaryKey(),
@@ -132,3 +133,84 @@ export const betaAuditEntries = sqliteTable("beta_audit_entries", {
   requestId: text("request_id").notNull(),
   createdAt: text("created_at").notNull(),
 }, (table) => [index("beta_audit_created_idx").on(table.createdAt, table.action)]);
+
+// The pilot is separate from legacy browser fixtures and unverified beta telemetry.
+export const pilotUsers = sqliteTable("pilot_users", {
+  id: text("id").primaryKey(), displayName: text("display_name").notNull(),
+  active: integer("active").notNull().default(1), createdAt: integer("created_at").notNull(),
+}, t => [check("pilot_users_active", sql`${t.active} in (0,1)`)]);
+export const pilotIdentities = sqliteTable("pilot_identities", {
+  issuer: text("issuer").notNull(), subject: text("subject").notNull(),
+  userId: text("user_id").notNull().references(() => pilotUsers.id),
+}, t => [primaryKey({ columns: [t.issuer, t.subject] }), index("pilot_identity_user_idx").on(t.userId)]);
+export const pilotSchools = sqliteTable("pilot_schools", {
+  id: text("id").primaryKey(), name: text("name").notNull(), active: integer("active").notNull().default(1),
+});
+export const pilotMemberships = sqliteTable("pilot_memberships", {
+  schoolId: text("school_id").notNull().references(() => pilotSchools.id),
+  userId: text("user_id").notNull().references(() => pilotUsers.id), role: text("role").notNull(),
+  active: integer("active").notNull().default(1),
+}, t => [primaryKey({ columns: [t.schoolId, t.userId] }), index("pilot_membership_user_idx").on(t.userId, t.active),
+  check("pilot_membership_role", sql`${t.role} in ('enseignant','eleve','parent','directeur')`)]);
+export const pilotClasses = sqliteTable("pilot_classes", {
+  id: text("id").primaryKey(), schoolId: text("school_id").notNull().references(() => pilotSchools.id),
+  name: text("name").notNull(), active: integer("active").notNull().default(1),
+}, t => [uniqueIndex("pilot_class_school_unique").on(t.id, t.schoolId)]);
+export const pilotClassMembers = sqliteTable("pilot_class_members", {
+  schoolId: text("school_id").notNull(), classId: text("class_id").notNull(), userId: text("user_id").notNull(),
+}, t => [primaryKey({ columns: [t.schoolId, t.classId, t.userId] }),
+  foreignKey({ columns: [t.classId, t.schoolId], foreignColumns: [pilotClasses.id, pilotClasses.schoolId] }),
+  foreignKey({ columns: [t.schoolId, t.userId], foreignColumns: [pilotMemberships.schoolId, pilotMemberships.userId] }),
+  index("pilot_class_member_user_idx").on(t.schoolId, t.userId)]);
+export const pilotFamilyLinks = sqliteTable("pilot_family_links", {
+  schoolId: text("school_id").notNull(), parentId: text("parent_id").notNull(), studentId: text("student_id").notNull(),
+  active: integer("active").notNull().default(1),
+}, t => [primaryKey({ columns: [t.schoolId, t.parentId, t.studentId] }),
+  foreignKey({ columns: [t.schoolId, t.parentId], foreignColumns: [pilotMemberships.schoolId, pilotMemberships.userId] }),
+  foreignKey({ columns: [t.schoolId, t.studentId], foreignColumns: [pilotMemberships.schoolId, pilotMemberships.userId] }),
+  check("pilot_family_different_users", sql`${t.parentId} <> ${t.studentId}`)]);
+export const pilotSessions = sqliteTable("pilot_sessions", {
+  tokenHash: text("token_hash").primaryKey(), userId: text("user_id").notNull().references(() => pilotUsers.id),
+  csrfToken: text("csrf_token").notNull(), assurance: text("assurance").notNull(),
+  createdAt: integer("created_at").notNull(), expiresAt: integer("expires_at").notNull(), revokedAt: integer("revoked_at"),
+}, t => [index("pilot_session_user_idx").on(t.userId), index("pilot_session_expiry_idx").on(t.expiresAt),
+  check("pilot_session_assurance", sql`${t.assurance} in ('oidc','local_fixture')`)]);
+export const pilotAdmins = sqliteTable("pilot_admins", {
+  userId: text("user_id").primaryKey().references(() => pilotUsers.id), active: integer("active").notNull().default(1),
+});
+export const pilotAdminEvents = sqliteTable("pilot_admin_events", {
+  id: text("id").primaryKey(), actorId: text("actor_id").notNull().references(() => pilotUsers.id),
+  action: text("action").notNull(), targetId: text("target_id").notNull(), createdAt: integer("created_at").notNull(),
+});
+export const pilotAuthFlows = sqliteTable("pilot_auth_flows", {
+  stateHash: text("state_hash").primaryKey(), browserHash: text("browser_hash").notNull(),
+  verifier: text("verifier").notNull(), nonce: text("nonce").notNull(), expiresAt: integer("expires_at").notNull(),
+}, t => [index("pilot_auth_flow_expiry_idx").on(t.expiresAt)]);
+export const pilotAuthLimits = sqliteTable("pilot_auth_limits", {
+  bucket: text("bucket").primaryKey(), window: integer("window").notNull(), attempts: integer("attempts").notNull(),
+}, t => [index("pilot_auth_limits_window_idx").on(t.window)]);
+export const pilotAssignments = sqliteTable("pilot_assignments", {
+  id: text("id").primaryKey(), schoolId: text("school_id").notNull(), classId: text("class_id").notNull(),
+  teacherId: text("teacher_id").notNull(), title: text("title").notNull(), instructions: text("instructions").notNull(),
+  dueDate: text("due_date").notNull(), createdAt: integer("created_at").notNull(),
+  requestKey: text("request_key").notNull(), requestHash: text("request_hash").notNull(),
+}, t => [uniqueIndex("pilot_assignment_id_school").on(t.id,t.schoolId),
+  uniqueIndex("pilot_assignment_request_unique").on(t.schoolId,t.teacherId,t.requestKey),
+  index("pilot_assignment_class_idx").on(t.schoolId,t.classId,t.createdAt),
+  foreignKey({ columns:[t.classId,t.schoolId], foreignColumns:[pilotClasses.id,pilotClasses.schoolId] }),
+  foreignKey({ columns:[t.schoolId,t.teacherId], foreignColumns:[pilotMemberships.schoolId,pilotMemberships.userId] })]);
+export const pilotSubmissions = sqliteTable("pilot_submissions", {
+  id: text("id").primaryKey(), schoolId: text("school_id").notNull(), assignmentId: text("assignment_id").notNull(),
+  studentId: text("student_id").notNull(), body: text("body").notNull(), requestHash: text("request_hash").notNull(),
+  submittedAt: integer("submitted_at").notNull(),
+}, t => [uniqueIndex("pilot_submission_id_school").on(t.id,t.schoolId),
+  uniqueIndex("pilot_submission_once").on(t.assignmentId,t.studentId),
+  foreignKey({ columns:[t.assignmentId,t.schoolId], foreignColumns:[pilotAssignments.id,pilotAssignments.schoolId] }),
+  foreignKey({ columns:[t.schoolId,t.studentId], foreignColumns:[pilotMemberships.schoolId,pilotMemberships.userId] })]);
+export const pilotReviews = sqliteTable("pilot_reviews", {
+  submissionId: text("submission_id").primaryKey(), schoolId: text("school_id").notNull(), teacherId: text("teacher_id").notNull(),
+  score: integer("score").notNull(), feedback: text("feedback").notNull(), requestHash: text("request_hash").notNull(),
+  reviewedAt: integer("reviewed_at").notNull(),
+}, t => [foreignKey({ columns:[t.submissionId,t.schoolId], foreignColumns:[pilotSubmissions.id,pilotSubmissions.schoolId] }),
+  foreignKey({ columns:[t.schoolId,t.teacherId], foreignColumns:[pilotMemberships.schoolId,pilotMemberships.userId] }),
+  check("pilot_review_score", sql`${t.score} >= 0 and ${t.score} <= 20`)]);

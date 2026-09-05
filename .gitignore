@@ -4,3 +4,16 @@ dist/
 *.tgz
 .DS_Store
 qa/
+.local-media/
+.local-data/
+.env
+.env.*
+!.env.example
+.codex-tmp/
+# Wrangler local state and server secrets must never be committed.
+.wrangler/
+.dev.vars
+.dev.vars.*
+wrangler.test.local.jsonc
+# Captures du PDF personnel : recette locale uniquement.
+audit-lancement-2026-09-04/implementation-captures/pdf-*.jpg

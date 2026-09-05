@@ -41,10 +41,9 @@ export function DemoProvider({ children, storage, storageKey = DEMO_STORAGE_KEY,
   const value = useMemo(() => {
     const currentUser = state.users.find((user) => user.id === state.session.userId) || null;
     const visibleNotifications = state.notifications.filter(
-      (notification) =>
-        !notification.role ||
-        notification.role === state.session.role ||
-        notification.userId === state.session.userId,
+      (notification) => notification.userId
+        ? notification.userId === state.session.userId
+        : !notification.role || notification.role === state.session.role,
     );
 
     const resetDemo = () => {
@@ -64,6 +63,7 @@ export function DemoProvider({ children, storage, storageKey = DEMO_STORAGE_KEY,
     return {
       state,
       ...state,
+      storageBackend: store.storage.backend,
       currentUser,
       visibleNotifications,
       unreadNotifications: visibleNotifications.filter((notification) => !notification.read),

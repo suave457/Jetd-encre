@@ -37,21 +37,21 @@ const PAGE_META = Object.freeze({
 });
 
 const DEFAULT_OPERATOR = Object.freeze({
-  name: "Jet d’Encre Éditions",
-  legalForm: "À renseigner avant la mise en production",
-  registeredOffice: "À renseigner avant la mise en production",
-  registry: "À renseigner avant la mise en production",
-  ice: "À renseigner avant la mise en production",
-  publicationDirector: "À renseigner avant la mise en production",
-  contactEmail: "contact@jetdencre.ma",
-  privacyEmail: "contact@jetdencre.ma",
-  phone: "À renseigner avant la mise en production",
-  hostName: "À renseigner lors du choix de l’hébergement",
-  hostAddress: "À renseigner lors du choix de l’hébergement",
-  cndpReference: "À renseigner après accomplissement des formalités applicables",
+  name: "Jet d’Encre Éditions — entité fictive de démonstration",
+  legalForm: "SARL fictive — aucun statut juridique attesté",
+  registeredOffice: "12, rue de la Lecture, Ville Démo, Maroc — adresse fictive",
+  registry: "DEMO-RC-0001 — référence fictive non valable",
+  ice: "DEMO-ICE-0001 — référence fictive non valable",
+  publicationDirector: "Équipe de démonstration — responsable réel à désigner",
+  contactEmail: "assistance@jetdencre.invalid",
+  privacyEmail: "confidentialite@jetdencre.invalid",
+  phone: "Aucun numéro réel dans cette démonstration",
+  hostName: "Prototype privé Sites ; hébergement de production à confirmer",
+  hostAddress: "Coordonnées contractuelles à renseigner avant ouverture réelle",
+  cndpReference: "Aucune formalité déclarée accomplie — référence à valider avant traitement réel",
 });
 
-const LAST_UPDATED = "27 août 2026";
+const LAST_UPDATED = "4 septembre 2026";
 
 function HashLink({ to, children, ...props }) {
   return <a href={to} onClick={(event) => {
@@ -72,8 +72,8 @@ function LegalSection({ id, title, children }) {
 
 function PrototypeNotice() {
   return <aside className="legal-prototype-notice" role="note">
-    <strong>Version de préproduction</strong>
-    <p>Cette page décrit le fonctionnement visé de Jet d’Encre. Les mentions signalées « à renseigner » doivent être complétées et validées par le responsable juridique avant l’ouverture au public.</p>
+    <strong>Démonstration — informations fictives, sans valeur juridique</strong>
+    <p>Les noms, adresses et identifiants d’exemple servent uniquement à tester l’affichage. Les adresses en .invalid ne reçoivent aucun message. Toutes les informations officielles et les formalités applicables doivent être renseignées puis validées avant l’ouverture à de vrais utilisateurs.</p>
   </aside>;
 }
 
@@ -85,7 +85,7 @@ function MentionsLegales({ operator }) {
   return <>
     <PrototypeNotice />
     <LegalSection id="editeur" title="1. Éditeur de la plateforme">
-      <p>La plateforme Jet d’Encre est éditée par l’entité ci-dessous, responsable du contenu éditorial et du service numérique.</p>
+      <p>La fiche ci-dessous est fictive. Elle illustre les informations que l’éditeur réel devra fournir avant le lancement.</p>
       <DefinitionList items={[
         ["Dénomination", operator.name],
         ["Forme juridique et capital", operator.legalForm],
