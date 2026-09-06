@@ -1,15 +1,26 @@
 
 /* Launch preparation: readable controls, explicit demo state, recoverable errors. */
 .prototype-banner { margin: 0; padding: 12px 24px; text-align: center; color: #173e3a; background: #e6f3ef; font-size: 14px; line-height: 1.6; border-bottom: 1px solid #b5d6ca; }
+.landing-page .prototype-banner, .blog-page .prototype-banner { padding: 8px 24px; font-size: 12px; }
 .prototype-banner strong { margin-right: 8px; }
-.public-info-heading { max-width: 1040px; margin: auto; padding-bottom: 24px; }
+.public-info-heading { max-width: 1140px; margin: auto; padding-top: 48px; padding-bottom: 28px; }
 .public-info-heading h1 { font-family: Outfit, sans-serif; font-size: clamp(32px, 3.5vw, 50px); line-height: 1.15; margin: 18px 0; }
-.public-info-heading p { font-size: 20px; line-height: 1.6; max-width: 780px; }
-.public-info-sections { max-width: 1000px; margin: 0 auto; padding: 0 24px; display: grid; gap: 20px; }
-.public-info-sections .panel { padding: 30px; }
-.public-info-sections h2 { font-size: 25px; margin: 10px 0 16px; }
-.public-info-sections p { font-size: 18px; line-height: 1.8; margin: 0; max-width: 78ch; }
-.public-info-actions { max-width: 1040px; margin: auto; display: flex; gap: 12px; flex-wrap: wrap; }
+.public-info-heading p { font-size: 18px; line-height: 1.65; max-width: 780px; margin-bottom: 0; color: var(--muted); }
+.public-info-sections { max-width: 1140px; margin: 0 auto; padding: 0 24px; display: grid; gap: 18px; }
+.public-info-sections .panel { padding: 26px; }
+.public-info-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.public-info-sections h2 { font-family: Outfit, sans-serif; font-size: 23px; line-height: 1.25; margin: 12px 0; }
+.public-info-sections p { font-size: 16px; line-height: 1.75; margin: 0; max-width: 78ch; color: var(--muted); }
+.public-info-actions { max-width: 1140px; margin: auto; padding-top: 30px; padding-bottom: 48px; display: flex; gap: 12px; flex-wrap: wrap; }
+.public-help-steps { max-width: 1040px; gap: 12px; }
+.public-help-steps .panel { padding: 0; overflow: hidden; }
+.public-help-steps summary { min-height: 64px; padding: 19px 24px; font-size: 17px; font-weight: 750; cursor: pointer; }
+.public-help-steps summary::marker { color: var(--green); }
+.public-help-steps summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; }
+.public-help-steps details[open] summary { background: #f0f6f3; }
+.public-help-steps p { padding: 20px 24px 24px; }
+.public-reading-sections { max-width: 1040px; }
+@media (max-width: 900px) { .public-info-grid { grid-template-columns: 1fr; } }
 .app-recovery { max-width: 780px; margin: 10vh auto; padding: 32px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
 .app-recovery h1 { font-size: 32px; }
 .app-recovery p { line-height: 1.7; font-size: 18px; }
@@ -20,4 +31,3 @@ html[data-text-size="grand"] .app-content :is(.button, input, select) { font-siz
 html[data-text-size="grand"] .app-content small { font-size: 14px; line-height: 1.5; }
 html[data-reduce-motion="true"], html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, html[data-reduce-motion="true"] *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 @media (max-width: 1100px) { .public-info-heading, .public-info-actions { padding: 32px 24px; } }
-

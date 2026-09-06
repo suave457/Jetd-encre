@@ -48,18 +48,23 @@ export default function PilotCrosswords() {
   const awards=state.records.filter(record=>record.completedAt).map(record=>({userId:identity.user.id,id:buildMotsFlechesAwardId(identity.user.id,MOTS_FLECHES_GRIDS.find(grid=>grid.id===record.gridId))}));
   const status=state.conflicts.length?'Autre version à choisir':state.error?'En attente · garde cet onglet ouvert':state.pending?'Enregistrement en cours…':state.storageWarning?'Enregistré · copie locale indisponible':'Sauvegardé sur mon compte';
   return <>
-    <MotsFlechesGame key={generation} studentId={identity.user.id} studentName={identity.user.name} currentXp={state.xpTotal} awardHistory={awards} initialProgressByGrid={initial.progressByGrid} initialHintCounts={initial.hintCounts} persistLocally={false} onProgressChange={changed} onConfirmGrid={confirm} onExit={()=>{window.location.assign('/pilote');}} connectionStatus={<span className="pilot-game-sync" role="status">{status}{state.error&&!state.conflicts.length&&<button onClick={()=>sync.current.flush()}>Réessayer</button>}</span>}/>
+    <MotsFlechesGame key={generation} studentId={identity.user.id} studentName={identity.user.name} currentXp={state.xpTotal} awardHistory={awards} initialProgressByGrid={initial.progressByGrid} initialHintCounts={initial.hintCounts} persistLocally={false} onProgressChange={changed} onConfirmGrid={confirm} onExit={()=>{window.location.assign('/pilote?section=jeux');}} connectionStatus={<span className="pilot-game-sync" role="status">{status}{state.error&&!state.conflicts.length&&<button onClick={()=>sync.current.flush()}>Réessayer</button>}</span>}/>
     {state.conflicts.length>0&&<div className="pilot-game-conflict" role="alert"><strong>Cette grille a changé sur un autre appareil.</strong><p>Ta copie est conservée ici. Choisis la version à garder avant de continuer.</p><button onClick={()=>resolve(false)}>Reprendre la version du compte</button><button onClick={()=>resolve(true)}>Garder mes réponses de cet appareil</button></div>}
   </>;
 }
 
-export function PilotGameSummary({user,refreshKey}) {
+export function useSchoolGameSummary(user,refreshKey) {
   const [data,setData]=useState(null),[error,setError]=useState('');
   useEffect(()=>{const controller=new AbortController();setData(null);setError('');
-    if(!['eleve','parent'].includes(user.role))return;
-    gameApi('/games/mots-fleches/summary',{signal:controller.signal}).then(result=>{if(result.userId!==user.id||result.schoolId!==user.schoolId)throw new Error('Le compte a changé. Actualise la page.');setData(result);}).catch(e=>{if(e.name!=='AbortError')setError(e.message);});
+    if(!user||!['eleve','parent'].includes(user.role))return;
+    gameApi('/games/mots-fleches/summary',{signal:controller.signal}).then(result=>{if(controller.signal.aborted)return;if(result.userId!==user.id||result.schoolId!==user.schoolId)throw new Error('Le compte a changé. Actualise la page.');setData(result);}).catch(e=>{if(e.name!=='AbortError'&&!controller.signal.aborted)setError(e.message);});
     return()=>controller.abort();
-  },[user.id,user.schoolId,user.role,refreshKey]);
+  },[user?.id,user?.schoolId,user?.role,refreshKey]);
+  return {data:data?.userId===user?.id&&data?.schoolId===user?.schoolId?data:null,error};
+}
+
+export function PilotGameSummary({user,summary}) {
   if(!['eleve','parent'].includes(user.role))return null;
-  return <section className="pilot-panel pilot-game-summary"><h2>Mots fléchés · progresser en vocabulaire</h2><p>18 grilles, trois niveaux. Facile : 20 XP · Normal : 35 XP · Difficile : 50 XP. Chaque récompense est attribuée une seule fois par grille.</p>{error?<p role="alert">{error}</p>:data?data.children.map(child=><p key={child.studentId}><strong>{child.studentName} · {child.xpTotal} XP</strong> — {child.completedCount} grille{child.completedCount===1?'':'s'} terminée{child.completedCount===1?'':'s'}</p>):<p role="status">Chargement des progrès…</p>}{user.role==='eleve'&&<a className="button button-gold" href="/pilote/jeux/mots-fleches">Ouvrir mes grilles sauvegardées</a>}</section>;
+  const {data,error}=summary;
+  return <section className="pilot-panel pilot-game-summary"><span className="page-eyebrow">VOCABULAIRE ET RÉFLEXION</span><h2>Mots fléchés</h2><p>18 grilles pour découvrir des mots et jouer avec leurs définitions.</p><div className="school-quick-links" aria-label="Niveaux et récompenses"><div><strong>Facile</strong><p>20 XP par grille</p></div><div><strong>Normal</strong><p>35 XP par grille</p></div><div><strong>Difficile</strong><p>50 XP par grille</p></div></div>{error?<p role="alert">{error}</p>:data?data.children.map(child=><p key={child.studentId}><strong>{child.studentName} · {child.xpTotal} XP</strong> — {child.completedCount} grille{child.completedCount===1?'':'s'} terminée{child.completedCount===1?'':'s'}</p>):<p role="status">Chargement des progrès…</p>}{user.role==='eleve'&&<a className="button button-gold" href="/pilote/jeux/mots-fleches">Jouer aux mots fléchés</a>}<p className="school-library-note">Ta progression est sauvegardée sur ton compte. Chaque grille terminée rapporte sa récompense une seule fois.</p></section>;
 }

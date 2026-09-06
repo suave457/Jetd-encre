@@ -1,0 +1,65 @@
+.school-shell{font-family:Inter,sans-serif;color:var(--navy)}
+.school-role-enseignant .app-sidebar{background:linear-gradient(180deg,#061a31,#0b4b47)}
+.school-shell [hidden]{display:none!important}
+.school-shell .app-sidebar{overflow-y:auto;gap:0}
+.school-shell .app-sidebar nav{margin-bottom:26px}
+.school-shell .side-link{font-size:14px;min-height:49px}
+.school-shell .side-link span{min-width:0}.school-shell .side-link small{display:block;font-size:11px;font-weight:400;margin-top:4px}
+.school-shell .side-logout{font-size:13px;color:#cbd9e6}.school-shell .side-logout:disabled{opacity:.6}
+.school-shell .sidebar-help{min-height:66px;text-decoration:none}.school-shell .sidebar-help strong{font-size:12px}.school-shell .sidebar-help small{font-size:11px}
+.school-shell .school-nav-unavailable{color:#aab7c5;cursor:default}.school-shell .school-nav-unavailable:hover{background:none}
+.school-topbar{gap:18px}.school-topbar .school-name{font-size:13px;color:#526177;min-width:0;overflow-wrap:anywhere}.school-topbar .topbar-meta{margin-left:auto}
+.school-topbar .demo-badge{font-size:11px;padding:7px 10px;background:#fff9ea;border-color:#d8ba7c;color:#785111}
+.school-identity{cursor:default}.school-identity strong{font-size:12px}.school-identity small{font-size:11px}.school-identity>span:nth-child(2){max-width:220px}
+.school-topbar .student-xp-chip strong{font-size:13px}
+.school-skip{position:fixed;top:-200px;left:16px;z-index:100;background:white;color:#07182e;padding:14px;border:2px solid #07182e;border-radius:8px}.school-skip:focus{top:10px}
+.school-shell :focus-visible,.school-entry :focus-visible{outline:3px solid #a76f10;outline-offset:3px}.school-shell .app-sidebar :focus-visible{outline-color:#f4c24d}
+.school-entry{min-height:100dvh;padding:26px 32px}.school-entry .auth-top{max-width:1160px;margin:0 auto 26px}.school-entry .pilot-main,.school-entry .access-admin{max-width:900px;margin:0 auto;background:#fffdfa;border:1px solid #e0d6c7;border-radius:26px;padding:32px;box-shadow:0 18px 45px #17374710}.school-entry .pilot-heading h1{font-size:32px}.school-entry .pilot-school-grid{gap:16px}.school-entry .pilot-school{padding:20px}.school-entry .pilot-school h2{font-size:21px}
+.school-secondary-nav{margin:0 8px 22px;font-size:12px;color:#d3dfeb}.school-secondary-nav summary{cursor:pointer}.school-secondary-nav a{display:block;padding:8px 0;color:#d3dfeb}
+.school-shell .pilot-app{min-height:0;background:transparent}.school-shell .pilot-main{padding:30px clamp(24px,3vw,44px) 42px;max-width:1460px}
+.school-shell .pilot-heading{margin-bottom:22px}.school-shell .pilot-heading h1{margin-top:5px}.school-shell .pilot-heading p{font-size:14px}.school-shell .pilot-eyebrow{color:#895910}
+.school-shell .pilot-panel{background:white;padding:24px}.school-shell .pilot-panel h2{font-size:24px}.school-shell .pilot-summary{margin-bottom:24px}.school-shell .pilot-summary p{font-size:13px}
+.school-shell .pilot-layout{grid-template-columns:230px minmax(0,1fr);gap:20px}.school-shell .pilot-list{padding:18px}.school-shell .pilot-list h2{font-size:21px}.school-shell .pilot-list button{font-size:14px}.school-shell .pilot-instructions{font-size:17px}.school-shell .pilot-form{font-size:15px}
+.school-dashboard .student-journey{margin:0 0 20px}.school-dashboard .student-journey h2{font-size:29px;line-height:1.2}.school-dashboard .student-journey p{font-size:15px;line-height:1.6;max-width:610px}.school-dashboard .student-journey .button{margin-top:16px}
+.school-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);gap:20px}.school-dashboard-grid .panel h2{font-size:21px;line-height:1.35;margin:10px 0}.school-dashboard-grid .panel p{font-size:14px;line-height:1.6}.school-dashboard-grid .panel .button{margin-top:14px}.school-dashboard-grid .school-play-card{background:#ffe7a2;border-color:#e8bf56}
+.school-quick-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}.school-quick-links a{display:flex;align-items:center;gap:14px;padding:21px 18px;border:1px solid var(--line);border-radius:16px;background:white}.school-quick-links svg{flex:0 0 auto;width:25px;height:25px;color:var(--green)}.school-quick-links strong{font-size:15px;display:block}.school-quick-links small{font-size:12px;color:#536779;display:block;margin-top:5px}
+.school-library-note{font-size:13px;color:#526177;line-height:1.65;margin:0 0 20px}.school-class-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.school-class-list .panel h2{font-size:23px}.school-class-list .panel p{font-size:15px}.school-help-list{display:grid;gap:16px}.school-help-list details{padding:22px;border:1px solid var(--line);border-radius:15px;background:white}.school-help-list summary{font-weight:700;cursor:pointer}.school-help-list p{font-size:15px;line-height:1.7;margin-top:14px}
+.school-shell .mediatheque-intro{margin-bottom:20px}.school-shell .mediatheque-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.school-shell .pilot-game-summary{margin-top:0}.school-progress-grid{margin-top:20px}
+.pilot-game-summary .school-quick-links>div{padding:20px;border:1px solid var(--line);border-radius:14px;background:#fffaf0}.pilot-game-summary>.school-library-note{margin:20px 0 0}
+/* Reading keeps the school landmarks while giving the document priority. */
+@media(min-width:768px){
+  .school-shell .pilot-main:has(.mediatheque-reader-page){padding:16px 24px 28px}
+  .school-shell .pilot-main:has(.mediatheque-reader-page)>.pilot-heading{margin:0 0 8px;min-height:0}
+  .school-shell .pilot-main:has(.mediatheque-reader-page)>.pilot-heading h1{font-size:20px;line-height:1.2;margin:0}
+  .school-shell .pilot-main:has(.mediatheque-reader-page)>.pilot-heading :is(.pilot-eyebrow,p,.pilot-actions),
+  .school-shell .pilot-main:has(.mediatheque-reader-page) .school-library-note{display:none}
+  .school-shell .mediatheque-reader-page .pdf-reader{gap:8px}
+  .school-shell .mediatheque-reader-page .pdf-reader__header{align-items:center;gap:16px;padding:0}
+  .school-shell .mediatheque-reader-page .pdf-reader__heading{display:grid;grid-template-columns:140px minmax(0,1fr);column-gap:16px;align-items:center;flex:1}
+  .school-shell .mediatheque-reader-page .pdf-reader__back{grid-column:1;grid-row:1 / 3;margin:0;line-height:1.4;text-align:left}
+  .school-shell .mediatheque-reader-page .pdf-reader__eyebrow{display:none}
+  .school-shell .mediatheque-reader-page .pdf-reader__heading h2{grid-column:2;font-size:22px;line-height:1.15;margin:0 0 4px}
+  .school-shell .mediatheque-reader-page .pdf-reader__heading p{grid-column:2;font-size:11px}
+  .school-shell .mediatheque-reader-page .pdf-reader__file-actions{flex-wrap:nowrap;gap:6px;flex-shrink:0}
+  .school-shell .mediatheque-reader-page .pdf-reader__file-actions a{padding-inline:10px}
+  .school-shell .mediatheque-reader-page .pdf-reader__reading-status{padding:6px 10px;gap:6px 10px}
+  .school-shell .mediatheque-reader-page .pdf-reader__reading-status p{font-size:12px}
+  .school-shell .mediatheque-reader-page .pdf-reader__toolbar{min-height:60px;padding:8px;gap:8px}
+  .school-shell .mediatheque-reader-page .pdf-reader__toolbar-group{flex:0 1 auto;gap:6px}
+  .school-shell .mediatheque-reader-page .pdf-reader__toolbar button{padding-inline:9px}
+  .school-shell .mediatheque-reader-page .pdf-reader__display{gap:6px;margin-right:0}
+  .school-shell .mediatheque-reader-page .pdf-reader__zoom{gap:6px;padding-left:8px}
+  .school-shell .mediatheque-reader-page .pdf-reader__zoom button{padding:0}
+  .school-shell .mediatheque-reader-page .pdf-reader__zoom output{min-width:44px}
+  .school-shell .mediatheque-reader-page .pdf-reader__viewport{height:clamp(360px,calc(100dvh - 304px),780px);padding:12px}
+}
+@media(min-width:768px) and (max-width:900px){
+  .school-shell .mediatheque-reader-page .pdf-reader__header{flex-wrap:wrap}
+  .school-shell .mediatheque-reader-page .pdf-reader__heading{flex-basis:100%}
+  .school-shell .mediatheque-reader-page .pdf-reader__file-actions{margin-left:auto}
+  .school-shell .mediatheque-reader-page .pdf-reader__toolbar-group{flex-basis:100%}
+}
+@media(min-width:768px){.school-shell{display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr)}.school-shell .app-sidebar{transform:none;inset:0 auto 0 0;box-shadow:none}.school-shell .app-area{grid-column:2}.school-shell .topbar-meta>.demo-badge{display:inline-flex}}
+@media(max-width:1100px){.school-shell{--sidebar:210px}.school-shell .app-sidebar{padding-inline:12px}.school-shell .pilot-main{padding:24px}.school-topbar{padding:12px 22px}.school-topbar .school-name{max-width:190px}.school-dashboard .student-journey{grid-template-columns:1fr 160px;padding:24px;gap:15px}.school-dashboard .student-journey h2{font-size:25px}.school-dashboard .student-journey img{height:140px}.school-dashboard-grid{grid-template-columns:1.3fr 1fr}.school-quick-links a{padding:18px 14px;gap:10px}.school-shell .pilot-layout{grid-template-columns:210px minmax(0,1fr)}.school-shell .pilot-panel{padding:20px}}
+@media(min-width:768px) and (max-width:900px){.school-shell{display:grid;--sidebar:196px}.school-shell .app-sidebar{transform:none;box-shadow:none}.school-shell .app-area{grid-column:2}.school-shell .side-link{font-size:13px;padding-inline:10px}.school-topbar .school-name{display:none}.school-dashboard .student-journey{grid-template-columns:1fr}.school-dashboard .student-journey img{display:none}.school-dashboard-grid,.school-shell .pilot-layout,.school-quick-links{grid-template-columns:1fr}.school-shell .mediatheque-grid{grid-template-columns:1fr}}
+@media(max-width:767px){.school-shell{display:block}.school-shell .app-sidebar{position:static;transform:none;width:100%;max-height:none}.school-shell .app-sidebar nav{grid-template-columns:repeat(2,1fr);margin:12px 0}.school-shell .sidebar-help,.school-shell .school-name{display:none}.school-shell .app-area{min-height:0}.school-topbar{flex-wrap:wrap}.school-dashboard-grid,.school-dashboard .student-journey,.school-shell .pilot-layout,.school-quick-links,.school-class-list{grid-template-columns:1fr}.school-dashboard .student-journey img{display:none}.school-shell .mediatheque-grid{grid-template-columns:1fr}.school-entry{padding:20px}.school-entry .pilot-main{padding:20px}}

@@ -1,2 +1,103 @@
-.access-admin{min-height:100vh;background:#faf7f0;color:#092038;font:16px/1.5 Inter,Arial,sans-serif}.access-admin *{box-sizing:border-box}.access-top{display:flex;align-items:center;gap:32px;padding:20px 36px;background:#071c31;color:white}.access-top a{color:white;text-decoration:none;font:700 25px Outfit,Arial,sans-serif}.access-top span{display:flex;gap:8px;align-items:center}.access-top button{margin-left:auto}.access-admin main{max-width:1560px;margin:auto;padding:32px}.access-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:28px}.access-heading span{color:#866016;font-weight:700;font-size:13px;letter-spacing:.1em}.access-heading h1{font:700 38px/1.15 Outfit,Arial,sans-serif;margin:8px 0}.access-heading p{margin:0;color:#526071}.access-admin button,.access-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border:1px solid #cbd2da;border-radius:10px;background:white;color:#092038;font:600 14px/1.3 Inter,Arial,sans-serif;cursor:pointer;text-decoration:none}.access-admin button:disabled{opacity:.5;cursor:not-allowed}.access-admin .access-primary{background:#e9b22c;border-color:#c7921b;color:#071c31}.access-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}.access-panel{padding:24px;background:white;border:1px solid #dbe0e5;border-radius:16px}.access-panel h2{display:flex;align-items:center;gap:8px;font:700 23px/1.3 Outfit,Arial,sans-serif;margin:0 0 18px}.access-panel h2 small{margin-left:auto;font-size:16px}.access-admin label{display:grid;gap:8px;font-size:14px;font-weight:600}.access-admin input,.access-admin select{width:100%;min-height:46px;border:1px solid #b6c2cc;border-radius:8px;padding:10px 12px;font:inherit;background:white;color:#092038}.access-admin :focus-visible{outline:3px solid #247fa2;outline-offset:3px}.access-schools{display:grid;gap:10px;margin-top:20px}.access-schools button{display:grid;text-align:left;justify-content:stretch;padding:15px}.access-schools button[aria-pressed=true]{background:#fff6dc;border-color:#b58014}.access-schools span{font-size:13px;font-weight:400;color:#526071}.access-school-title{display:flex;align-items:start;justify-content:space-between;gap:12px}.access-tag{display:inline-block;padding:4px 9px;border-radius:6px;background:#e8f4ef;color:#226448;font-size:13px}.access-tag.suspended{background:#fff0e8;color:#974325}.access-toolbar{display:flex;align-items:center;gap:10px;margin:24px 0 16px;flex-wrap:wrap}.access-toolbar h3{display:flex;gap:8px;align-items:center;margin:0 auto 0 0;font-size:18px}.access-table{overflow:auto}.access-table table{border-collapse:collapse;width:100%;text-align:left}.access-table th{font-size:13px;color:#536476;background:#f4f6f8}.access-table th,.access-table td{padding:14px 10px;border-bottom:1px solid #e1e6ea}.access-table td{font-size:14px}.access-table td small{display:block;color:#526071}.access-row-actions{display:flex;gap:8px;flex-wrap:wrap}.access-row-actions button{font-size:13px}.access-footnote{color:#526071;font-size:14px;margin:20px 0 0}.access-error,.access-notice{padding:14px 18px;border-radius:10px;margin-bottom:20px}.access-error{background:#fff0ed;color:#942f25}.access-notice{background:#e7f3ef;color:#24624f}.access-form-panel{margin-top:22px;border:2px solid #d5a02e;max-width:800px}.access-form-panel fieldset{border:0;padding:0;display:grid;gap:18px}.access-form-panel .access-toolbar{margin:0}.access-form-panel p{margin:0}.access-history{margin-top:22px}.access-history summary{cursor:pointer;font-weight:600}.access-history p{font-size:14px;border-top:1px solid #e1e6ea;padding-top:12px}@media(max-width:1100px){.access-admin main{padding:24px}.access-layout{grid-template-columns:245px minmax(0,1fr)}.access-panel{padding:18px}.access-school-title{flex-wrap:wrap}.access-heading h1{font-size:32px}}@media(max-width:800px){.access-layout{grid-template-columns:1fr}.access-heading{align-items:start;flex-direction:column}.access-top{padding:18px;gap:12px;flex-wrap:wrap}}
-.access-skip{position:absolute;top:-100px;left:20px;z-index:5;background:white;padding:12px}.access-skip:focus{top:10px}.access-nav{display:flex;align-items:center;gap:8px;padding:12px 36px;border-bottom:1px solid #dbe0e5;background:white;flex-wrap:wrap}.access-nav a{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;text-decoration:none;border-radius:9px;color:#445669;font-weight:600;font-size:14px}.access-nav a[aria-current=page]{background:#fff1c9;color:#694906}.access-nav a:hover{background:#f4f6f8}.access-nav a:last-child{margin-left:auto}.admin-welcome{display:flex;align-items:center;justify-content:space-between;gap:32px;background:#0b263d;color:white;border-radius:20px;padding:30px 32px}.admin-welcome>div{max-width:710px}.admin-welcome span{font-size:11px;letter-spacing:.12em;color:#f4c956;font-weight:700}.admin-welcome h2{font:700 29px/1.2 Outfit,Arial,sans-serif;margin:10px 0}.admin-welcome p{color:#d2e0e8;margin:0;font-size:15px}.admin-welcome>a{flex-shrink:0}.admin-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin:24px 0}.admin-metrics article{display:flex;flex-direction:column;gap:9px}.admin-metrics article>span{display:flex;align-items:center;gap:10px;font-size:14px;color:#526071;font-weight:600}.admin-metrics article svg{font-size:21px;color:#136b5d}.admin-metrics strong{font:700 38px/1.1 Outfit,Arial,sans-serif}.admin-metrics small{color:#526071;font-size:12px}.admin-home-columns{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(310px,1fr);gap:22px;align-items:start}.admin-section-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.admin-section-heading h2{margin:0}.admin-home a:not(.access-primary){color:#155f62;text-decoration:none;font-weight:600}.admin-section-heading>a{display:inline-flex;align-items:center;gap:8px;font-size:13px}.admin-school-list{display:grid;gap:12px}.admin-school-list>a{display:flex;align-items:center;gap:14px;padding:16px 12px;background:#f7f9fa;border:1px solid #e3e8ec;border-radius:12px}.admin-school-list a strong{display:block;font-size:15px;color:#092038}.admin-school-list a small{display:block;font-size:12px;color:#526071;margin-top:4px;font-weight:400}.admin-school-list .access-tag{margin-left:auto;white-space:nowrap}.admin-school-list>a>svg{flex-shrink:0}.admin-school-icon{display:grid;place-items:center;background:white;border:1px solid #e2e6e9;border-radius:10px;width:42px;height:42px;flex-shrink:0;font-size:23px}.admin-next-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#fff1c9;color:#785307;font-size:25px;margin-bottom:18px}.admin-next h2{font-size:22px}.admin-next p,.admin-next li{font-size:14px;color:#526071}.admin-next ol{padding-left:20px}.admin-next li{margin:9px 0}.admin-next hr{border:0;border-top:1px solid #e1e6ea;margin:24px 0}.admin-next h3{font-size:16px}.admin-next>a:last-child{font-size:14px;display:flex;align-items:center;gap:8px}@media(max-width:1100px){.admin-welcome{padding:25px;align-items:flex-start;flex-direction:column;gap:18px}.admin-welcome h2{font-size:26px}.admin-metrics{gap:12px}.admin-metrics article>span{font-size:12px}.admin-home-columns{grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr)}.admin-school-list>a{flex-wrap:wrap}.access-nav{padding:10px 20px}}@media(max-width:800px){.admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-home-columns{grid-template-columns:1fr}.access-nav a:last-child{margin-left:0}}
+.access-admin { min-width: 0; color: #092038; font: 15px/1.5 Inter, Arial, sans-serif; }
+.access-admin * { box-sizing: border-box; }
+.access-admin main { max-width: 1480px; margin: auto; padding: 32px; }
+.access-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.access-heading span { color: #866016; font-weight: 700; font-size: 11px; letter-spacing: .11em; }
+.access-heading h1 { font: 700 34px/1.2 Outfit, Arial, sans-serif; margin: 6px 0; }
+.access-heading p { margin: 0; color: #526071; }
+.access-admin button, .access-admin .access-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 15px; border: 1px solid #d8d1c6; border-radius: 10px; background: white; color: #092038; font: 600 14px/1.3 Inter, Arial, sans-serif; cursor: pointer; text-decoration: none; }
+.access-admin button:disabled { opacity: .5; cursor: not-allowed; }
+.access-admin .access-primary { background: #e9b22c; border-color: #c7921b; color: #071c31; }
+.access-admin .access-primary:hover { background: #f3c14a; }
+.access-heading > .access-primary { flex-shrink: 0; }
+.access-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+.access-panel { min-width: 0; padding: 22px; background: white; border: 1px solid #ded5c8; border-radius: 18px; }
+.access-panel h2 { display: flex; align-items: center; gap: 8px; font: 700 22px/1.3 Outfit, Arial, sans-serif; margin: 0 0 18px; }
+.access-panel h2 small { margin-left: auto; font-size: 16px; }
+.access-admin label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; }
+.access-admin input, .access-admin select { width: 100%; min-height: 46px; border: 1px solid #b6c2cc; border-radius: 8px; padding: 10px 12px; font: inherit; background: white; color: #092038; }
+.access-admin :focus-visible { outline: 3px solid #247fa2; outline-offset: 3px; }
+.access-schools { display: grid; gap: 10px; margin-top: 20px; }
+.access-schools button { display: grid; text-align: left; justify-content: stretch; padding: 15px; }
+.access-schools button[aria-pressed=true] { background: #fff6dc; border-color: #b58014; }
+.access-schools span { font-size: 13px; font-weight: 400; color: #526071; }
+.access-school-title { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.access-tag { display: inline-block; padding: 4px 9px; border-radius: 6px; background: #e8f4ef; color: #226448; font-size: 12px; }
+.access-tag.suspended { background: #fff0e8; color: #974325; }
+.access-toolbar { display: flex; align-items: center; gap: 10px; margin: 24px 0 16px; flex-wrap: wrap; }
+.access-toolbar h3 { display: flex; gap: 8px; align-items: center; margin: 0 auto 0 0; font-size: 18px; }
+.access-table { overflow: auto; }
+.access-table table { border-collapse: collapse; width: 100%; text-align: left; }
+.access-table th { font-size: 12px; color: #536476; background: #f8f6f2; }
+.access-table th, .access-table td { padding: 14px 10px; border-bottom: 1px solid #e1e6ea; }
+.access-table td { font-size: 14px; }
+.access-table td small { display: block; color: #526071; }
+.access-row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.access-row-actions button { font-size: 12px; }
+.access-footnote { color: #526071; font-size: 13px; margin: 20px 0 0; }
+.access-error, .access-notice { padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; }
+.access-error { background: #fff0ed; color: #942f25; }
+.access-notice { background: #e7f3ef; color: #24624f; }
+.access-form-panel { margin-top: 22px; border: 2px solid #d5a02e; max-width: 800px; }
+.access-form-panel fieldset { border: 0; padding: 0; display: grid; gap: 18px; }
+.access-form-panel .access-toolbar { margin: 0; }
+.access-form-panel p { margin: 0; }
+.access-history { margin-top: 20px; }
+.access-history summary { cursor: pointer; font-weight: 600; }
+.access-history p { font-size: 13px; border-top: 1px solid #e1e6ea; padding-top: 12px; overflow-wrap: anywhere; }
+.admin-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0 0 22px; }
+.admin-metrics article { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+.admin-metrics article::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #238b75; }
+.admin-metrics article:nth-child(2)::before { background: #e0a719; }
+.admin-metrics article:nth-child(3)::before { background: #4085c3; }
+.admin-metrics article:nth-child(4)::before { background: #a076a0; }
+.admin-metrics article > span { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #526071; font-weight: 600; }
+.admin-metrics article svg { flex-shrink: 0; font-size: 21px; color: #136b5d; }
+.admin-metrics strong { font: 700 38px/1.1 Outfit, Arial, sans-serif; }
+.admin-metrics small { color: #526071; font-size: 12px; }
+.admin-home-columns { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(265px, 1fr); gap: 20px; align-items: start; }
+.admin-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.admin-section-heading h2 { margin: 0; }
+.admin-home a:not(.access-primary) { color: #155f62; text-decoration: none; font-weight: 600; }
+.admin-home a:not(.access-primary):hover { text-decoration: underline; }
+.admin-section-heading > a { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; flex-shrink: 0; }
+.admin-school-list { display: grid; gap: 12px; }
+.admin-school-list > a { display: flex; align-items: center; gap: 12px; padding: 16px 12px; background: #fcfbf8; border: 1px solid #e8e0d5; border-radius: 12px; }
+.admin-school-list a strong { display: block; font-size: 15px; color: #092038; overflow-wrap: anywhere; }
+.admin-school-list a small { display: block; font-size: 12px; color: #526071; margin-top: 4px; font-weight: 400; }
+.admin-school-list .access-tag { margin-left: auto; white-space: nowrap; }
+.admin-school-list > a > svg { flex-shrink: 0; }
+.admin-school-icon { display: grid; place-items: center; background: #edf7f3; border-radius: 10px; width: 42px; height: 42px; flex-shrink: 0; font-size: 23px; }
+.admin-next-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #fff1c9; color: #785307; font-size: 25px; margin-bottom: 18px; }
+.admin-next h2 { font-size: 22px; margin-bottom: 12px; }
+.admin-next p { font-size: 14px; color: #526071; margin: 0 0 20px; }
+.admin-help-link { font-size: 13px; display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+.admin-demo-tools { padding: 18px 0 0; color: #526071; font-size: 13px; }
+.admin-demo-tools summary { cursor: pointer; width: fit-content; }
+.admin-demo-tools p { max-width: 700px; }
+.admin-demo-tools a { display: inline-flex; gap: 8px; align-items: center; }
+@media(max-width: 1150px) {
+  .access-admin main { padding: 24px; }
+  .access-layout { grid-template-columns: 1fr; }
+  .access-layout > aside .access-schools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .access-panel { padding: 20px; }
+  .access-school-title { flex-wrap: wrap; }
+  .access-heading h1 { font-size: 30px; }
+  .admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .admin-home-columns { grid-template-columns: 1fr; }
+  .admin-next { display: grid; grid-template-columns: 44px 1fr auto; column-gap: 16px; align-items: start; }
+  .admin-next-icon { grid-column: 1; grid-row: 1 / 3; margin: 0; }
+  .admin-next h2 { grid-column: 2; }
+  .admin-next p { grid-column: 2; margin-bottom: 0; }
+  .admin-next .access-primary { grid-column: 3; grid-row: 1 / 3; align-self: center; }
+  .admin-next .admin-help-link { grid-column: 2 / 4; }
+}
+@media(max-width: 650px) {
+  .access-admin main { padding: 20px 16px; }
+  .access-heading { align-items: start; flex-direction: column; gap: 16px; }
+  .access-layout > aside .access-schools { grid-template-columns: 1fr; }
+  .admin-school-list > a { flex-wrap: wrap; }
+  .admin-next { display: block; }
+  .admin-next-icon { margin-bottom: 14px; }
+  .admin-next p { margin-bottom: 16px; }
+}

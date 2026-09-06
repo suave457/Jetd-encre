@@ -1,8 +1,8 @@
 import { PUBLIC_BLOG_ARTICLES } from "./publicContentArticles.js";
 
 export const PUBLIC_TEST_NOTICE = Object.freeze({
-  title: "Accès scolaire en test · données fictives.",
-  body: "Le pilote utilise des comptes de test. Ne saisissez pas de données personnelles d’élèves. Les coordonnées officielles restent à valider avant l’ouverture du service.",
+  title: "Site de test · données fictives.",
+  body: "Ne saisissez aucune donnée personnelle d’élève.",
 });
 
 export const PUBLIC_PAGES = Object.freeze({
@@ -23,8 +23,8 @@ export const PUBLIC_PAGES = Object.freeze({
     sections: [
       ["Inviter à raconter", "Demandez : « Quel endroit as-tu aimé aujourd’hui ? » Laissez l’enfant réfléchir. S’il cherche un mot, proposez un choix ou un début de phrase : « J’ai aimé… parce que… »."],
       ["Reformuler sans interrompre", "Accueillez d’abord l’idée. Reprenez ensuite la phrase naturellement en français. Une courte explication en darija ou en amazighe peut aider ; revenez ensemble à une formulation française accessible."],
-      ["Regarder un progrès concret", "Un mot nouveau, une phrase plus précise ou une initiative de parole est un progrès observable. Avec le compte parent remis par l’école, l’espace scolaire permet de consulter les travaux et retours associés à son enfant. Le pilote reste réservé aux données de test ; les profils de démonstration sont séparés."],
-    ], cta: ["Ouvrir mon espace scolaire", "/pilote"], secondaryCta: ["Lire le guide d’accueil", "/guide-ecole"],
+      ["Regarder un progrès concret", "Un mot nouveau, une phrase plus précise ou une initiative de parole est déjà un progrès. Le compte parent permet de retrouver les travaux et les retours associés à son enfant."],
+    ], cta: ["Me connecter", "/connexion"], secondaryCta: ["Besoin d’aide ?", "/guide-ecole"],
   },
   "/ecoles": {
     title: "Préparer un pilote dans votre école", description: "Périmètre du pilote Jet d’Encre : une unité de français, quelques classes accompagnées et des critères précis avant l’ouverture du service.",
@@ -32,9 +32,9 @@ export const PUBLIC_PAGES = Object.freeze({
     intro: "Le premier pilote vise une unité de 5e AEP, avec des aides différenciées. Il n’est pas encore ouvert à de vrais dossiers d’élèves.",
     sections: [
       ["Un périmètre clair", "Une unité, des séquences courtes et quelques classes. Un enseignant relais accompagne la prise en main. Les jeux et médias sont choisis selon les objectifs de communication, pas selon leur quantité."],
-      ["Un parcours scolaire distinct de la démonstration", "L’espace scolaire relie les comptes attribués par l’établissement : devoir de l’enseignant, remise de l’élève et consultation du retour par le parent. Le pilote est encore en test. Le choix d’un profil dans la démonstration ne crée aucun droit scolaire et l’espace direction connecté n’est pas disponible."],
-      ["Avant de commencer", "L’administration prépare l’école, les classes et les comptes individuels, puis remet les accès en privé. Il n’y a pas d’inscription libre. Autorisations, contenus relus, conditions d’utilisation, sauvegarde et assistance doivent être validés avant un accueil réel ; les coordonnées affichées dans la démonstration ne sont pas des contacts officiels validés."],
-    ], cta: ["Ouvrir mon espace scolaire", "/pilote"], secondaryCta: ["Préparer les accès avec le guide", "/guide-ecole"],
+      ["Relier l’école et la maison", "L’enseignant prépare un devoir, l’élève remet son travail et le parent consulte le retour. Chacun dispose de son compte. L’espace direction connecté est en préparation ; son aperçu reste disponible en démonstration."],
+      ["Des accès préparés ensemble", "Jet d’Encre crée l’école, les classes et les comptes, puis remet les accès en privé. Il n’y a pas d’inscription libre. Contenus, autorisations, sauvegarde et assistance doivent être validés avant l’accueil de vrais élèves."],
+    ], cta: ["Me connecter", "/connexion"], secondaryCta: ["Préparer les accès", "/guide-ecole"],
   },
   "/niveau/5e-aep": {
     title: "Le pilote de français en 5e AEP", description: "Découvrez le périmètre de préparation du niveau 5e AEP : vocabulaire, compréhension et courtes productions, avec une différenciation adaptée.",
@@ -57,17 +57,17 @@ export const PUBLIC_PAGES = Object.freeze({
     ], cta: ["Découvrir les aides pour les familles", "/familles"],
   },
   "/guide-ecole": {
-    title: "Le guide d’accueil de votre école", description: "Recevoir son accès Jet d’Encre, se connecter avec le bon compte, demander une réinitialisation et utiliser un appareil partagé en toute clarté.",
+    title: "Besoin d’aide pour vous connecter ?", description: "Recevoir son accès Jet d’Encre, se connecter avec le bon compte, demander une réinitialisation et utiliser un appareil partagé en toute clarté.",
     eyebrow: "Élèves, familles et enseignants",
-    intro: "Un seul point d’entrée : le bouton Connexion ouvre l’espace scolaire. Ce guide accompagne le pilote de test ; l’accueil de vrais élèves reste soumis à la validation de l’établissement et de l’éditeur.",
+    intro: "Choisissez votre question pour retrouver les étapes utiles. Les accès sont préparés par l’administration Jet d’Encre.",
     sections: [
       ["1. Recevoir son accès en privé", "L’administration Jet d’Encre crée l’école, les classes et les comptes. Le référent de l’établissement coordonne les demandes et la remise des accès. Recevez votre identifiant et les consignes par son canal habituel, en privé. Il n’y a pas d’inscription libre : une activation de démonstration ou un choix de profil ne crée pas un compte scolaire. Ne partagez jamais votre mot de passe dans un devoir, une capture d’écran ou un groupe de discussion."],
-      ["2. Se connecter et vérifier son profil", "Ouvrez Connexion, puis connectez-vous avec le compte reçu. Le rôle et les accès viennent de l’affectation validée par l’administration Jet d’Encre ; vous ne les choisissez pas à la connexion. Vérifiez le nom du compte et les informations affichées. Un parent consulte seulement les enfants qui lui sont rattachés. Si le profil ou le rattachement est incorrect, arrêtez-vous et signalez-le au référent sans ouvrir les travaux d’une autre personne."],
+      ["2. Se connecter et vérifier son profil", "Ouvrez Connexion, choisissez votre profil, puis utilisez le compte reçu. Le choix du profil vous oriente ; il ne change pas les droits attribués par Jet d’Encre. Vérifiez le nom et les informations affichés. Un parent consulte seulement les enfants qui lui sont rattachés. Si le rattachement est incorrect, signalez-le au référent sans ouvrir les travaux d’une autre personne."],
       ["3. Mot de passe oublié ou accès refusé", "Repartez du bouton Connexion de ce site. Si le formulaire de connexion propose « Mot de passe oublié ? », suivez ses indications avec l’identifiant reçu. Sinon, demandez au référent de l’établissement une réinitialisation auprès du gestionnaire des accès. Ne créez pas un second compte pour contourner le problème et ne communiquez pas votre ancien mot de passe. Aucun envoi de message ni changement de mot de passe n’est effectué par cette page."],
       ["4. Utiliser un appareil partagé", "À la fin, choisissez Déconnexion et vérifiez que l’écran propose de se connecter à nouveau. Ne mémorisez pas le mot de passe sur un appareil partagé. À la prochaine connexion, vérifiez le nom du compte avant de travailler ; fermer seulement l’onglet ne suffit pas à terminer une session."],
       ["5. Essayer la démonstration sans confondre les données", "Le lien Démonstration ouvre des profils fictifs et des essais enregistrés dans le navigateur. Les remettre à zéro ou effacer le stockage du navigateur ne réinitialise pas un mot de passe scolaire. Les devoirs et résultats de démonstration ne sont pas transférés dans le pilote. L’espace direction existe uniquement en démonstration à ce stade."],
       ["6. Qui peut aider ?", "Utilisez le contact habituel déjà communiqué par votre établissement. Les noms, adresses et coordonnées de démonstration ne constituent pas un service d’assistance officiel. Le responsable éditorial, le domaine public, les contacts et les conditions d’accueil doivent être confirmés avant l’ouverture du service à de vrais élèves."],
-    ], cta: ["Ouvrir mon espace scolaire", "/pilote"], secondaryCta: ["Essayer la démonstration", "/connexion"],
+    ], cta: ["Me connecter", "/connexion"], secondaryCta: ["Essayer la démonstration", "/connexion?mode=demo"],
   },
 });
 export const PUBLIC_PREVIEW_PATHS = Object.freeze(["/", ...Object.keys(PUBLIC_PAGES), "/blog", ...PUBLIC_BLOG_ARTICLES.map(article => `/blog/${article.slug}`)]);
@@ -91,7 +91,7 @@ export function getPageMetadata(path, { origin, indexable = false, article } = {
     "/conditions-utilisation": "Conditions d’utilisation — démonstration",
     "/accessibilite": "Accessibilité de Jet d’Encre",
     "/cookies": "Stockage local et cookies",
-    "/connexion": "Connexion de démonstration",
+    "/connexion": "Connexion",
     "/activation": "Tester l’activation d’un manuel",
   })[path] || "Espace de démonstration");
   const safeOrigin = getSiteOrigin(origin);

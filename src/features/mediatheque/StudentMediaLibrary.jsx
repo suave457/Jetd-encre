@@ -261,6 +261,12 @@ function BookDetail({ content, onNavigate, userId }) {
 export default function StudentMediaLibrary({ detail, onNavigate, ui }) {
   const { currentUser } = useDemoStore();
   const readerUserId = currentUser?.role === "eleve" ? currentUser.id : null;
+  return <MediaLibraryView detail={detail} onNavigate={onNavigate} ui={ui} userId={readerUserId}/>;
+}
+
+// Shared reader UI; school accounts provide their identity without mounting the demo store.
+export function MediaLibraryView({ detail, onNavigate, ui, userId, allowLocalImport = true }) {
+  const readerUserId = userId;
   const [section, setSection] = useState(ALL_MEDIA);
   const [localBook, setLocalBook] = useState(null);
   const [importError, setImportError] = useState("");
@@ -350,7 +356,7 @@ export default function StudentMediaLibrary({ detail, onNavigate, ui }) {
         </div>
       </section>
 
-      {import.meta.env.DEV && <section className="mediatheque-local-test" aria-label="Test local de la liseuse">
+      {import.meta.env.DEV && allowLocalImport && <section className="mediatheque-local-test" aria-label="Test local de la liseuse">
         <div><strong>Tester un autre PDF</strong><p>Le fichier reste sur cet appareil. Il n’est ni envoyé au serveur ni ajouté au catalogue publié. Limite : 100 Mio.</p></div>
         <label className="mediatheque-local-picker">{importing ? "Vérification du PDF…" : "Choisir un PDF local"}<input type="file" accept="application/pdf,.pdf" aria-label="Choisir un PDF local" onChange={openLocalPdf} disabled={importing} /></label>
         {importError && <p className="mediatheque-local-error" role="alert">{importError}</p>}

@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Buildings, Plus, ShieldCheck, SignOut, Users } from '@phosphor-icons/react/ssr';
+import { ArrowRight, Buildings, House, Plus, Users } from '@phosphor-icons/react/ssr';
 import './access-admin.css';
 import AdminHome from './AdminHome.jsx';
+import SchoolShell from './SchoolShell.jsx';
+import { getAutomaticSignInPath } from './schoolNavigationCore.js';
 
 const roles={enseignant:'Enseignant',eleve:'Élève',parent:'Parent'};
 const actions={school_created:'École créée',class_created:'Classe créée',account_created:'Compte préparé',identity_linked:'Connexion rattachée',school_suspended:'École suspendue',school_activated:'École réactivée',account_suspended:'Compte suspendu',account_activated:'Compte réactivé',sessions_revoked:'Sessions fermées'};
+const adminNavigation=[
+  {id:'home',label:'Accueil',href:'/admin/accueil',Icon:House},
+  {id:'schools',label:'Écoles et accès',href:'/admin/ecoles-acces',Icon:Buildings},
+];
 async function api(path,body,csrf){
   const response=await fetch('/api/pilot'+path,{method:body===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',headers:body===undefined?{}:{'Content-Type':'application/json','X-CSRF-Token':csrf||'', 'X-Local-Pilot':'1'},...(body===undefined?{}:{body:JSON.stringify(body)})});
   const data=await response.json();if(!response.ok){const error=new Error(data.error?.message||'Le service est indisponible.');error.status=response.status;throw error;}return data;
@@ -12,22 +18,37 @@ async function api(path,body,csrf){
 export default function AccessAdmin({home=false}){
   const [session,setSession]=useState(null),[data,setData]=useState(null),[schoolId,setSchoolId]=useState(''),[query,setQuery]=useState('');
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[form,setForm]=useState(null),[draft,setDraft]=useState({});
-  const epoch=useRef(0),identity=useRef(null);
+  const epoch=useRef(0),identity=useRef(null),signInStarted=useRef(false);
   useEffect(()=>{document.title=(home?'Accueil administrateur':'Écoles et accès')+' · Jet d’Encre';},[home]);
+  useEffect(()=>{
+    if(!home||error||signInStarted.current)return;
+    const url=new URL(window.location.href);
+    if(session?.authenticated&&url.searchParams.getAll('connexion').length===1&&url.searchParams.get('connexion')==='1'){
+      url.searchParams.delete('connexion');
+      window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);
+      return;
+    }
+    const signInPath=getAutomaticSignInPath(session,url.search);
+    if(!signInPath)return;
+    signInStarted.current=true;
+    url.searchParams.delete('connexion');
+    window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);
+    window.location.replace(signInPath);
+  },[home,session,error]);
   async function refresh(){const version=++epoch.current;setError('');setData(null);try{const s=await api('/session');if(version!==epoch.current)return;if(identity.current!==s.user?.id){setForm(null);setDraft({});setSchoolId('');}identity.current=s.user?.id;setSession(s);if(!s.authenticated||s.user.role!=='admin'){setData(null);return;}const next=await api('/admin');if(version!==epoch.current)return;if(next.userId!==s.user.id)throw new Error('Le compte a changé. Actualisez la page.');setData(next);setSchoolId(previous=>{const requested=previous||new URLSearchParams(window.location.search).get('ecole');return next.schools.some(s=>s.id===requested)?requested:next.schools[0]?.id||'';});}catch(e){if(version===epoch.current){setData(null);setError(e.message);}}}
   useEffect(()=>{refresh();const reset=()=>{setData(null);refresh();};window.addEventListener('focus',reset);return()=>{epoch.current++;window.removeEventListener('focus',reset);};},[]);
-  async function mutate(path,body){setBusy(true);setError('');setNotice('');try{await api(path,body,session?.csrfToken);setForm(null);setNotice('Modification enregistrée.');await refresh();}catch(e){setError(e.message);if(e.status===401||e.status===403){setData(null);await refresh();}}finally{setBusy(false);}}
+  async function mutate(path,body){setBusy(true);setError('');setNotice('');try{await api(path,body,session?.csrfToken);setForm(null);if(path.startsWith('/admin/'))setNotice('Modification enregistrée.');await refresh();}catch(e){setError(e.message);if(e.status===401||e.status===403){setData(null);await refresh();}}finally{setBusy(false);}}
   function open(kind,account=null){setError('');setNotice('');setDraft({id:account?.id||crypto.randomUUID(),name:'',role:'enseignant',classId:'',childId:'',subject:'',schoolId});setForm(kind);}
   const school=data?.schools.find(s=>s.id===schoolId),accounts=data?.accounts.filter(a=>a.schoolId===schoolId)||[];
   const classes=data?.classes.filter(c=>c.schoolId===schoolId)||[];
   async function logout(){await mutate('/logout',{});setData(null);setSession(null);await refresh();}
-  return <div className="access-admin"><a className="access-skip" href="#access-main">Aller au contenu</a><header className="access-top"><a href="/admin/accueil">Jet d’Encre</a><span><ShieldCheck/> Administration</span>{session?.authenticated&&<button onClick={logout} disabled={busy}><SignOut/> Se déconnecter</button>}</header>
-    <nav className="access-nav" aria-label="Navigation administrateur"><a href="/admin/accueil" aria-current={home?"page":undefined}>Accueil</a><a href="/admin/ecoles-acces" aria-current={!home?"page":undefined}>Écoles et accès</a><a href="/guide-ecole">Guide d’accueil</a><a href="/">Voir le site</a><a href="/connexion">Choix du profil</a></nav><main id="access-main"><div className="access-heading"><div><span>ADMINISTRATION JET D’ENCRE</span><h1>{home?"Accueil administrateur":"Écoles et accès"}</h1><p>{home?"Votre réseau scolaire, vos accès et les prochaines actions, au même endroit.":"Vous décidez qui peut se connecter et à quelle école."}</p></div>{data&&!home&&<button className="access-primary" disabled={busy} onClick={()=>open('school')}><Plus/> Ajouter une école</button>}</div>
+  return <SchoolShell role="admin" user={session?.authenticated&&session.user.role==='admin'?session.user:null} schoolName="Administration Jet d’Encre" nav={adminNavigation} activeId={home?'home':'schools'} onLogout={session?.authenticated?logout:undefined} busy={busy} mainId="access-main">
+    <div className="access-admin"><main id="access-main"><div className="access-heading"><div><span>VOTRE ESPACE DE GESTION</span><h1>{home?"Accueil administrateur":"Écoles et accès"}</h1><p>{home?"Vos établissements et les accès à préparer.":"Vous décidez qui peut se connecter et à quelle école."}</p></div>{data&&(home?<a className="access-primary" href="/admin/ecoles-acces">Gérer les écoles <ArrowRight/></a>:<button className="access-primary" disabled={busy} onClick={()=>open('school')}><Plus/> Ajouter une école</button>)}</div>
     {error&&<p className="access-error" role="alert">{error} <button onClick={refresh}>Actualiser</button></p>}{notice&&<p className="access-notice" role="status">{notice}</p>}
     {!session&&!error&&<p role="status">Vérification de votre accès…</p>}
     {session&&!session.authenticated&&<section className="access-panel"><h2>Connexion administrateur</h2><p>Utilisez votre compte administrateur attribué par Jet d’Encre.</p>{session.mode==='local_fixture'?<><p>Prévisualisation locale · écoles et comptes fictifs.</p><button className="access-primary" onClick={()=>mutate('/local/login',{profileId:'pilot-local-admin'})} disabled={busy}>Ouvrir l’administration de test</button></>:<a className="access-primary" href="/api/pilot/auth/start">Me connecter</a>}</section>}
     {session?.authenticated&&session.user.role!=='admin'&&<section className="access-panel"><h2>Accès réservé</h2><p>Ce compte ne dispose pas des droits d’administration Jet d’Encre.</p><a href="/pilote">Retour à mon espace</a></section>}
-    {data&&<>{session.mode==='local_fixture'&&<p className="access-notice">Environnement local de test · aucune modification du site en ligne.</p>}{home?<AdminHome data={data}/>:<div className="access-layout"><aside className="access-panel"><h2><Buildings/> Établissements <small>{data.schools.length}</small></h2><label>Rechercher une école<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom de l’école"/></label><div className="access-schools">{data.schools.filter(s=>s.name.toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr'))).map(s=>{const accountCount=data.accounts.filter(a=>a.schoolId===s.id).length;return <button key={s.id} aria-pressed={schoolId===s.id} onClick={()=>{setSchoolId(s.id);setForm(null);}}><strong>{s.name}</strong><span>{s.active?'Active':'Suspendue'} · {accountCount} {accountCount===1?'compte':'comptes'}</span></button>;})}</div></aside>
+    {data&&<>{home?<AdminHome data={data}/>:<div className="access-layout"><aside className="access-panel"><h2><Buildings/> Établissements <small>{data.schools.length}</small></h2><label>Rechercher une école<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Nom de l’école"/></label><div className="access-schools">{data.schools.filter(s=>s.name.toLocaleLowerCase('fr').includes(query.toLocaleLowerCase('fr'))).map(s=>{const accountCount=data.accounts.filter(a=>a.schoolId===s.id).length;return <button key={s.id} aria-pressed={schoolId===s.id} onClick={()=>{setSchoolId(s.id);setForm(null);}}><strong>{s.name}</strong><span>{s.active?'Active':'Suspendue'} · {accountCount} {accountCount===1?'compte':'comptes'}</span></button>;})}</div></aside>
     <section className="access-panel">{school?<><div className="access-school-title"><div><h2>{school.name}</h2><span className={school.active?'access-tag':'access-tag suspended'}>{school.active?'Accès ouverts':'École suspendue'}</span></div><button disabled={busy} onClick={()=>{if(window.confirm(school.active?'Suspendre cette école et fermer les sessions de ses utilisateurs ?':'Réactiver les accès de cette école ?'))mutate('/admin/school-status',{id:school.id,active:!school.active});}}>{school.active?'Suspendre l’école':'Réactiver l’école'}</button></div>
     <div className="access-toolbar"><h3><Users/> {accounts.length} {accounts.length===1?'compte':'comptes'}</h3><button disabled={busy||!school.active} onClick={()=>open('class')}>Ajouter une classe</button><button className="access-primary" disabled={busy||!school.active} onClick={()=>open('account')}><Plus/> Ajouter un compte</button></div>
     {!accounts.length?<p>Aucun compte pour cette école. Ajoutez une classe, puis les enseignants et les élèves. Vous pourrez ensuite rattacher leurs parents.</p>:<div className="access-table"><table><thead><tr><th>Utilisateur</th><th>Accès</th><th>Sessions</th><th>Actions</th></tr></thead><tbody>{accounts.map(a=><tr key={a.id}><td><strong>{a.name}</strong><small>{roles[a.role]||a.role}</small></td><td><span className="access-tag">{!a.active?'Suspendu':!school.active?'École suspendue':a.connected?'Connexion rattachée':'Connexion à préparer'}</span></td><td>{a.sessions}</td><td><div className="access-row-actions">{!a.connected&&<button disabled={busy||!a.active||!school.active} onClick={()=>open('identity',a)}>Rattacher la connexion</button>}<button disabled={busy} onClick={()=>{if(window.confirm(a.active?`Suspendre ${a.name} et fermer ses sessions ?`:`Réactiver ${a.name} ?`))mutate('/admin/account-status',{id:a.id,active:!a.active});}}>{a.active?'Suspendre':'Réactiver'}</button>{a.sessions>0&&<button disabled={busy} onClick={()=>{if(window.confirm(`Fermer toutes les sessions de ${a.name} ?`))mutate('/admin/revoke',{id:a.id});}}>Fermer les sessions</button>}</div></td></tr>)}</tbody></table></div>}
@@ -38,5 +59,5 @@ export default function AccessAdmin({home=false}){
     {form==='identity'&&<><p>Compte : <strong>{accounts.find(a=>a.id===draft.id)?.name}</strong></p><ol><li>Créez le compte dans votre tableau de bord Auth0.</li><li>Vérifiez son identité, puis recopiez son « User ID » ci-dessous.</li><li>Remettez les identifiants à l’utilisateur par votre canal habituel.</li></ol><label>User ID Auth0<input autoFocus required placeholder="auth0|…" value={draft.subject} onChange={e=>setDraft({...draft,subject:e.target.value})}/></label><p>Ne saisissez aucun mot de passe ici. La réinitialisation reste gérée depuis Auth0 à cette étape.</p></>}
     <div className="access-toolbar"><button className="access-primary">{busy?'Enregistrement…':'Enregistrer'}</button><button type="button" onClick={()=>setForm(null)}>Annuler</button></div></fieldset></form></section>}
     <details className="access-panel access-history"><summary>Historique des dernières actions</summary>{!data.events.length&&<p>Aucune action enregistrée pour le moment.</p>}{data.events.map((e,i)=><p key={i}><strong>{actions[e.action]||e.action}</strong> · {data.schools.find(s=>s.id===e.targetId)?.name||data.accounts.find(a=>a.id===e.targetId)?.name||'Classe'} · {e.actor} · {new Date(e.createdAt*1000).toLocaleString('fr-MA')}</p>)}</details></>}
-    </main></div>;
+    </main></div></SchoolShell>;
 }

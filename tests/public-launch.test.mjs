@@ -3,6 +3,7 @@ import test from "node:test";
 import { readAccessibilityPreferences, saveAccessibilityPreferences, applyAccessibilityPreferences } from "../src/accessibilityPreferences.js";
 import { PUBLIC_PREVIEW_PATHS, getPageMetadata, getSiteOrigin, isPublicIndexingEnabled, buildPublicSitemap, buildPublicRobots } from "../src/publicContent.js";
 import { parseRoute, usesSchoolDocumentNavigation } from "../src/routeCore.js";
+import { getSchoolSection, getAutomaticSignInPath } from "../src/features/pilote/schoolNavigationCore.js";
 
 test("les nouvelles pages publiques ont une route et des métadonnées propres, sans indexation par défaut", () => {
   const titles = new Set();
@@ -93,4 +94,73 @@ test('l’accueil administrateur connecté reste distinct du pilotage de démons
   assert.equal(parseRoute('/admin/pilotage').kind,'app');
   assert.equal(parseRoute('/admin/accueil/inconnu').kind,'not-found');
   assert.equal(getPageMetadata('/admin/accueil',{origin:'https://example.org',indexable:true}).robots,'noindex,nofollow');
+});
+
+test("le choix du profil lance uniquement la connexion OIDC explicitement demandée", () => {
+  const anonymous = { authenticated: false, mode: "oidc", signInPath: "/api/pilot/auth/start" };
+  for (const search of ["?connexion=1", "?profil=eleve&connexion=1", "?profil=parent&connexion=1", "?profil=admin&connexion=1"]) {
+    assert.equal(getAutomaticSignInPath(anonymous, search), "/api/pilot/auth/start", search);
+  }
+  for (const search of ["", "?profil=eleve", "?connexion=0", "?connexion=echec", "?connexion=expiree", "?connexion=non-autorisee", "?connexion=1&connexion=1", "?connexion=1&connexion=echec", "?connexion=echec&connexion=1"]) {
+    assert.equal(getAutomaticSignInPath(anonymous, search), null, search);
+  }
+});
+
+test("une session existante, locale ou invalide ne déclenche aucune redirection automatique", () => {
+  const anonymous = { authenticated: false, mode: "oidc", signInPath: "/api/pilot/auth/start" };
+  const sessions = [
+    null,
+    {},
+    { ...anonymous, authenticated: true, user: { id: "teacher-a", role: "enseignant" } },
+    { ...anonymous, authenticated: "false" },
+    { ...anonymous, authenticated: undefined },
+    { ...anonymous, mode: "local_fixture" },
+    { ...anonymous, mode: undefined },
+    { ...anonymous, signInPath: null },
+    { ...anonymous, signInPath: "https://foreign.example/login" },
+    { ...anonymous, signInPath: "//foreign.example/login" },
+    { ...anonymous, signInPath: "/api/pilot/auth/start?returnTo=https://foreign.example" },
+  ];
+  for (const session of sessions) {
+    assert.equal(getAutomaticSignInPath(session, "?profil=admin&connexion=1"), null);
+  }
+});
+
+test("les rubriques intégrées restent dans le parcours scolaire privé et le jeu conserve son URL", () => {
+  const metadataOptions = { origin: "https://example.org", indexable: true };
+  for (const section of ["accueil", "devoirs", "jeux", "mediatheque", "progres", "classes", "enfants", "aide"]) {
+    const path = `/pilote?section=${section}`;
+    assert.equal(parseRoute(path).kind, "pilot", path);
+    assert.equal(usesSchoolDocumentNavigation(path), true, path);
+    assert.equal(getPageMetadata(path, metadataOptions).robots, "noindex,nofollow", path);
+    assert.equal(getPageMetadata(path, metadataOptions).canonical, null, path);
+  }
+  assert.equal(parseRoute("/pilote/jeux/mots-fleches?section=jeux").screen, "pilot.game.mots-fleches");
+  for (const role of ["eleve", "parent", "enseignant", "directeur", "admin"]) {
+    assert.equal(parseRoute(`/connexion/${role}`).kind, "login", role);
+    assert.equal(usesSchoolDocumentNavigation(`/connexion/${role}`), false, role);
+  }
+});
+
+test("l’accueil reste l’entrée par défaut et une rubrique inconnue ne crée pas de nouvel écran", () => {
+  for (const role of ["eleve", "parent", "enseignant"]) {
+    for (const search of ["", "?profil=eleve", "?section=", "?section=inconnue", "?section=../admin", "?section=https://foreign.example", "?section=devoirs&section=classes", "?section=devoirs&section=devoirs"]) {
+      assert.equal(getSchoolSection(search, role), "accueil", `${role} ${search}`);
+    }
+    assert.equal(getSchoolSection("?section=devoirs", role), "devoirs", role);
+    assert.equal(getSchoolSection("?section=aide", role), "aide", role);
+  }
+});
+
+test("les rubriques se fondent sur le rôle de session et jamais sur le profil demandé dans l’URL", () => {
+  assert.equal(getSchoolSection("?section=classes", "enseignant"), "classes");
+  assert.equal(getSchoolSection("?section=enfants", "parent"), "enfants");
+  assert.equal(getSchoolSection("?section=jeux", "eleve"), "jeux");
+  assert.equal(getSchoolSection("?section=classes&profil=enseignant", "eleve"), "accueil");
+  assert.equal(getSchoolSection("?section=enfants&profil=parent", "eleve"), "accueil");
+  assert.equal(getSchoolSection("?section=classes&profil=enseignant", "parent"), "accueil");
+  assert.equal(getSchoolSection("?section=enfants&profil=parent", "enseignant"), "accueil");
+  for (const role of [undefined, null, "inconnu", "admin", "directeur", "__proto__", "constructor", "toString"]) {
+    assert.equal(getSchoolSection("?section=devoirs&profil=eleve", role), "accueil", String(role));
+  }
 });
