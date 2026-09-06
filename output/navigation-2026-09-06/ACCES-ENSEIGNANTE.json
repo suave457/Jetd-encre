@@ -1,0 +1,9 @@
+{
+  "teacherConnected": true,
+  "roleNotUserSelectable": true,
+  "adminDenied": 403,
+  "adminMetricsHidden": true,
+  "existingSubmissions": 2,
+  "reviews": 1,
+  "loggedOut": 401
+}

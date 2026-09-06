@@ -1,0 +1,11 @@
+{
+  "localAdminAutoRedirect": true,
+  "localAdminLogout401": true,
+  "demoLoginForms": [
+    "eleve",
+    "parent",
+    "enseignant",
+    "directeur",
+    "admin"
+  ]
+}

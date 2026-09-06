@@ -1,0 +1,68 @@
+{
+  "checks": [
+    {
+      "screen": "admin-local",
+      "width": 1440,
+      "overflow": false,
+      "metrics": [
+        "2",
+        "7",
+        "2",
+        "0"
+      ]
+    },
+    {
+      "screen": "admin-local",
+      "width": 1024,
+      "overflow": false,
+      "metrics": [
+        "2",
+        "7",
+        "2",
+        "0"
+      ]
+    },
+    {
+      "screen": "profiles",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "screen": "profiles",
+      "width": 1024,
+      "overflow": false
+    }
+  ],
+  "entries": [
+    {
+      "title": "Élève",
+      "path": "/pilote?profil=eleve"
+    },
+    {
+      "title": "Parent",
+      "path": "/pilote?profil=parent"
+    },
+    {
+      "title": "Enseignant",
+      "path": "/pilote?profil=enseignant"
+    },
+    {
+      "title": "Direction d’école",
+      "path": "/ecoles"
+    },
+    {
+      "title": "Administration",
+      "path": "/admin/accueil"
+    }
+  ],
+  "demos": [
+    "/connexion/eleve",
+    "/connexion/parent",
+    "/connexion/enseignant",
+    "/connexion/directeur",
+    "/connexion/admin"
+  ],
+  "schoolDeepLink": true,
+  "localAdminLoggedOut": true,
+  "browserBackForward": true
+}

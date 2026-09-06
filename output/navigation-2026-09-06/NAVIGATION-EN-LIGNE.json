@@ -1,0 +1,43 @@
+{
+  "profiles": [
+    "Élève",
+    "Parent",
+    "Enseignant",
+    "Direction d’école",
+    "Administration"
+  ],
+  "pages": [
+    {
+      "path": "/connexion",
+      "status": 200
+    },
+    {
+      "path": "/connexion/",
+      "status": 200
+    },
+    {
+      "path": "/admin",
+      "status": 200
+    },
+    {
+      "path": "/admin/accueil",
+      "status": 200
+    },
+    {
+      "path": "/admin/accueil/",
+      "status": 200
+    },
+    {
+      "path": "/admin/ecoles-acces",
+      "status": 200
+    },
+    {
+      "path": "/pilote/jeux/mots-fleches/",
+      "status": 200
+    }
+  ],
+  "anonymousAdminDenied": 401,
+  "adminNavigation": true,
+  "teacherChoice": true,
+  "auth0Form": true
+}
