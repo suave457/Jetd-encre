@@ -1,5 +1,13 @@
 # Jet d’Encre — application du plan d’action
 
+**Mise à jour du 6 septembre 2026 : le code est maintenant publié sur le site de test et les parcours scolaires ont été vérifiés avec Auth0 et D1.**
+
+Les sauvegardes réelles avant/après migration ont été vérifiées par restauration locale isolée. La grille terminée, ses 20 XP uniques, la reprise dans un second navigateur et le résumé parent fonctionnent en ligne. Le commit final publié `b6767fb1b7c302601675d5fe29c0dd485505331e` a été reconstruit séparément : 321 tests réussis. La page administrateur demande une reconnexion du propriétaire ; son contenu authentifié n’a donc pas été revérifié. Le site reste un pilote fictif non indexable, pas une ouverture aux vrais dossiers d’élèves.
+
+Le [compte rendu de publication](output/publication-2026-09-06/COMPTE-RENDU.md) précise les résultats, les deux corrections de publication et les étapes restantes. **Les sections ci-dessous conservent l’état historique de la livraison locale, antérieur à cette publication.**
+
+## Historique — livraison locale avant publication
+
 **6 septembre 2026 — livraison locale, non publiée.**
 
 Le socle technique prioritaire du plan est intégré. Il permet de tester les mots fléchés avec un compte scolaire, une progression enregistrée par le serveur et des XP vérifiés. Le site en ligne n’a pas été modifié pendant cette livraison : le profil Cloudflare enregistré ne dispose plus d’une authentification utilisable. Les conditions d’accueil de données réelles ne sont pas encore réunies.

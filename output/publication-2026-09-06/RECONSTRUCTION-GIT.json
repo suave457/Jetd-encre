@@ -1,0 +1,38 @@
+{
+  "commit": "b6767fb1b7c302601675d5fe29c0dd485505331e",
+  "platform": "win32",
+  "node": "v24.20.0",
+  "steps": [
+    {
+      "name": "clone",
+      "ok": true
+    },
+    {
+      "name": "checkout",
+      "ok": true
+    },
+    {
+      "name": "install",
+      "ok": true
+    },
+    {
+      "name": "build",
+      "ok": true
+    },
+    {
+      "name": "tests",
+      "ok": true
+    },
+    {
+      "name": "schema",
+      "ok": true
+    }
+  ],
+  "tests": {
+    "passed": 321,
+    "failed": 0
+  },
+  "pdfByteIdentical": true,
+  "privateFilesAbsent": true,
+  "clean": true
+}

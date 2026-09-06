@@ -1,0 +1,14 @@
+{
+  "comparedDurableTables": 21,
+  "changedDurableTables": [],
+  "volatileTablesExcluded": [
+    "pilot_auth_flows",
+    "pilot_auth_limits",
+    "pilot_sessions"
+  ],
+  "newTables": [
+    "pilot_game_awards",
+    "pilot_game_progress"
+  ],
+  "ok": true
+}

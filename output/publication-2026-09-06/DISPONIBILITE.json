@@ -1,0 +1,51 @@
+[
+  {
+    "path": "/api/v1/ready",
+    "status": 200,
+    "requestReference": true,
+    "robots": null,
+    "cache": "no-store",
+    "readiness": {
+      "ok": true,
+      "release": "BETA",
+      "schema": "beta-v1",
+      "storage": {
+        "database": "checked",
+        "schema": "checked",
+        "media": "unavailable"
+      },
+      "writesEnabled": false,
+      "eventPseudonymsConfigured": false,
+      "identityAssurance": "oidc",
+      "time": "2026-09-05T23:51:15.301Z"
+    }
+  },
+  {
+    "path": "/api/pilot/workspace",
+    "status": 401,
+    "requestReference": true,
+    "robots": null,
+    "cache": "no-store"
+  },
+  {
+    "path": "/api/pilot/games/mots-fleches/progress",
+    "status": 401,
+    "requestReference": true,
+    "robots": null,
+    "cache": "no-store"
+  },
+  {
+    "path": "/",
+    "status": 200,
+    "requestReference": false,
+    "robots": null,
+    "cache": "public, max-age=0, must-revalidate"
+  },
+  {
+    "path": "/guide-ecole",
+    "status": 200,
+    "requestReference": false,
+    "robots": null,
+    "cache": "public, max-age=0, must-revalidate"
+  }
+]

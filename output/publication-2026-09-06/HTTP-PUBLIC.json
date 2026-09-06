@@ -1,0 +1,136 @@
+{
+  "checkedAt": "2026-09-06T00:02:10.353Z",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/methode",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/familles",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/ecoles",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/niveau/5e-aep",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/decouvrir",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/guide-ecole",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/7-jeux-parler-francais-maison",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/plurilinguisme-force-classe",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/routine-comprehension-orale",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/medina-fes-vocabulaire-defis",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/enfant-comprend-mais-nose-pas-parler",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/guide-audio-quartier-tache-finale",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote/jeux/mots-fleches",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote/jeux/mots-fleches/",
+      "status": 200,
+      "expected": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote/jeux/inconnu",
+      "status": 404,
+      "expected": 404,
+      "noindex": false,
+      "ok": true
+    }
+  ],
+  "robots": {
+    "status": 200,
+    "disallowAll": true
+  },
+  "ok": true
+}
