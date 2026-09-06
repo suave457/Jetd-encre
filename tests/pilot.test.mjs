@@ -23,6 +23,8 @@ const publish=(teacher,extra={},headers={})=>teacher.call("/assignments",{classI
 test('administration : droits exclusifs, création, rattachement scolaire et révocation',async t=>{
   const {DB,sqlite}=await setup(t),admin=await client(DB,'pilot-local-admin'),teacher=await client(DB,'pilot-a-teacher');
   assert.equal((await teacher.call('/admin')).status,403);
+  assert.equal((await teacher.call('/session?profil=admin')).data.user.role,'enseignant');
+  assert.equal((await teacher.call('/admin?profil=admin')).status,403);
   assert.equal((await teacher.call('/admin/schools',{id:'evil',name:'École interdite'})).status,403);
   assert.equal((await admin.call('/admin/schools',{id:'csrf',name:'Sans protection'},{'X-CSRF-Token':''})).status,403);
   assert.equal((await admin.call('/session')).data.user.role,'admin');

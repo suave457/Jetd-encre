@@ -479,13 +479,15 @@ export function getNotFoundHome(routeOrPath, sessionRole = null) {
 }
 
 export function usesSchoolDocumentNavigation(path) {
-  return path === "/pilote" || path.startsWith("/pilote/") || path === "/admin/ecoles-acces";
+  const clean=normalizeRoute(path);
+  return clean === '/connexion' || clean === "/pilote" || clean.startsWith("/pilote/") || ['/admin','/admin/accueil','/admin/ecoles-acces'].includes(clean);
 }
 
 export function parseRoute(input = "/") {
   const path = normalizeRoute(input);
 
   if (path === "/") return publicRoute({ kind: "landing", path }, "public.landing");
+  if (['/admin','/admin/accueil','/admin/ecoles-acces'].includes(path)) return publicRoute({kind:'pilot-admin',path},path==='/admin/ecoles-acces'?'pilot.admin.access':'pilot.admin.home');
   if (path === "/pilote") return publicRoute({ kind: "pilot", path }, "pilot.entry");
   if (path === "/pilote/jeux/mots-fleches") return publicRoute({ kind: "pilot", path }, "pilot.game.mots-fleches", { game: "mots-fleches" });
   if (path === "/blog") return publicRoute({ kind: "blog-index", path }, "public.blog-index");

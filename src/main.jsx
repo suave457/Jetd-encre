@@ -13,12 +13,15 @@ applyAccessibilityPreferences(readAccessibilityPreferences());
 const PilotApp = lazy(() => import("./features/pilote/PilotApp.jsx"));
 const AccessAdmin = lazy(() => import('./features/pilote/AccessAdmin.jsx'));
 const PilotCrosswords = lazy(() => import('./features/pilote/PilotCrosswords.jsx'));
+const AccessPortal = lazy(() => import('./features/pilote/AccessPortal.jsx'));
 function ApplicationRoot() {
   const [path, setPath] = useState(window.location.pathname);
-  useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener("popstate", update); return () => window.removeEventListener("popstate", update); }, []);
-  if (path === "/pilote" || path === "/pilote/") return <Suspense fallback={<p role="status">Chargement du pilote…</p>}><PilotApp /></Suspense>;
-  if (path === '/pilote/jeux/mots-fleches') return <Suspense fallback={<p role="status">Chargement des grilles…</p>}><PilotCrosswords /></Suspense>;
-  if (path === '/admin/ecoles-acces') return <Suspense fallback={<p role="status">Chargement de l’administration…</p>}><AccessAdmin /></Suspense>;
+  useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener("popstate", update); window.addEventListener('jde:navigate', update); return () => {window.removeEventListener("popstate", update);window.removeEventListener('jde:navigate', update);}; }, []);
+  const currentPath=path.replace(/\/$/,'')||'/';
+  if (currentPath === '/connexion') return <Suspense fallback={<p role="status">Chargement des espaces…</p>}><AccessPortal /></Suspense>;
+  if (currentPath === "/pilote") return <Suspense fallback={<p role="status">Chargement du pilote…</p>}><PilotApp /></Suspense>;
+  if (currentPath === '/pilote/jeux/mots-fleches') return <Suspense fallback={<p role="status">Chargement des grilles…</p>}><PilotCrosswords /></Suspense>;
+  if (['/admin','/admin/accueil','/admin/ecoles-acces'].includes(currentPath)) return <Suspense fallback={<p role="status">Chargement de l’administration…</p>}><AccessAdmin key={currentPath} home={currentPath!=='/admin/ecoles-acces'}/></Suspense>;
   return <DemoProvider><App /></DemoProvider>;
 }
 

@@ -1,0 +1,18 @@
+import { ArrowRight, Buildings, CheckCircle, GraduationCap, Key, Users } from '@phosphor-icons/react/ssr';
+
+const countLabel=(count,singular,plural)=>`${count} ${count===1?singular:plural}`;
+
+export default function AdminHome({data}){
+  const activeSchools=data.schools.filter(s=>s.active);
+  const pending=data.accounts.filter(a=>a.active&&!a.connected&&activeSchools.some(s=>s.id===a.schoolId));
+  const connected=data.accounts.filter(a=>a.connected).length;
+  const sessions=data.accounts.reduce((total,a)=>total+a.sessions,0);
+  const metrics=[['Écoles',data.schools.length,`${activeSchools.length} active${activeSchools.length===1?'':'s'}`,Buildings],['Comptes scolaires',data.accounts.length,`${connected} connexion${connected===1?'':'s'} rattachée${connected===1?'':'s'}`,Users],['Classes actives',data.classes.length,'Dans les établissements',GraduationCap],['Sessions scolaires',sessions,'Connexions actuellement ouvertes',Key]];
+  return <div className="admin-home">
+    <section className="admin-welcome"><div><span>LES ACCÈS RESTENT ENTRE VOS MAINS</span><h2>Un point d’entrée pour tout votre réseau.</h2><p>Retrouvez vos écoles, préparez les comptes et accompagnez les premières connexions.</p></div><a className="access-primary" href="/admin/ecoles-acces">Gérer les écoles et les accès <ArrowRight/></a></section>
+    <section className="admin-metrics" aria-label="Vue d’ensemble des écoles">{metrics.map(([label,value,caption,Icon])=><article className="access-panel" key={label}><span><Icon/>{label}</span><strong>{value}</strong><small>{caption}</small></article>)}</section>
+    <div className="admin-home-columns"><section className="access-panel"><div className="admin-section-heading"><h2>Vos établissements</h2><a href="/admin/ecoles-acces">Tout gérer <ArrowRight/></a></div>{data.schools.length?<div className="admin-school-list">{data.schools.map(s=><a href={`/admin/ecoles-acces?ecole=${encodeURIComponent(s.id)}`} key={s.id}><span className="admin-school-icon"><Buildings/></span><span><strong>{s.name}</strong><small>{countLabel(data.accounts.filter(a=>a.schoolId===s.id).length,'compte','comptes')} · {countLabel(data.classes.filter(c=>c.schoolId===s.id).length,'classe active','classes actives')}</small></span><span className={'access-tag'+(s.active?'':' suspended')}>{s.active?'Active':'Suspendue'}</span><ArrowRight/></a>)}</div>:<p>Aucune école pour le moment. Ouvrez la gestion des écoles pour préparer votre premier établissement.</p>}</section>
+    <aside className="access-panel admin-next"><span className="admin-next-icon">{pending.length?<Key/>:<CheckCircle/>}</span><h2>{!data.accounts.length?'Préparez les premiers comptes':pending.length?`${pending.length} connexion${pending.length===1?'':'s'} à préparer`:'Aucune connexion en attente'}</h2><p>{!data.accounts.length?'Commencez par une école et une classe, puis ajoutez leurs comptes individuels.':pending.length?'Ces comptes actifs attendent encore leur rattachement à Auth0 avant de pouvoir se connecter.':'Aucun compte actif d’une école ouverte n’attend de rattachement. Vérifiez aussi la remise privée des identifiants.'}</p><a className="access-primary" href="/admin/ecoles-acces">Vérifier les accès <ArrowRight/></a><hr/><h3>Accueillir une école</h3><ol><li>Ajouter l’école et ses classes.</li><li>Préparer les comptes individuels.</li><li>Rattacher et remettre les identifiants en privé.</li></ol><a href="/guide-ecole">Consulter le guide d’accueil <ArrowRight/></a></aside></div>
+    <p className="access-footnote">Ces chiffres proviennent du serveur. Les comptes administrateurs sont séparés des comptes scolaires. Le pilote reste réservé aux données fictives ; les outils éditoriaux et l’espace direction restent accessibles en démonstration.</p>
+  </div>;
+}

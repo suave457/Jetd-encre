@@ -161,12 +161,13 @@ test("accepte les identifiants éditoriaux en majuscules dans une fiche détaill
 });
 
 test("redirige la racine d’un espace vers son accueil", () => {
-  assert.deepEqual(parseRoute("/admin"), {
+  assert.deepEqual(parseRoute("/enseignant"), {
     kind: "redirect",
-    path: "/admin",
-    to: "/admin/pilotage",
+    path: "/enseignant",
+    to: "/enseignant/tableau-de-bord",
     reason: "role_home",
   });
+  assert.equal(parseRoute('/admin').screen,'pilot.admin.home');
 });
 
 test("rejette les rôles, pages, détails et profondeurs inconnus", () => {

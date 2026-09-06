@@ -83,6 +83,14 @@ test("le jeu scolaire a une route exacte et ne transforme pas tout le préfixe e
 });
 
 test("les liens scolaires changent de document tandis que la navigation de démonstration reste locale", () => {
-  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/admin/ecoles-acces"]) assert.equal(usesSchoolDocumentNavigation(path), true);
-  for (const path of ["/connexion", "/connexion/enseignant", "/connexion/directeur", "/admin", "/guide-ecole", "/pilote-inconnu"]) assert.equal(usesSchoolDocumentNavigation(path), false);
+  for (const path of ["/connexion", "/connexion?mode=demo", "/pilote", "/pilote?profil=eleve", "/pilote/jeux/mots-fleches/", "/admin", "/admin/accueil/", "/admin/ecoles-acces?ecole=test"]) assert.equal(usesSchoolDocumentNavigation(path), true, path);
+  for (const path of ["/connexion/enseignant", "/connexion/directeur", "/admin/pilotage", "/guide-ecole", "/pilote-inconnu"]) assert.equal(usesSchoolDocumentNavigation(path), false,path);
+});
+
+test('l’accueil administrateur connecté reste distinct du pilotage de démonstration',()=>{
+  for(const path of ['/admin','/admin/accueil','/admin/accueil/'])assert.equal(parseRoute(path).screen,'pilot.admin.home');
+  assert.equal(parseRoute('/admin/ecoles-acces?ecole=test').screen,'pilot.admin.access');
+  assert.equal(parseRoute('/admin/pilotage').kind,'app');
+  assert.equal(parseRoute('/admin/accueil/inconnu').kind,'not-found');
+  assert.equal(getPageMetadata('/admin/accueil',{origin:'https://example.org',indexable:true}).robots,'noindex,nofollow');
 });

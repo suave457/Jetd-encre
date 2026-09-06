@@ -182,7 +182,7 @@ test("serves exact prerendered public routes; unknown public paths and local PDF
     assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 200, path);
     assert.equal(calls.at(-1), expected, path);
   }
-  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/mots-fleches/"]) {
+  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/mots-fleches/", "/admin", "/admin/accueil", "/admin/accueil/", "/admin/ecoles-acces"]) {
     const response = await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env);
     assert.equal(response.status, 200, path);
     assert.equal(calls.at(-1), "/index.html", path);
