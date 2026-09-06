@@ -1,0 +1,165 @@
+{
+  "checkedAt": "2026-09-06T01:42:03.261Z",
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/methode",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/familles",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/ecoles",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/niveau/5e-aep",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/decouvrir",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/guide-ecole",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/7-jeux-parler-francais-maison",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/plurilinguisme-force-classe",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/routine-comprehension-orale",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/medina-fes-vocabulaire-defis",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/enfant-comprend-mais-nose-pas-parler",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/blog/guide-audio-quartier-tache-finale",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/connexion",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/connexion?mode=demo",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote?section=mediatheque",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/pilote/jeux/mots-fleches",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/admin/accueil",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    },
+    {
+      "path": "/admin/ecoles-acces",
+      "status": 200,
+      "noindex": true,
+      "ok": true
+    }
+  ],
+  "checks": [
+    {
+      "path": "/api/v1/ready",
+      "status": 200,
+      "expected": 200,
+      "ok": true
+    },
+    {
+      "path": "/api/pilot/workspace",
+      "status": 401,
+      "expected": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/pilot/admin",
+      "status": 401,
+      "expected": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/pilot/games/mots-fleches/progress",
+      "status": 401,
+      "expected": 401,
+      "ok": true
+    },
+    {
+      "path": "/pilote/jeux/inconnu",
+      "status": 404,
+      "expected": 404,
+      "ok": true
+    }
+  ],
+  "disallowAll": true,
+  "ok": true
+}
