@@ -1,6 +1,13 @@
 export const QUESTION_DURATION_SECONDS = 10;
 export const XP_PER_CORRECT = 10;
 
+// A concurrent game may add points while this attempt is open. Keep the
+// confirmed total and show arithmetic only when these three values reconcile.
+export function canShowQuizBalanceEquation(startXp, earnedXp, totalXp) {
+  return [startXp, earnedXp, totalXp].every(value => Number.isSafeInteger(value) && value >= 0)
+    && startXp + earnedXp === totalXp;
+}
+
 export function hashQuizSeed(value) {
   let hash = 2166136261;
   for (const character of String(value ?? "jet-dencre")) {

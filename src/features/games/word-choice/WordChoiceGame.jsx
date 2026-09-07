@@ -30,6 +30,7 @@ import {
   isWordChoiceTimeExpired,
 } from "./wordChoiceEngine.js";
 import "./word-choice.css";
+import { canShowQuizBalanceEquation } from '../quizEngine.js';
 
 const GAME_ID = "mot-juste";
 const DEFAULT_ILLUSTRATION = "/assets/games/word-choice/le-mot-juste-hero.webp";
@@ -59,7 +60,7 @@ function GameHeader({ phase, questionNumber, total, streak, sessionXp, onExit })
   const progress = phase === "results" ? 100 : total ? (questionNumber / total) * 100 : 0;
   return (
     <header className="wj-header">
-      <button className="wj-back" type="button" onClick={onExit}>
+      <button className="wj-back" type="button" aria-label="Mes jeux" onClick={onExit}>
         <ArrowLeft weight="bold" aria-hidden="true" />
         <span>Mes jeux</span>
       </button>
@@ -99,7 +100,7 @@ function Timer({ timeLeft, paused }) {
   );
 }
 
-function Welcome({ level, category, questionCount, onLevelChange, onCategoryChange, onStart, illustrationSrc }) {
+function Welcome({ level, category, questionCount, onLevelChange, onCategoryChange, onStart, illustrationSrc = DEFAULT_ILLUSTRATION }) {
   return (
     <main className="wj-main wj-welcome">
       <section className="wj-welcome-card" aria-labelledby="wj-title">
@@ -112,7 +113,7 @@ function Welcome({ level, category, questionCount, onLevelChange, onCategoryChan
           </p>
 
           <div className="wj-rule-row" aria-label="Règles du jeu">
-            <span><Target weight="duotone" /><strong>{questionCount}</strong><small>phrases</small></span>
+            <span><Target weight="duotone" /><strong>{questionCount}</strong><small>{questionCount===1?'phrase':'phrases'}</small></span>
             <span><ClockCountdown weight="duotone" /><strong>10 s</strong><small>par phrase</small></span>
             <span><Lightning weight="duotone" /><strong>+10 XP</strong><small>bonne réponse</small></span>
           </div>
@@ -249,13 +250,14 @@ function Question({ item, index, total, timeLeft, answer, onAnswer, onContinue }
 }
 
 function Results({ summary, profileXpStart, profileXpTotal, onRestart, onExit }) {
+  const showEquation = canShowQuizBalanceEquation(profileXpStart, summary.xpEarned, profileXpTotal);
   const title = summary.scorePercent >= 80
     ? "Tu as le sens du mot juste !"
     : summary.scorePercent >= 50
       ? "Beau travail de langue !"
       : "Chaque phrase te fait progresser !";
   const strongest = Object.entries(summary.categoryResults)
-    .filter(([, value]) => value.total > 0)
+    .filter(([, value]) => value.total > 0 && value.correct > 0)
     .sort(([, left], [, right]) => (right.correct / right.total) - (left.correct / left.total))[0]?.[0];
 
   return (
@@ -272,12 +274,14 @@ function Results({ summary, profileXpStart, profileXpTotal, onRestart, onExit })
           <article><Fire weight="duotone" /><strong>{summary.bestStreak}</strong><small>meilleure série</small></article>
           <article><Target weight="duotone" /><strong>{strongest || "À poursuivre"}</strong><small>point fort</small></article>
         </div>
-        <div className="wj-profile-total" aria-label={`XP du profil : ${profileXpStart} au départ, ${summary.xpEarned} gagnés, ${profileXpTotal} au total`}>
+        <div className="wj-profile-total" aria-label={showEquation ? `XP du profil : ${profileXpStart} au départ, ${summary.xpEarned} gagnés, ${profileXpTotal} au total` : `XP du profil : ${profileXpTotal} au total, dont ${summary.xpEarned} gagnés dans cette partie`}>
           <span>Ton profil</span>
+          {showEquation ? <>
           <strong>{profileXpStart.toLocaleString("fr-FR")}</strong>
           <small>+</small>
           <strong className="is-earned">{summary.xpEarned}</strong>
           <small>=</small>
+          </> : <small>Total actuel enregistré</small>}
           <strong>{profileXpTotal.toLocaleString("fr-FR")} XP</strong>
         </div>
         <div className="wj-result-actions">
@@ -288,6 +292,8 @@ function Results({ summary, profileXpStart, profileXpTotal, onRestart, onExit })
     </main>
   );
 }
+
+export { GameHeader as WordChoiceHeader, Welcome as WordChoiceWelcome, Question as WordChoiceQuestion, Results as WordChoiceResults };
 
 export default function WordChoiceGame({
   currentXp = 0,

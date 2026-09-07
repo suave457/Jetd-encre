@@ -1,5 +1,7 @@
 import { handlePilot } from "./pilot/api.js";
 import { authSettings } from "./pilot/oidc.js";
+import { handlePublicArticles } from './public-articles.js';
+import { publicArticleDocument } from './public-article-document.js';
 import { PUBLIC_PREVIEW_PATHS } from "../src/publicContent.js";
 
 const SECURITY_HEADERS = Object.freeze({
@@ -63,7 +65,8 @@ const MAX_EVENT_BATCH = 50;
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const MAX_CONTENT_VERSION = 1_000_000;
 const PUBLIC_PAGES = new Set(PUBLIC_PREVIEW_PATHS);
-const PILOT_DOCUMENT_PATHS = new Set(["/pilote", "/pilote/jeux/mots-fleches", "/admin", "/admin/accueil", "/admin/ecoles-acces"]);
+const PILOT_DOCUMENT_PATHS = new Set(["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/culture-generale", "/pilote/jeux/defi-du-jour", "/pilote/jeux/mot-juste", "/pilote/jeux/mission-zellige", "/pilote/jeux/souk-des-mots", "/pilote/jeux/defis-classe", "/pilote/bibliotheque", "/admin", "/admin/accueil", "/admin/ecoles-acces", "/admin/licences", "/admin/analyses", "/admin/blog", "/admin/bibliotheque"]);
+const PILOT_DOCUMENT_PATTERNS = [/^\/pilote\/lecture\/[a-zA-Z0-9_-]{1,100}$/];
 const APP_ROOTS = new Set(["eleve", "parent", "enseignant", "directeur", "admin"]);
 const PUBLIC_APP_PATHS = new Set(["/blog", "/connexion", "/activation", "/mentions-legales", "/confidentialite", "/conditions-utilisation", "/cookies", "/accessibilite", "/mot-de-passe-oublie", "/reinitialisation", "/session-expiree", "/invitation"]);
 const PUBLIC_APP_PATTERNS = [
@@ -422,6 +425,7 @@ async function readiness(env, requestId) {
       (SELECT event_id FROM beta_events LIMIT 1) AS events,
       (SELECT current_version_id FROM beta_editorial_items LIMIT 1) AS editorial,
       (SELECT checksum FROM beta_content_versions LIMIT 1) AS versions,
+      (SELECT source_version_no FROM beta_article_publication_events LIMIT 1) AS article_publications,
       (SELECT checksum_sha256 FROM beta_media_assets LIMIT 1) AS media,
       (SELECT id FROM beta_import_jobs LIMIT 1) AS imports,
       (SELECT id FROM beta_reference_items LIMIT 1) AS reference_items,
@@ -436,11 +440,19 @@ async function readiness(env, requestId) {
         (SELECT active FROM pilot_schools LIMIT 1), (SELECT role FROM pilot_memberships LIMIT 1),
         (SELECT school_id FROM pilot_classes LIMIT 1), (SELECT user_id FROM pilot_class_members LIMIT 1),
         (SELECT active FROM pilot_family_links LIMIT 1), (SELECT assurance FROM pilot_sessions LIMIT 1),
-        (SELECT verifier FROM pilot_auth_flows LIMIT 1), (SELECT attempts FROM pilot_auth_limits LIMIT 1),
+        (SELECT verifier FROM pilot_auth_flows LIMIT 1), (SELECT requested_role FROM pilot_auth_flows LIMIT 1), (SELECT return_path FROM pilot_auth_flows LIMIT 1), (SELECT attempts FROM pilot_auth_limits LIMIT 1),
         (SELECT request_hash FROM pilot_assignments LIMIT 1), (SELECT request_hash FROM pilot_submissions LIMIT 1),
         (SELECT score FROM pilot_reviews LIMIT 1), (SELECT active FROM pilot_admins LIMIT 1),
         (SELECT action FROM pilot_admin_events LIMIT 1),
-        (SELECT revision FROM pilot_game_progress LIMIT 1), (SELECT xp FROM pilot_game_awards LIMIT 1)`).first();
+        (SELECT revision FROM pilot_game_progress LIMIT 1), (SELECT xp FROM pilot_game_awards LIMIT 1),
+        (SELECT active FROM pilot_manuals LIMIT 1), (SELECT code_hash FROM pilot_manual_codes LIMIT 1),
+        (SELECT attempts FROM pilot_manual_attempts LIMIT 1), (SELECT avatar FROM pilot_student_profiles LIMIT 1),
+        (SELECT revision FROM pilot_quiz_attempts LIMIT 1), (SELECT xp FROM pilot_quiz_awards LIMIT 1), (SELECT reward_type FROM pilot_market_awards LIMIT 1),
+        (SELECT revision FROM pilot_class_challenges LIMIT 1), (SELECT revision FROM pilot_class_attempts LIMIT 1),
+        (SELECT question_index FROM pilot_class_awards LIMIT 1),
+        (SELECT id FROM pilot_quiz_attempts INDEXED BY pilot_quiz_attempt_owner LIMIT 1)`).first();
+      const quizSchema = await env.DB.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name='pilot_quiz_attempts'").first();
+      if (!quizSchema?.sql?.includes("'mot-juste'")) throw new Error('quiz_game_migration_required');
     }
     return jsonResponse({ ok: true, release: "BETA", schema: "beta-v1", storage: { database: "checked", schema: "checked", media: env.FILES ? "binding_configured_not_probed" : "unavailable" }, writesEnabled: Boolean(env.BETA_WRITE_TOKEN), eventPseudonymsConfigured: Boolean(eventPseudonymSecret(env)), identityAssurance: env.PILOT_ENABLED === "true" ? "oidc" : "demo_only", time: new Date().toISOString() }, 200, requestId);
   } catch {
@@ -475,6 +487,9 @@ async function handleApi(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if(url.pathname==='/api/public/articles'||url.pathname.startsWith('/api/public/articles/'))return secure(await handlePublicArticles(request,env),request);
+    const publishedArticle=url.pathname.match(/^\/blog\/(article-[a-f0-9-]{36})\/?$/);
+    if(publishedArticle)return secure(await publicArticleDocument(request,env,publishedArticle[1]),request);
     if (url.pathname.startsWith("/api/pilot/")) {
       const requestId=crypto.randomUUID();
       return secure(await handlePilot(request, env, {requestId}), request, requestId);
@@ -491,7 +506,7 @@ export default {
       pageUrl.search = "";
       return secure(await env.ASSETS.fetch(new Request(pageUrl, request)), request);
     }
-    if (documentRequest && PILOT_DOCUMENT_PATHS.has(canonicalPath)) {
+    if (documentRequest && (PILOT_DOCUMENT_PATHS.has(canonicalPath) || PILOT_DOCUMENT_PATTERNS.some((pattern) => pattern.test(canonicalPath)))) {
       const indexUrl = new URL("/index.html", request.url);
       const page = secure(await env.ASSETS.fetch(new Request(indexUrl, request)), request);
       page.headers.set("X-Robots-Tag", "noindex, nofollow");

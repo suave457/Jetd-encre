@@ -698,7 +698,7 @@
 .parent-login-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .parent-login-options label { display: inline-flex; align-items: center; gap: 7px; color: var(--parent-muted); font-size: 12px; }
 .parent-login-options input { width: 18px; min-height: 18px; accent-color: var(--parent-teal); }
-.parent-login-options a { min-height: 44px; display: inline-flex; align-items: center; color: var(--parent-teal); font-size: 12px; font-weight: 800; }
+.parent-login-options a, .parent-login-options .text-action { min-height: 44px; display: inline-flex; align-items: center; color: var(--parent-teal); font-size: 12px; font-weight: 800; text-decoration: none; }
 .parent-login-card .button { min-height: 50px; border-radius: 9px; font-size: 13px; }
 .parent-login-card > .button-light { margin-top: 10px; border-color: var(--parent-border); background: #fff; color: var(--parent-slate); }
 

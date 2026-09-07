@@ -14,13 +14,13 @@ function RoleDataNotice({ scope }) {
   return <div className="beta-role-notice"><CheckCircle weight="fill"/><div><strong>Indicateurs BETA calculés · {scope}</strong><span>Données pédagogiques fictives et pseudonymisées. Les dénominateurs restent visibles pour éviter les interprétations trompeuses.</span></div></div>;
 }
 
-function RoleKpis({ items }) {
+export function RoleKpis({ items }) {
   return <div className="beta-role-kpis">{items.map(([label, value, note, tone = "green"]) => <article key={label} className={`tone-${tone}`}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}</div>;
 }
 
-function RoleActionList({ actions, resolutions, onResolve, RouteLink }) {
+export function RoleActionList({ actions, resolutions, onResolve, RouteLink }) {
   const open = actions.filter((item) => resolutions.get(item.id) !== "resolved");
-  return <div className="beta-role-actions">{open.map((item) => <article key={item.id} className={`priority-${item.priority}`}><span>{item.icon}</span><div><small>{item.meta}</small><strong>{item.title}</strong><p>{item.description}</p><footer><RouteLink to={item.route}>{item.action} <ArrowRight/></RouteLink><button onClick={() => onResolve(item.id, "resolved")}><Check/> Marquer traité</button></footer></div></article>)}{!open.length && <div className="beta-role-empty"><CheckCircle/><strong>Toutes les priorités sont traitées.</strong><span>Elles resteront enregistrées après rechargement.</span></div>}</div>;
+  return <div className="beta-role-actions">{open.map((item) => <article key={item.id} className={`priority-${item.priority}`}><span>{item.icon}</span><div><small>{item.meta}</small><strong>{item.title}</strong><p>{item.description}</p><footer><RouteLink to={item.route}>{item.action} <ArrowRight/></RouteLink>{onResolve&&<button onClick={() => onResolve(item.id, "resolved")}><Check/> Marquer traité</button>}</footer></div></article>)}{!open.length && <div className="beta-role-empty"><CheckCircle/><strong>Toutes les priorités sont traitées.</strong><span>Elles resteront enregistrées après rechargement.</span></div>}</div>;
 }
 
 export function BetaTeacherDashboard({ ui }) {

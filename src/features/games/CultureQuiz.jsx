@@ -20,6 +20,7 @@ import { readPublishedGameQuestions } from "./publishedQuestionSource.js";
 import {
   XP_PER_CORRECT,
   calculateQuizSummary,
+  canShowQuizBalanceEquation,
   evaluateAnswer,
   isTimeExpired,
   prepareQuizQuestions,
@@ -35,7 +36,7 @@ const NOOP = () => {};
 const DEFAULT_EXPERIENCE = Object.freeze({
   quizId: "culture-generale",
   source: "culture-generale",
-  welcomeKicker: "Le défi du jour",
+  welcomeKicker: "Entraînement libre",
   title: "Le grand quiz de",
   titleEmphasis: " culture générale",
   description:
@@ -57,6 +58,10 @@ const DEFAULT_EXPERIENCE = Object.freeze({
   shuffleQuestions: true,
   shuffleSeed: null,
 });
+
+// Shared presentation only: the connected controller never mounts the demo
+// runtime or accepts its locally computed awards as school results.
+export { DEFAULT_EXPERIENCE, QuizTopbar, WelcomeScreen, QuestionScreen, ResultsScreen };
 
 function createAttemptId(quizId = "culture-generale") {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -116,7 +121,7 @@ function QuizTopbar({
         <span className="cq-meta-item cq-meta-xp">
           <Sparkle weight="bold" aria-hidden="true" />
           <span>
-            <small>XP</small>
+            <small>XP partie</small>
             <strong>{xp.toLocaleString("fr-FR")}</strong>
           </span>
         </span>
@@ -430,6 +435,7 @@ function ResultsScreen({
 }) {
   const score = Number.isFinite(summary.scorePercent) ? summary.scorePercent : 0;
   const totalXpEarned = summary.xpEarned + experience.completionBonus;
+  const showBalanceEquation = canShowQuizBalanceEquation(profileXpStart, totalXpEarned, profileXpTotal);
   const title =
     score >= 90
       ? "Quelle performance !"
@@ -493,13 +499,17 @@ function ResultsScreen({
 
         <div
           className="cq-profile-balance"
-          aria-label={`Profil : ${profileXpStart} points d’expérience au départ, plus ${totalXpEarned}, nouveau total ${profileXpTotal}`}
+          aria-label={showBalanceEquation
+            ? `Profil : ${profileXpStart} points d’expérience au départ, plus ${totalXpEarned}, nouveau total ${profileXpTotal}`
+            : `Profil : total actuel de ${profileXpTotal} points d’expérience, dont ${totalXpEarned} pour cette partie`}
         >
-          <span>XP du profil</span>
-          <strong>{profileXpStart.toLocaleString("fr-FR")}</strong>
-          <small>+</small>
-          <strong className="cq-profile-earned">{totalXpEarned}</strong>
-          <small>=</small>
+          <span>{showBalanceEquation ? "XP du profil" : "XP du profil · total actuel"}</span>
+          {showBalanceEquation && <>
+            <strong>{profileXpStart.toLocaleString("fr-FR")}</strong>
+            <small>+</small>
+            <strong className="cq-profile-earned">{totalXpEarned}</strong>
+            <small>=</small>
+          </>}
           <strong>{profileXpTotal.toLocaleString("fr-FR")}</strong>
         </div>
 

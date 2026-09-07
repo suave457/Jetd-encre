@@ -21,7 +21,7 @@ try {
     const metadata = getPageMetadata(path, { origin, indexable });
     const markup = renderToString(createElement(PublicPreview, { path }));
     if (!markup.includes("<h1") || !markup.includes("<main")) throw new Error("Incomplete public prerender: " + path);
-    let html = template.replace('<div id="root"></div>', '<div id="root" data-prerendered="true">' + markup + "</div>")
+    let html = template.replace('<div id="root"></div>', '<div id="root" data-prerendered="true">' + markup + "</div><!--jde-prerender-end-->")
       .replace(/<title>[\s\S]*?<\/title>/, "<title>" + escape(metadata.title) + "</title>")
       .replace(/(<meta name="description" content=")[^"]*(")/, "$1" + escape(metadata.description) + "$2")
       .replace(/(<meta name="robots" content=")[^"]*(")/, "$1" + metadata.robots + "$2");

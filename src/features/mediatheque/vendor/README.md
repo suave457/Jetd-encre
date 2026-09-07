@@ -7,6 +7,21 @@
 
 Les fichiers sont servis localement afin que la liseuse fonctionne sans dépendance CDN.
 
+## Décodeur JBIG2 — 7 septembre 2026
+
+Le PDF privé de recette utilise une image JBIG2, notamment page 120. Le lecteur fournit désormais `wasmUrl` vers `/assets/pdfjs/5.7.284/wasm/`, avec le décodeur et son repli JavaScript officiels. Aucun module principal n’a été remplacé, aucun CDN n’est appelé et la politique de sécurité n’a pas été assouplie.
+
+Les quatre fichiers proviennent de `web/wasm/` dans l’archive officielle `pdfjs-5.7.284-dist.zip`, dont le SHA-256 vérifié est `6D1B81252D76358DF5831567D7D551F40EBAE0CD8E0A554694BC4DF0D3DB8715`.
+
+| Fichier public | SHA-256 |
+| --- | --- |
+| `jbig2.wasm` | `E6BEE67724A7B5436FE8162638E3708CFC8D52B6342DB69A49715E30FF27CFDC` |
+| `jbig2_nowasm_fallback.js` | `04C795A6657A4553A64B781EA3E85256203D913C3B71B72B85FA3CE00622F458` |
+| `LICENSE_JBIG2` | `9E66B7F1B934A28B37F3BC4DAC97915DE1674271E79A0A88182A18ED9731B4D1` |
+| `LICENSE_PDFJS_JBIG2` | `AAD3CCE09842E00E9E11AD5E8FEF8CC02FBC3A3768FE2F007443B9CEE37AAEE5` |
+
+La licence complète et les notices tierces accompagnent les fichiers distribués. Le PDF personnel n’est pas un de ces fichiers publics.
+
 ## Intégrité des fichiers
 
 SHA-256 calculés sur les deux fichiers actuellement intégrés :

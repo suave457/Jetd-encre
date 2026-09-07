@@ -492,11 +492,17 @@ export default function MissionZellige({
     radios?.[nextIndex]?.focus();
   };
 
+  return <MissionZelligeView model={{currentXp, daily, missionIndex, phase, selectedHotspot, locationSolved, orderedPieces, sentenceSolved, builderAnnouncement, feedback, speaking, showTranscript, result, studentName, fragmentCount, finishButtonRef, missionTitleRef, sentenceHeadingRef, completionHeadingRef, mission, isDailyMission, availablePieces, sentence, selectedOption, phaseLabel, exitMission, resetForMission, toggleTranscript, toggleClue, validateLocation, chooseHotspot, handleRadioKeyDown, addPiece, removePiece, movePiece, resetSentence, validateSentence, finishMission}}/>;
+}
+
+// Shared original presentation; the school adapter supplies server-confirmed state.
+export function MissionZelligeView({model}) {
+  const {currentXp, daily, missionIndex, phase, selectedHotspot, locationSolved, orderedPieces, sentenceSolved, builderAnnouncement, feedback, speaking, showTranscript, result, studentName, fragmentCount, finishButtonRef, missionTitleRef, sentenceHeadingRef, completionHeadingRef, mission, isDailyMission, availablePieces, sentence, selectedOption, phaseLabel, exitMission, resetForMission, toggleTranscript, toggleClue, validateLocation, chooseHotspot, handleRadioKeyDown, addPiece, removePiece, movePiece, resetSentence, validateSentence, finishMission, missions=MISSION_ZELLIGE_MISSIONS}=model;
   return (
     <div className="mission-zellige">
       <a className="mz-skip-link" href="#mz-main">Aller à la mission</a>
       <header className="mz-topbar">
-        <button className="mz-back" type="button" onClick={exitMission}>
+        <button className="mz-back" type="button" aria-label="Mes jeux" onClick={exitMission}>
           <ArrowLeft weight="bold" aria-hidden="true" />
           <span>Mes jeux</span>
         </button>
@@ -504,7 +510,7 @@ export default function MissionZellige({
         <div className="mz-top-progress">
           <span><strong>Situation {missionIndex + 1}</strong> sur 4</span>
           <div aria-label={`Situation ${missionIndex + 1} sur 4`}>
-            {MISSION_ZELLIGE_MISSIONS.map((item, index) => (
+            {missions.map((item, index) => (
               <button
                 className={`${index === missionIndex ? "is-active" : ""}${index === daily.missionIndex ? " is-daily" : ""}`}
                 type="button"
@@ -716,12 +722,12 @@ export default function MissionZellige({
                 <strong>{mission.answer}</strong>
                 <span>{result?.preview ? "Aperçu bêta terminé · aucun XP supplémentaire" : result?.alreadyRecorded ? "Récompense déjà enregistrée aujourd’hui" : "Récompense enregistrée une seule fois aujourd’hui"}</span>
                 <span className="mz-transfer-prompt"><Lightbulb weight="fill" aria-hidden="true" /> Pour aller plus loin : {mission.transferPrompt}</span>
-                <span className="mz-fragment-progress"><DiamondsFour weight="fill" aria-hidden="true" /> Fragment « {mission.fragmentLabel} » · {fragmentCount}/{MISSION_ZELLIGE_MISSIONS.length} dans ta fresque</span>
+                <span className="mz-fragment-progress"><DiamondsFour weight="fill" aria-hidden="true" /> Fragment « {mission.fragmentLabel} » · {fragmentCount}/{missions.length} dans ta fresque</span>
                 <ActionFeedback feedback={feedback} />
               </div>
               <div className="mz-result-actions">
                 <button type="button" className="mz-secondary" onClick={() => resetForMission(missionIndex, { replay: true })}>Rejouer</button>
-                <button type="button" className="mz-primary" onClick={() => resetForMission((missionIndex + 1) % MISSION_ZELLIGE_MISSIONS.length)}>Situation suivante <ArrowRight weight="bold" /></button>
+                <button type="button" className="mz-primary" onClick={() => resetForMission((missionIndex + 1) % missions.length)}>Situation suivante <ArrowRight weight="bold" /></button>
               </div>
             </>
           )}

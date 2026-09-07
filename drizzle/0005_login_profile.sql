@@ -1,0 +1,1 @@
+ALTER TABLE `pilot_auth_flows` ADD `requested_role` text;

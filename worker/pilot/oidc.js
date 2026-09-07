@@ -1,5 +1,6 @@
 import * as oidc from "openid-client";
 import { fail, first, hash, issueSession, now, randomToken, readCookie, run, TOKEN } from "./session.js";
+import { effectiveRole, requestedProfile, signInReturn } from './access-role.js';
 
 const configurations = new Map();
 function publicHttps(value) {
@@ -89,11 +90,15 @@ export async function handleOidc(request,env) {
   if(url.origin!==settings.origin || request.method!=="GET")fail(403,"auth_request_rejected","Requête de connexion refusée.");
   if(url.pathname==="/api/pilot/auth/start") {
     if(request.headers.get("Sec-Fetch-Site")==="cross-site")fail(403,"origin_rejected","Ouvrez la connexion depuis la plateforme.");
+    const profile=requestedProfile(url);
+    const returns=url.searchParams.getAll('retour');
+    if(returns.length>1||(returns.length===1&&(returns[0]!=='activation'||profile!=='eleve')))fail(400,'invalid_auth_return','Destination de connexion invalide.');
+    const returnPath=returns.length?'/activation':null;
     await limitAuthStarts(env.DB,request,env);
     const config=await configuration(env,settings);
     const state=oidc.randomState(),nonce=oidc.randomNonce(),verifier=oidc.randomPKCECodeVerifier(),browser=randomToken();
     await run(env.DB,"DELETE FROM pilot_auth_flows WHERE state_hash IN (SELECT state_hash FROM pilot_auth_flows WHERE expires_at < ? LIMIT 100)",now());
-    const admitted=await run(env.DB,"INSERT INTO pilot_auth_flows(state_hash,browser_hash,verifier,nonce,expires_at) SELECT ?,?,?,?,? WHERE (SELECT count(*) FROM pilot_auth_flows WHERE expires_at>?)<500",await hash(state),await hash(browser),verifier,nonce,now()+600,now());
+    const admitted=await run(env.DB,"INSERT INTO pilot_auth_flows(state_hash,browser_hash,verifier,nonce,expires_at,requested_role,return_path) SELECT ?,?,?,?,?,?,? WHERE (SELECT count(*) FROM pilot_auth_flows WHERE expires_at>?)<500",await hash(state),await hash(browser),verifier,nonce,now()+600,profile,returnPath,now());
     if(!admitted.meta?.changes)fail(429,"auth_capacity_reached","Beaucoup de connexions sont en cours. Réessayez dans quelques minutes.");
     // Shared computers must ask the provider to reauthenticate, even when its SSO cookie remains.
     // Never accept a browser-supplied prompt override.
@@ -101,28 +106,35 @@ export async function handleOidc(request,env) {
     return redirect(target.href,[flowCookie(browser)]);
   }
   if(url.pathname!=="/api/pilot/auth/callback")fail(404,"not_found","Page introuvable.");
+  let profile=null,returnPath=null;
+  const destination=reason=>returnPath==='/activation'&&profile==='eleve'?'/activation'+(reason?'?connexion='+encodeURIComponent(reason):''):signInReturn(profile,reason);
   try {
     for(const key of new Set(url.searchParams.keys()))if(url.searchParams.getAll(key).length!==1)fail(400,"ambiguous_callback","Retour de connexion invalide.");
     const state=url.searchParams.get("state"),browser=readCookie(request,"__Host-jde_auth");
     if(!state||state.length>128||!browser||!TOKEN.test(browser))fail(400,"invalid_auth_flow","La connexion a expiré. Recommencez.");
     const stateHash=await hash(state),browserHash=await hash(browser);
     // DELETE RETURNING atomically consumes the transaction; even concurrent callbacks have one winner.
-    const transaction=await first(env.DB,"DELETE FROM pilot_auth_flows WHERE state_hash=? AND browser_hash=? AND expires_at>? RETURNING verifier,nonce",stateHash,browserHash,now());
+    const transaction=await first(env.DB,"DELETE FROM pilot_auth_flows WHERE state_hash=? AND browser_hash=? AND expires_at>? RETURNING verifier,nonce,requested_role,return_path",stateHash,browserHash,now());
     if(!transaction)fail(400,"invalid_auth_flow","La connexion a expiré ou a déjà été utilisée.");
+    profile=transaction.requested_role;
+    returnPath=transaction.return_path==='/activation'?'/activation':null;
     const config=await configuration(env,settings);
     const tokens=await oidc.authorizationCodeGrant(config,url,{pkceCodeVerifier:transaction.verifier,expectedState:state,expectedNonce:transaction.nonce,idTokenExpected:true});
     const claims=tokens.claims();
     if(!claims||typeof claims.sub!=="string"||claims.iss!==config.serverMetadata().issuer)fail(403,"identity_rejected","Identité refusée.");
     const identity=await first(env.DB,`SELECT i.user_id FROM pilot_identities i JOIN pilot_users u ON u.id=i.user_id WHERE i.issuer=? AND i.subject=? AND u.active=1`,claims.iss,claims.sub);
-    if(!identity) return redirect("/pilote?connexion=non-autorisee",[flowCookie()]);
+    if(!identity) return redirect(destination('non-autorisee'),[flowCookie()]);
+    const role=await effectiveRole(env.DB,identity.user_id);
+    if(profile&&role!==profile)return redirect(destination('profil-incompatible'),[flowCookie()]);
+    if(!role)return redirect(destination('non-autorisee'),[flowCookie()]);
     // No email-based account linking, implicit enrolment or browser-supplied role.
-    const session=await issueSession(env.DB,identity.user_id,"oidc",false);
+    const session=await issueSession(env.DB,identity.user_id,"oidc",false,profile);
     const previous=readCookie(request,"__Host-jde_pilot");
     if(previous&&TOKEN.test(previous))await run(env.DB,"UPDATE pilot_sessions SET revoked_at=? WHERE token_hash=?",now(),await hash(previous));
-    return redirect("/pilote",[flowCookie(),session.cookie]);
+    return redirect(destination(),[flowCookie(),session.cookie]);
   } catch (error) {
-    if(error instanceof Response)return redirect("/pilote?connexion=expiree",[flowCookie()]);
+    if(error instanceof Response)return redirect(destination('expiree'),[flowCookie()]);
     // Do not log codes, provider payloads, claims, cookies or personal data.
-    return redirect("/pilote?connexion=echec",[flowCookie()]);
+    return redirect(destination('echec'),[flowCookie()]);
   }
 }

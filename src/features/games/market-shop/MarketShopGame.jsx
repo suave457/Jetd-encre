@@ -39,7 +39,7 @@ import "./market-shop.css";
 const NOOP = () => {};
 const EMPTY_AWARD_HISTORY = Object.freeze([]);
 const EMPTY_ATTEMPT_HISTORY = Object.freeze([]);
-const DEFAULT_ASSETS = Object.freeze({
+export const DEFAULT_ASSETS = Object.freeze({
   mascot: "/assets/games/market-shop/plumi.webp",
   vendor: "/assets/games/market-shop/market-vendor-scene.webp",
   stall: "/assets/games/market-shop/market-stall-backdrop.webp",
@@ -50,7 +50,7 @@ function MarketHeader({ progressLabel, progressValue, progressCount, sessionXp, 
   const safeProgressValue = Math.min(safeProgressCount, Math.max(0, Number(progressValue) || 0));
   return (
     <header className="ms-header">
-      <button className="ms-back" type="button" onClick={onBack}>
+      <button className="ms-back" type="button" aria-label={backLabel} onClick={onBack}>
         <ArrowLeft weight="bold" aria-hidden="true" />
         <span>{backLabel}</span>
       </button>
@@ -228,7 +228,7 @@ function MarketTierJourney({ tiers, mascotSrc, celebratingTierId, reviewingTierI
           <MarketTierCard
             key={tier.id}
             tier={tier}
-            prerequisiteLabel={tierById.get(tier.unlock?.tierId)?.label}
+            prerequisiteLabel={tierById.get(tier.unlock?.tierId)?.cardTitle}
             mascotSrc={mascotSrc}
             celebrating={celebratingTierId === tier.id}
             reviewing={reviewingTierId === tier.id}
@@ -821,6 +821,12 @@ export default function MarketShopGame({
     setScreen("journey");
   };
 
+  const changeFormula=(formulaId)=>{if(solved)return;setSelectedFormulaId(formulaId);setFeedback(null);};
+  return <MarketShopView model={{screen, summary, profileXp, sessionXp, assets, replay, exitGame, completedTierCount, tierProgress, celebratingTierId, reviewTierId, openTier, mission, activeTier, activeTierMissionIndex, showJourney, selectedFormulaId, helpUsed, speaking, solved, listenToMission, revealHelp, products, basket, changeQuantity, feedback, missionXp, isReviewMode, isLastTierMission, isFinalTier, validateMission, advance, audioNotice,changeFormula}}/>;
+}
+
+export function MarketShopView({model}) {
+  const {screen, summary, profileXp, sessionXp, assets, replay, exitGame, completedTierCount, tierProgress, celebratingTierId, reviewTierId, openTier, mission, activeTier, activeTierMissionIndex, showJourney, selectedFormulaId, helpUsed, speaking, solved, listenToMission, revealHelp, products, basket, changeQuantity, feedback, missionXp, isReviewMode, isLastTierMission, isFinalTier, validateMission, advance, audioNotice,changeFormula}=model;
   if (screen === "results" && summary) {
     return (
       <div className="market-shop-game">
@@ -884,11 +890,7 @@ export default function MarketShopGame({
           helpUsed={helpUsed}
           speaking={speaking}
           locked={solved}
-          onFormulaChange={(formulaId) => {
-            if (solved) return;
-            setSelectedFormulaId(formulaId);
-            setFeedback(null);
-          }}
+          onFormulaChange={changeFormula}
           onListen={listenToMission}
           onHelp={revealHelp}
           vendorSrc={assets.vendor}
@@ -913,7 +915,7 @@ export default function MarketShopGame({
               <ProductCard
                 product={product}
                 quantity={basket[product.id] || 0}
-                expectedQuantity={mission.expectedBasket[product.id] || 0}
+                expectedQuantity={mission.expectedBasket?.[product.id] || 0}
                 maxSelectableQuantity={mission.difficulty?.maxSelectableQuantity}
                 locked={solved}
                 onChange={changeQuantity}

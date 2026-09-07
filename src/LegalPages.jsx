@@ -1,5 +1,6 @@
 import "./legal-pages.css";
 import { usesSchoolDocumentNavigation } from './routeCore.js';
+import { publicContactHref } from './publicContactCore.js';
 
 export const LEGAL_PAGE_PATHS = Object.freeze({
   "mentions-legales": "/mentions-legales",
@@ -64,6 +65,11 @@ function HashLink({ to, children, ...props }) {
   }} {...props}>{children}</a>;
 }
 
+function ContactAddress({ email }) {
+  const href = publicContactHref(email);
+  return href ? <a href={href}>{email}</a> : <span title="Contact officiel non fourni — aucun envoi possible">{email || 'Contact à confirmer'} (contact à confirmer)</span>;
+}
+
 function ExternalLink({ href, children }) {
   return <a href={href} target="_blank" rel="noreferrer noopener">{children}<span className="legal-external-mark" aria-hidden="true">↗</span></a>;
 }
@@ -95,7 +101,7 @@ function MentionsLegales({ operator }) {
         ["Registre du commerce", operator.registry],
         ["ICE", operator.ice],
         ["Directeur ou directrice de publication", operator.publicationDirector],
-        ["Adresse électronique", <a href={`mailto:${operator.contactEmail}`}>{operator.contactEmail}</a>],
+        ["Adresse électronique", <ContactAddress email={operator.contactEmail}/>],
         ["Téléphone", operator.phone],
       ]} />
     </LegalSection>
@@ -127,7 +133,7 @@ function Confidentialite({ operator }) {
     <LegalSection id="responsable" title="1. Responsable du traitement">
       <p><strong>{operator.name}</strong> est destiné à devenir responsable des traitements liés à la plateforme, seul ou conjointement avec l’établissement scolaire selon l’organisation retenue. Les rôles exacts devront être précisés dans le contrat conclu avec chaque établissement.</p>
       <DefinitionList items={[
-        ["Contact données personnelles", <a href={`mailto:${operator.privacyEmail}`}>{operator.privacyEmail}</a>],
+        ["Contact données personnelles", <ContactAddress email={operator.privacyEmail}/>],
         ["Référence CNDP", operator.cndpReference],
       ]} />
     </LegalSection>
@@ -179,7 +185,7 @@ function Confidentialite({ operator }) {
       <p>La version de production doit prévoir une authentification robuste, des autorisations contrôlées côté serveur, le chiffrement des échanges, la journalisation des accès sensibles, des sauvegardes testées et une procédure de gestion des incidents. Les comptes de démonstration ne doivent jamais être réutilisés en production.</p>
     </LegalSection>
     <LegalSection id="droits" title="9. Vos droits">
-      <p>Dans les conditions prévues par la loi n° 09-08, toute personne concernée peut demander l’accès aux données qui la concernent, leur rectification et, lorsque les conditions sont réunies, s’opposer à leur traitement. Une demande peut être envoyée à <a href={`mailto:${operator.privacyEmail}`}>{operator.privacyEmail}</a> avec les éléments permettant de vérifier l’identité et le compte concernés.</p>
+      <p>Dans les conditions prévues par la loi n° 09-08, toute personne concernée peut demander l’accès aux données qui la concernent, leur rectification et, lorsque les conditions sont réunies, s’opposer à leur traitement. Une demande peut être envoyée à <ContactAddress email={operator.privacyEmail}/> avec les éléments permettant de vérifier l’identité et le compte concernés.</p>
       <p>Si la réponse apportée ne convient pas, la personne peut contacter la <ExternalLink href="https://www.cndp.ma/">Commission Nationale de contrôle de la protection des Données à caractère Personnel (CNDP)</ExternalLink>.</p>
     </LegalSection>
     <LegalSection id="prototype" title="10. Données de démonstration">
@@ -228,7 +234,7 @@ function ConditionsUtilisation({ operator }) {
       <p>Chaque utilisateur est responsable de l’exactitude des informations qu’il transmet et des actions réalisées depuis son compte. Jet d’Encre met en œuvre les moyens raisonnables pour assurer la qualité du service, sans garantir une disponibilité ininterrompue ni l’absence absolue d’erreur.</p>
     </LegalSection>
     <LegalSection id="contact-cgu" title="10. Contact et droit applicable">
-      <p>Une question peut être adressée à <a href={`mailto:${operator.contactEmail}`}>{operator.contactEmail}</a>. Les présentes conditions sont soumises au droit marocain. Les parties privilégient une résolution amiable avant toute saisine de la juridiction compétente.</p>
+      <p>Une question peut être adressée à <ContactAddress email={operator.contactEmail}/>. Les présentes conditions sont soumises au droit marocain. Les parties privilégient une résolution amiable avant toute saisine de la juridiction compétente.</p>
     </LegalSection>
   </>;
 }
@@ -286,7 +292,7 @@ function Accessibilite({ operator }) {
       </ul>
     </LegalSection>
     <LegalSection id="assistance" title="4. Signaler une difficulté">
-      <p>Si un contenu ou une fonction vous empêche d’accéder à l’information, écrivez à <a href={`mailto:${operator.contactEmail}`}>{operator.contactEmail}</a>. Indiquez la page, l’appareil, le navigateur, la technologie d’assistance éventuelle et l’action que vous souhaitiez réaliser. Une solution de remplacement accessible sera recherchée.</p>
+      <p>Si un contenu ou une fonction vous empêche d’accéder à l’information, écrivez à <ContactAddress email={operator.contactEmail}/>. Indiquez la page, l’appareil, le navigateur, la technologie d’assistance éventuelle et l’action que vous souhaitiez réaliser. Une solution de remplacement accessible sera recherchée.</p>
     </LegalSection>
     <LegalSection id="evaluation" title="5. Évaluation et amélioration">
       <p>Cette déclaration a été préparée le {LAST_UPDATED} à partir d’un audit interne du prototype. Avant la production, elle devra être complétée par des tests automatisés, une revue clavier, une revue avec lecteurs d’écran, un contrôle des contrastes et des essais sur les principaux parcours utilisateurs.</p>
@@ -324,7 +330,7 @@ export function LegalPages({ page = "mentions-legales", operator: operatorOverri
       <nav aria-label="Navigation secondaire">
         <HashLink to="/">Accueil</HashLink>
         <HashLink to="/blog">Blog</HashLink>
-        <a href="/pilote" className="legal-login-link">Connexion</a>
+        <a href="/connexion" className="legal-login-link">Connexion</a>
       </nav>
     </header>
     <section className="legal-hero">
@@ -337,7 +343,7 @@ export function LegalPages({ page = "mentions-legales", operator: operatorOverri
       <aside className="legal-navigation" aria-label="Pages légales">
         <strong>Informations utiles</strong>
         <nav>{Object.entries(PAGE_META).map(([key, item]) => <HashLink key={key} to={LEGAL_PAGE_PATHS[key]} aria-current={key === currentPage ? "page" : undefined}>{item.title}</HashLink>)}</nav>
-        <p>Une question ?<a href={`mailto:${operator.contactEmail}`}>{operator.contactEmail}</a></p>
+        <p>Une question ?<ContactAddress email={operator.contactEmail}/></p>
       </aside>
       <article className="legal-document">{content}</article>
     </main>

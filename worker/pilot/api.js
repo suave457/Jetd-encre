@@ -1,6 +1,16 @@
+import { handleManualReader } from './manual-reader.js';
+import { handleDirector } from './director.js';
 import { authSettings, handleOidc } from "./oidc.js";
-import { handleAdmin, isPlatformAdmin } from "./admin.js";
-import { handleGames } from './games.js';
+import { handleAdmin } from "./admin.js";
+import { handleGames, readSchoolGameSummary } from './games.js';
+import { handleQuizGames } from './quizzes.js';
+import { handleZellige } from './zellige.js';
+import {handleTeacherMarket} from "./teacher-market.js";
+import { handleMarket } from './market.js';
+import { handleClassChallenges } from './class-challenges.js';
+import { effectiveRole, requestedProfile, requireProfile } from './access-role.js';
+import { handleManuals } from './manuals.js';
+import { handleStudentProfile, readStudentProfile } from './student-profile.js';
 import { all, authenticate, checkCsrf, fail, first, hash, LIVE_SESSION_SQL, liveValues, now, readInput, reply, requiredText, run, sessionCookie } from "./session.js";
 
 async function context(db, session) {
@@ -29,6 +39,33 @@ async function assignment(db,c,id) {
   return record;
 }
 function viewAssignment(a) {return {id:a.id,classId:a.class_id,title:a.title,instructions:a.instructions,dueDate:a.due_date,createdAt:a.created_at};}
+async function studentDashboard(db,c,offset=0) {
+  requireProfile(await effectiveRole(db,c.user_id),'eleve');
+  const scope=assignmentScope(c),guard=membershipGuard(c);
+  const classes=await all(db,`SELECT cl.id,cl.name FROM pilot_classes cl JOIN pilot_class_members cm ON cm.school_id=cl.school_id AND cm.class_id=cl.id
+    WHERE cl.school_id=? AND cm.user_id=? AND cl.active=1 AND ${guard.sql} ORDER BY cl.name,cl.id`,c.school_id,c.user_id,...guard.values);
+  const from=`FROM pilot_assignments a
+    LEFT JOIN pilot_submissions sub ON sub.assignment_id=a.id AND sub.school_id=a.school_id AND sub.student_id=?
+    LEFT JOIN pilot_reviews rev ON rev.submission_id=sub.id AND rev.school_id=sub.school_id
+    WHERE a.school_id=? AND ${scope.sql} AND ${guard.sql}`;
+  const values=[c.user_id,c.school_id,...scope.values,...guard.values];
+  const counts=await first(db,`SELECT count(*) total,count(sub.id) submitted,count(rev.submission_id) reviewed ${from}`,...values);
+  const rows=await all(db,`SELECT a.*,sub.id submission_id,sub.submitted_at,rev.reviewed_at,rev.score,rev.feedback ${from}
+    ORDER BY a.due_date,a.created_at,a.id LIMIT 50 OFFSET ?`,...values,offset);
+  const next=await first(db,`SELECT a.* ${from} AND sub.id IS NULL ORDER BY a.due_date,a.created_at,a.id LIMIT 1`,...values);
+  const summary=await readSchoolGameSummary(db,{user:{id:c.user_id},schoolId:c.school_id,role:c.role,session:c});
+  // Reject the entire result when an access change occurred during its reads.
+  const currentClasses=await all(db,`SELECT cl.id FROM pilot_classes cl JOIN pilot_class_members cm ON cm.school_id=cl.school_id AND cm.class_id=cl.id
+    WHERE cl.school_id=? AND cm.user_id=? AND cl.active=1 AND ${guard.sql}`,c.school_id,c.user_id,...guard.values);
+  const ids=new Set(currentClasses.map(group=>group.id));
+  if(!classes.length||classes.length!==ids.size||classes.some(group=>!ids.has(group.id))||rows.some(row=>!ids.has(row.class_id))||(next&&!ids.has(next.class_id)))fail(403,'student_access_changed','Ton accès scolaire a changé. Reconnecte-toi pour continuer.');
+  requireProfile(await effectiveRole(db,c.user_id),'eleve');
+  return {userId:c.user_id,schoolId:c.school_id,classes,
+    assignments:{total:counts.total,submitted:counts.submitted,reviewed:counts.reviewed,pending:counts.total-counts.submitted,
+      next:next?viewAssignment(next):null,nextOffset:offset+rows.length<counts.total?offset+rows.length:null,
+      items:rows.map(row=>({...viewAssignment(row),submission:row.submission_id?{id:row.submission_id,submittedAt:row.submitted_at,reviewedAt:row.reviewed_at,score:row.score,feedback:row.feedback}:null}))},
+    rewards:summary.children.find(child=>child.studentId===c.user_id)||null};
+}
 async function relatedSubmissions(db,c,assignmentId=null,offset=0) {
   const scope=assignmentScope(c);
   let studentSql="1=1",values=[];
@@ -118,13 +155,19 @@ export async function handlePilot(request,env,{local=false,requestId=null}={}) {
     if(!local && (!authSettings(env)||new URL(request.url).origin!==authSettings(env).origin))fail(503,"identity_not_configured","La connexion réelle n’est pas encore configurée.");
     if(path.startsWith("/api/pilot/auth/"))return await handleOidc(request,env);
     if(request.method==="GET"&&path==="/api/pilot/session"){
+      const profile=requestedProfile(new URL(request.url));
       const session=await authenticate(request,env.DB,local,true);
       if(!session)return reply({authenticated:false,mode:local?"local_fixture":"oidc",signInPath:local?null:"/api/pilot/auth/start"});
-      if(await isPlatformAdmin(env.DB,session))return reply({authenticated:true,mode:local?'local_fixture':'oidc',csrfToken:session.csrf_token,user:{id:session.user_id,name:session.display_name,role:'admin'}});
+      const role=await effectiveRole(env.DB,session.user_id);
+      requireProfile(role,profile,local?'local_fixture':'oidc');
+      if(role==='admin')return reply({authenticated:true,mode:local?'local_fixture':'oidc',csrfToken:session.csrf_token,user:{id:session.user_id,name:session.display_name,role:'admin'}});
       const c=await context(env.DB,session);
-      return reply({authenticated:true,mode:local?"local_fixture":"oidc",csrfToken:c.csrf_token,user:{id:c.user_id,name:c.display_name,role:c.role,schoolId:c.school_id,schoolName:c.school_name}});
+      requireProfile(c.role,profile,local?'local_fixture':'oidc');
+      const studentProfile=c.role==='eleve'?await readStudentProfile(env.DB,c):null;
+      return reply({authenticated:true,mode:local?"local_fixture":"oidc",csrfToken:c.csrf_token,user:{id:c.user_id,name:c.display_name,role:c.role,schoolId:c.school_id,schoolName:c.school_name,...(studentProfile?{avatar:studentProfile.avatar}:{})}});
     }
     const session=await authenticate(request,env.DB,local);
+    if(path==='/api/pilot/reader'||path.startsWith('/api/pilot/reader/'))return await handleManualReader(request,env,session,local);
     if(request.method!=="GET")checkCsrf(request,session);
     // Logout remains available after all memberships were removed.
     if(request.method==="POST"&&path==="/api/pilot/logout"){
@@ -133,9 +176,18 @@ export async function handlePilot(request,env,{local=false,requestId=null}={}) {
     }
     if(path==='/api/pilot/admin'||path.startsWith('/api/pilot/admin/'))return await handleAdmin(request,env,session,local);
     const c=await context(env.DB,session);
+    if(path==='/api/pilot/director'||path.startsWith('/api/pilot/director/'))return await handleDirector(request,env,c,local);
+    if(path==='/api/pilot/student/profile')return await handleStudentProfile(request,env.DB,c);
+    if(path==='/api/pilot/manuals'||path.startsWith('/api/pilot/manuals/'))return await handleManuals(request,env.DB,c,path,local&&Boolean(env.LOCAL_MANUAL_FILES?.libraryEnabled));
+    if(path==='/api/pilot/teacher/market'||path.startsWith('/api/pilot/teacher/market/'))return await handleTeacherMarket(request,env,{user:{id:c.user_id},schoolId:c.school_id,role:c.role,session:c},local);
+    if(path==='/api/pilot/games/defis-classe'||path.startsWith('/api/pilot/games/defis-classe/'))return await handleClassChallenges(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
+    if(path==='/api/pilot/games/souk-des-mots'||path.startsWith('/api/pilot/games/souk-des-mots/'))return await handleMarket(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
+    if(path==='/api/pilot/games/mission-zellige'||path.startsWith('/api/pilot/games/mission-zellige/'))return await handleZellige(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
+    if(path.startsWith('/api/pilot/games/quiz/'))return await handleQuizGames(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
     if(path.startsWith('/api/pilot/games/'))return await handleGames(request,env,{user:{id:c.user_id,name:c.display_name},schoolId:c.school_id,role:c.role,session:c},path);
     const offset=Number(new URL(request.url).searchParams.get("offset")||0);
     if(!Number.isSafeInteger(offset)||offset<0||offset>100000)fail(422,"invalid_page","Page invalide.");
+    if(request.method==='GET'&&path==='/api/pilot/student/dashboard')return reply(await studentDashboard(env.DB,c,offset));
     if(request.method==="GET"&&path==="/api/pilot/workspace")return reply({userId:c.user_id,...await workspace(env.DB,c,offset)});
     if(request.method==="POST"&&path==="/api/pilot/assignments")return await publishAssignment(request,env.DB,c);
     const entry=path.match(/^\/api\/pilot\/assignments\/([a-f0-9-]{36})(\/submission)?$/);

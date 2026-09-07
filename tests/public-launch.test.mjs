@@ -3,7 +3,7 @@ import test from "node:test";
 import { readAccessibilityPreferences, saveAccessibilityPreferences, applyAccessibilityPreferences } from "../src/accessibilityPreferences.js";
 import { PUBLIC_PREVIEW_PATHS, getPageMetadata, getSiteOrigin, isPublicIndexingEnabled, buildPublicSitemap, buildPublicRobots } from "../src/publicContent.js";
 import { parseRoute, usesSchoolDocumentNavigation } from "../src/routeCore.js";
-import { getSchoolSection, getAutomaticSignInPath } from "../src/features/pilote/schoolNavigationCore.js";
+import { getSchoolSection, getAutomaticSignInPath, getSignInFailure, withSchoolProfile } from "../src/features/pilote/schoolNavigationCore.js";
 
 test("les nouvelles pages publiques ont une route et des métadonnées propres, sans indexation par défaut", () => {
   const titles = new Set();
@@ -99,11 +99,13 @@ test('l’accueil administrateur connecté reste distinct du pilotage de démons
 test("le choix du profil lance uniquement la connexion OIDC explicitement demandée", () => {
   const anonymous = { authenticated: false, mode: "oidc", signInPath: "/api/pilot/auth/start" };
   for (const search of ["?connexion=1", "?profil=eleve&connexion=1", "?profil=parent&connexion=1", "?profil=admin&connexion=1"]) {
-    assert.equal(getAutomaticSignInPath(anonymous, search), "/api/pilot/auth/start", search);
+    const profile=new URLSearchParams(search).get('profil');
+    assert.equal(getAutomaticSignInPath(anonymous, search), '/api/pilot/auth/start'+(profile?'?profil='+profile:''), search);
   }
-  for (const search of ["", "?profil=eleve", "?connexion=0", "?connexion=echec", "?connexion=expiree", "?connexion=non-autorisee", "?connexion=1&connexion=1", "?connexion=1&connexion=echec", "?connexion=echec&connexion=1"]) {
+  for (const search of ["", "?profil=eleve", "?connexion=0", "?connexion=echec", "?connexion=expiree", "?connexion=non-autorisee", "?connexion=1&connexion=1", "?connexion=1&connexion=echec", "?connexion=echec&connexion=1", "?profil=admin&profil=eleve&connexion=1", "?profil=inconnu&connexion=1", "?profil=&connexion=1"]) {
     assert.equal(getAutomaticSignInPath(anonymous, search), null, search);
   }
+  assert.equal(getAutomaticSignInPath(anonymous,'?connexion=1','admin'),'/api/pilot/auth/start?profil=admin');
 });
 
 test("une session existante, locale ou invalide ne déclenche aucune redirection automatique", () => {
@@ -124,6 +126,21 @@ test("une session existante, locale ou invalide ne déclenche aucune redirection
   for (const session of sessions) {
     assert.equal(getAutomaticSignInPath(session, "?profil=admin&connexion=1"), null);
   }
+});
+
+test('un retour de connexion refusé ne reprend pas une ancienne session en silence',()=>{
+  for(const reason of ['profil-incompatible','non-autorisee','expiree','echec'])assert.ok(getSignInFailure('?profil=eleve&connexion='+reason));
+  assert.ok(getSignInFailure('?connexion=echec&connexion=1'));
+  for(const query of ['','?profil=eleve','?connexion=1'])assert.equal(getSignInFailure(query),null);
+});
+
+test('les liens natifs conservent le profil sans détourner une destination extérieure',()=>{
+  for(const role of ['eleve','parent','enseignant']){
+    assert.equal(withSchoolProfile('/pilote',role),'/pilote?profil='+role);
+    assert.equal(withSchoolProfile('/pilote?section=devoirs&profil=admin&profil=eleve#travaux',role),'/pilote?section=devoirs&profil='+role+'#travaux');
+    for(const target of ['/guide-ecole','/admin/accueil','//foreign.example/pilote','https://foreign.example/pilote','/pilote-inconnu'])assert.equal(withSchoolProfile(target,role),target);
+  }
+  assert.equal(withSchoolProfile('/pilote?section=jeux','inconnu'),'/pilote?section=jeux');
 });
 
 test("les rubriques intégrées restent dans le parcours scolaire privé et le jeu conserve son URL", () => {

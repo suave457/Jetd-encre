@@ -172,6 +172,24 @@ test("client-declared identities cannot become production events or verified rol
   }
 });
 
+test('readiness requires production learning migrations; local-only PDF metadata remains optional',async()=>{
+  const sqlite=new DatabaseSync(':memory:');
+  try{
+    const directory=new URL('../drizzle/',import.meta.url);
+    for(const file of readdirSync(directory).filter(name=>name.endsWith('.sql')&&name<'0006').sort())sqlite.exec(readFileSync(new URL(file,directory),'utf8'));
+    const DB={prepare:sql=>({first:async()=>sqlite.prepare(sql).get()})};
+    const env={DB,PILOT_ENABLED:'true',PILOT_ORIGIN:base,OIDC_ISSUER:'https://identity.example.test',OIDC_CLIENT_ID:'fixture',OIDC_CLIENT_SECRET:'fixture-not-real'};
+    assert.equal((await worker.fetch(new Request(base+'/api/v1/ready'),env)).status,503);
+    const pending=readdirSync(directory).filter(name=>name.endsWith('.sql')&&name>='0006').sort();
+    for(const [index,file] of pending.entries()) {
+      sqlite.exec(readFileSync(new URL(file,directory),'utf8'));
+      assert.equal((await worker.fetch(new Request(base+'/api/v1/ready'),env)).status,file<'0013_class_challenges.sql'?503:200,file);
+    }
+    assert.equal((await worker.fetch(new Request(base+'/api/v1/ready'),env)).status,200);
+    assert.equal(sqlite.prepare('SELECT count(*) n FROM pilot_manuals').get().n,0);
+  }finally{sqlite.close();}
+});
+
 test("serves exact prerendered public routes; unknown public paths and local PDFs stay 404", async () => {
   const calls = [];
   const env = { ASSETS: { fetch: async (request) => { calls.push(new URL(request.url).pathname); return new Response("static", { status: new URL(request.url).pathname.endsWith("index.html") ? 200 : 404 }); } } };
@@ -182,13 +200,13 @@ test("serves exact prerendered public routes; unknown public paths and local PDF
     assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 200, path);
     assert.equal(calls.at(-1), expected, path);
   }
-  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/mots-fleches/", "/admin", "/admin/accueil", "/admin/accueil/", "/admin/ecoles-acces"]) {
+  for (const path of ["/pilote", "/pilote/jeux/mots-fleches", "/pilote/jeux/mots-fleches/", "/pilote/jeux/culture-generale", "/pilote/jeux/defi-du-jour", "/pilote/jeux/souk-des-mots", "/pilote/jeux/defis-classe", "/pilote/jeux/defis-classe/", "/pilote/bibliotheque", "/pilote/bibliotheque/", "/pilote/lecture/manual-test", "/pilote/lecture/manual-test/", "/pilote/lecture/A_1?profil=eleve", "/admin/bibliotheque", "/admin/bibliotheque/", "/admin", "/admin/accueil", "/admin/accueil/", "/admin/ecoles-acces", "/admin/licences", "/admin/analyses"]) {
     const response = await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env);
     assert.equal(response.status, 200, path);
     assert.equal(calls.at(-1), "/index.html", path);
     assert.equal(response.headers.get("X-Robots-Tag"), "noindex, nofollow");
   }
-  for (const path of ["/pilote/jeux/inconnu", "/pilote/jeux/mots-fleches/extra", "/guide-ecole/inconnu"]) {
+  for (const path of ["/pilote/jeux/inconnu", "/pilote/jeux/mots-fleches/extra", "/pilote/jeux/defis-classe/extra", "/pilote/bibliotheque/extra", "/pilote/lecture", "/pilote/lecture/", "/pilote/lecture/manual-test/extra", "/pilote/lecture/manual%20test", `/pilote/lecture/${"a".repeat(101)}`, "/guide-ecole/inconnu"]) {
     assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 404, path);
   }
   assert.equal((await worker.fetch(new Request(`${base}/page-inventee`, { headers: { accept: "text/html" } }), env)).status, 404);
@@ -197,4 +215,26 @@ test("serves exact prerendered public routes; unknown public paths and local PDF
   const before = calls.length;
   assert.equal((await worker.fetch(new Request(`${base}/__local-media/momo-chapitre-1.pdf`), env)).status, 404);
   assert.equal(calls.length, before);
+});
+
+test("documents privés : HEAD et liens directs sans élargir les méthodes ni servir de fichier local", async () => {
+  const calls = [];
+  const env = { ASSETS: { async fetch(request) {
+    const path = new URL(request.url).pathname;
+    calls.push({ path, method: request.method, search: new URL(request.url).search });
+    return new Response(request.method === "HEAD" ? null : "shell", { status: path === "/index.html" ? 200 : 404 });
+  } } };
+  for (const path of ["/pilote/jeux/defis-classe", "/pilote/bibliotheque", "/pilote/lecture/manual-test", "/admin/bibliotheque"]) {
+    const response = await worker.fetch(new Request(`${base}${path}?profil=eleve`, { method: "HEAD", headers: { accept: "text/html" } }), env);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get("X-Robots-Tag"), "noindex, nofollow");
+    assert.equal(await response.text(), "");
+    assert.deepEqual(calls.at(-1), { path: "/index.html", method: "HEAD", search: "" });
+    for (const options of [{ method: "POST", headers: { accept: "text/html" } }, { headers: { accept: "application/pdf" } }]) {
+      assert.equal((await worker.fetch(new Request(`${base}${path}`, options), env)).status, 404);
+    }
+  }
+  for (const path of ["/pilote/lecture/manual-test/file", "/pilote/lecture/manual-test/versions/sha/file", "/__local-media/private-manuals/test.pdf", "/.local-media/private-manuals/test.pdf"]) {
+    assert.equal((await worker.fetch(new Request(`${base}${path}`, { headers: { accept: "text/html" } }), env)).status, 404);
+  }
 });

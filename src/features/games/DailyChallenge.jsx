@@ -28,7 +28,7 @@ function formatChallengeDate(dateKey, options = {}) {
   }).format(new Date(`${dateKey}T12:00:00.000Z`));
 }
 
-function DailyCompletedScreen({ challenge, completion, history, currentXp, onExit }) {
+export function DailyCompletedScreen({ challenge, completion, history, currentXp, onExit }) {
   const recentHistory = history.slice(0, 7);
   return (
     <div className="culture-quiz daily-challenge-completed">

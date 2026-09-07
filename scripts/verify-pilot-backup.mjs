@@ -9,9 +9,10 @@ const PROJECT = realpathSync(fileURLToPath(new URL("../", import.meta.url)));
 const MIGRATIONS = new URL("../drizzle/", import.meta.url);
 const MAX_BYTES = 32 * 1024 * 1024;
 const METADATA_TABLES = new Set(["d1_migrations", "__drizzle_migrations", "__pilot_local_migrations", "_cf_KV", "sqlite_sequence"]);
-const SAFE_FUNCTIONS = new Set(["json_valid", "json_type", "length", "current_timestamp"]);
+const SAFE_FUNCTIONS = new Set(["json_valid", "json_type", "json_array_length", "length", "current_timestamp"]);
 const MESSAGES = {
   input_invalid: "Fournissez un fichier SQL normal, existant et non vide, de 32 Mio au maximum.",
+  reference_invalid: "La référence doit être le nom exact d’une migration locale existante, sans chemin ni option supplémentaire.",
   sql_not_supported: "Cet export contient du SQL hors du format autorisé. Aucune base existante n’a été modifiée.",
   runtime_unavailable: "Node.js 24.12 ou plus récent, avec les protections SQLite requises, est nécessaire.",
   temporary_location_rejected: "Le dossier temporaire du système doit se trouver hors du projet.",
@@ -137,13 +138,18 @@ function canonicalSchema(sql) {
   ))).map((token) => token.kind === "string" ? ["literal", token.value] : token.value.toUpperCase()));
 }
 
-function referenceSchema() {
+function referenceSchema(options) {
+  if (!options || typeof options !== "object" || Array.isArray(options)
+    || Object.keys(options).some((key) => key !== "throughMigration")) reject("reference_invalid");
+  const available = readdirSync(MIGRATIONS).filter((name) => /^\d{4}_.+\.sql$/.test(name)).sort();
+  const explicit = Object.hasOwn(options, "throughMigration");
+  if (explicit && (typeof options.throughMigration !== "string" || !available.includes(options.throughMigration))) reject("reference_invalid");
+  const migrations = explicit ? available.slice(0, available.indexOf(options.throughMigration) + 1) : available;
   const db = new DatabaseSync(":memory:");
   try {
-    const migrations = readdirSync(MIGRATIONS).filter((name) => /^\d{4}_.+\.sql$/.test(name)).sort();
     for (const name of migrations) db.exec(readFileSync(new URL(name, MIGRATIONS), "utf8"));
     const objects = db.prepare("SELECT type,name,tbl_name,sql FROM sqlite_schema WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY type,name").all();
-    return { migrations, objects, tables: new Set(objects.filter((item) => item.type === "table").map((item) => item.name)) };
+    return { migrations, objects, coverage: { mode: explicit ? "explicit-prefix" : "current", throughMigration: migrations.at(-1), includesAllLocalMigrations: migrations.length === available.length }, tables: new Set(objects.filter((item) => item.type === "table").map((item) => item.name)) };
   } finally { db.close(); }
 }
 
@@ -187,20 +193,20 @@ function inspectRestored(db, reference, inputBytes, statementCount) {
   const checks = { integrity: integrityIssues === 0, foreignKeys: foreignKeyViolations === 0,
     schema: missingObjects === 0 && mismatchedObjects === 0 && unexpectedObjects === 0,
     migrations: missingMigrations === 0 && unexpectedMigrations === 0 && migrationNames.length === reference.migrations.length };
-  return { ok: Object.values(checks).every(Boolean), checks,
+  return { ok: Object.values(checks).every(Boolean), reference: reference.coverage, checks,
     counts: { inputBytes, statements: statementCount, expectedTables: reference.tables.size,
       restoredTables: actual.filter((item) => item.type === "table").length, missingObjects, mismatchedObjects, unexpectedObjects,
       expectedMigrations: reference.migrations.length, restoredMigrations: migrationNames.length, missingMigrations,
       unexpectedMigrations, integrityIssues, foreignKeyViolations, rows } };
 }
 
-export function verifyPilotBackup(inputPath) {
+export function verifyPilotBackup(inputPath, options = {}) {
   let database, directory, temporaryRoot, result;
   try {
     if (typeof DatabaseSync.prototype.setAuthorizer !== "function" || typeof DatabaseSync.prototype.enableDefensive !== "function") reject("runtime_unavailable");
     const input = readBoundedSql(inputPath);
     const restore = statements(input.sql).filter(supported);
-    const reference = referenceSchema();
+    const reference = referenceSchema(options);
     temporaryRoot = realpathSync(tmpdir());
     if (inside(PROJECT, temporaryRoot)) reject("temporary_location_rejected");
     directory = mkdtempSync(join(temporaryRoot, "jde-pilot-backup-"));
@@ -234,11 +240,12 @@ export function verifyPilotBackup(inputPath) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  if (process.argv.length !== 3 || process.argv[2].startsWith("--")) {
-    process.stdout.write("Usage : node scripts/verify-pilot-backup.mjs <export-d1.sql>\n");
+  const args = process.argv.slice(2);
+  if (![1, 3].includes(args.length) || args[0].startsWith("--") || (args.length === 3 && args[1] !== "--through-migration")) {
+    process.stdout.write("Usage : node scripts/verify-pilot-backup.mjs <export-d1.sql> [--through-migration <nom-exact.sql>]\n");
     process.exitCode = 2;
   } else {
-    const result = verifyPilotBackup(process.argv[2]);
+    const result = verifyPilotBackup(args[0], args.length === 3 ? { throughMigration: args[2] } : {});
     process.stdout.write(`${JSON.stringify(result)}\n`);
     process.exitCode = result.ok ? 0 : result.error?.code === "verification_failed" ? 1 : 2;
   }

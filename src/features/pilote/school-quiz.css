@@ -1,0 +1,15 @@
+/* Connection feedback only; the validated game composition remains untouched. */
+.school-quiz-sync {
+  position: fixed;
+  z-index: 30;
+  inset: auto 16px 16px auto;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 14px 18px;
+  color: #fff;
+  background: #07182e;
+  border: 1px solid #ffe4a0;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px #07182e26;
+}
+.school-quiz-sync a { color: #fff; display: inline-block; margin-top: 8px; }
+.school-quiz-sync button { margin-top: 8px; }

@@ -61,9 +61,9 @@ function setup(t) {
     return Response.json(response);
   };
   t.after(() => { globalThis.fetch = originalFetch; store.close(); });
-  const startRequest = (headers = {}) => new Request(origin + "/api/pilot/auth/start", { headers: { "Sec-Fetch-Site": "same-origin", "CF-Connecting-IP": "192.0.2.20", ...headers } });
-  const begin = async (headers = {}) => {
-    const response = await invoke(startRequest(headers), env);
+  const startRequest = (headers = {}, query = '') => new Request(origin + "/api/pilot/auth/start" + query, { headers: { "Sec-Fetch-Site": "same-origin", "CF-Connecting-IP": "192.0.2.20", ...headers } });
+  const begin = async (headers = {}, query = '') => {
+    const response = await invoke(startRequest(headers, query), env);
     if (response.status !== 303) return { response };
     const target = new URL(response.headers.get("location"));
     const flow = {
@@ -88,6 +88,67 @@ function assertExchange(h, flow) {
 
 // One parent test deliberately serializes all subtests: they replace global fetch.
 test("OIDC réel : signatures, transactions, cookies, rejouement et limites", { concurrency: false }, async t => {
+  await t.test('activation : retour fixe après connexion élève, sans transmettre le code du manuel au fournisseur',async t=>{
+    const h=setup(t),flow=await h.begin({},'?profil=eleve&retour=activation');
+    assert.equal(h.sqlite.prepare('SELECT return_path FROM pilot_auth_flows').get().return_path,'/activation');
+    assert.equal(flow.target.searchParams.has('retour'),false);
+    const response=await h.complete(flow,{callback:flow.callback+'&retour=https://evil.example&profil=admin'});
+    assert.equal(response.headers.get('location'),'/activation');
+    assert.equal(h.sqlite.prepare('SELECT user_id FROM pilot_sessions').get().user_id,'pilot-a-student');
+  });
+  await t.test('activation : un administrateur est refusé sans réutilisation ni suppression de son ancienne session',async t=>{
+    const h=setup(t);
+    h.sqlite.prepare('UPDATE pilot_identities SET user_id=?').run('pilot-local-admin');
+    const previous=await issueSession(h.DB,'pilot-local-admin','oidc',false);
+    const flow=await h.begin({},'?profil=eleve&retour=activation');
+    const response=await h.complete(flow,{cookie:flow.cookie+'; '+previous.cookie.split(';')[0]});
+    assert.equal(response.headers.get('location'),'/activation?connexion=profil-incompatible');
+    assert.equal(h.countSessions(),1);assert.equal(h.sqlite.prepare('SELECT revoked_at FROM pilot_sessions').get().revoked_at,null);
+  });
+  for(const query of ['?retour=activation','?profil=admin&retour=activation','?profil=eleve&retour=https://evil.example','?profil=eleve&retour=activation&retour=activation']){
+    await t.test('activation : destination invalide refusée '+query,async t=>{
+      const h=setup(t),{response}=await h.begin({},query);
+      assert.equal(response.status,400);assert.equal(h.countFlows(),0);assert.equal(h.state.calls.length,0);
+    });
+  }
+  for (const [profile,userId] of [['eleve','pilot-a-student'],['parent','pilot-a-parent'],['enseignant','pilot-a-teacher'],['admin','pilot-local-admin']]) {
+    await t.test(`profil ${profile} conservé jusqu’au retour vers son accueil`, async t => {
+      const h=setup(t);
+      h.sqlite.prepare('UPDATE pilot_identities SET user_id=? WHERE subject=?').run(userId,'subject-a');
+      const flow=await h.begin({},'?profil='+profile);
+      assert.equal(h.sqlite.prepare('SELECT requested_role FROM pilot_auth_flows').get().requested_role,profile);
+      const response=await h.complete(flow);
+      assert.equal(response.headers.get('location'),(profile==='admin'?'/admin/accueil':'/pilote')+'?profil='+profile);
+      assert.equal(h.sqlite.prepare('SELECT user_id FROM pilot_sessions').get().user_id,userId);
+      assertExchange(h,flow);
+    });
+  }
+  for(const [profile,userId] of [['eleve','pilot-local-admin'],['admin','pilot-a-student'],['enseignant','pilot-a-parent']]) {
+    await t.test(`le compte ${userId} est refusé dans le profil ${profile}`,async t=>{
+      const h=setup(t);
+      h.sqlite.prepare('UPDATE pilot_identities SET user_id=? WHERE subject=?').run(userId,'subject-a');
+      const previous=await issueSession(h.DB,'pilot-local-admin','oidc',false);
+      const flow=await h.begin({},'?profil='+profile);
+      const response=await h.complete(flow,{callback:flow.callback+'&profil='+ (profile==='admin'?'eleve':'admin'),cookie:flow.cookie+'; '+previous.cookie.split(';')[0]});
+      assert.equal(response.headers.get('location'),(profile==='admin'?'/admin/accueil':'/pilote')+'?profil='+profile+'&connexion=profil-incompatible');
+      assert.equal(h.countSessions(),1,'aucune nouvelle session');
+      assert.equal(h.sqlite.prepare('SELECT revoked_at FROM pilot_sessions').get().revoked_at,null,'session antérieure préservée');
+      assert.equal(h.countFlows(),0);
+      assert.ok(response.headers.getSetCookie().every(value=>!value.startsWith('__Host-jde_pilot=')));
+    });
+  }
+  for (const query of ['?profil=','?profil=inconnu','?profil=eleve&profil=admin','?profil=eleve&profil=eleve']) {
+    await t.test(`profil ambigu ou inconnu refusé : ${query}`,async t=>{
+      const h=setup(t),{response}=await h.begin({},query);
+      assert.equal(response.status,400);assert.equal(h.countFlows(),0);assert.equal(h.state.calls.length,0);
+    });
+  }
+  await t.test('une école suspendue pendant la connexion ne reçoit aucune session',async t=>{
+    const h=setup(t),flow=await h.begin({},'?profil=eleve');
+    h.sqlite.prepare('UPDATE pilot_schools SET active=0 WHERE id=?').run('pilot-school-a');
+    assert.match((await h.complete(flow)).headers.get('location'),/connexion=profil-incompatible$/);
+    assert.equal(h.countSessions(),0);
+  });
   await t.test("le parcours valide utilise PKCE S256, state et nonce puis une session opaque", async t => {
     const h = setup(t), flow = await h.begin();
     assert.equal(flow.target.searchParams.get("response_type"), "code");

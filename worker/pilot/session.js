@@ -24,14 +24,14 @@ export function sessionCookie(local, token = "", maxAge = SESSION_SECONDS) {
 export function sameOrigin(request) {
   if (request.headers.get("Origin") !== new URL(request.url).origin || request.headers.get("Sec-Fetch-Site") === "cross-site") fail(403, "origin_rejected", "Cette action doit partir de la plateforme.");
 }
-export async function readInput(request) {
+export async function readInput(request, maxBytes = 16 * 1024) {
   if (request.headers.get("content-type")?.split(";", 1)[0].trim() !== "application/json") fail(415, "json_required", "Format de requête invalide.");
   const reader = request.body?.getReader(); const chunks = []; let length = 0;
   if (reader) try {
     while (true) {
       const item = await reader.read(); if (item.done) break;
       length += item.value.length;
-      if (length > 16 * 1024) { await reader.cancel(); fail(413, "body_too_large", "Le texte envoyé est trop long."); }
+      if (length > maxBytes) { await reader.cancel(); fail(413, "body_too_large", "Le texte envoyé est trop long."); }
       chunks.push(item.value);
     }
   } finally { reader.releaseLock(); }
@@ -47,11 +47,16 @@ export function requiredText(value, name, min, max) {
   if (typeof value !== "string" || value.trim().length < min || value.trim().length > max) fail(422, "invalid_field", `${name} : entre ${min} et ${max} caractères attendus.`);
   return value.trim();
 }
-export async function issueSession(db, userId, assurance, local) {
+export async function issueSession(db, userId, assurance, local, requestedRole = null) {
   if (assurance !== (local ? "local_fixture" : "oidc")) fail(403, "identity_rejected", "Identité non autorisée.");
   const token = randomToken(), csrfToken = randomToken(), time = now();
   const result = await run(db, `INSERT INTO pilot_sessions(token_hash,user_id,csrf_token,assurance,created_at,expires_at)
-    SELECT ?,id,?,?,?,? FROM pilot_users WHERE id=? AND active=1`, await hash(token), csrfToken, assurance, time, time + SESSION_SECONDS, userId);
+    SELECT ?,u.id,?,?,?,? FROM pilot_users u WHERE u.id=? AND u.active=1
+    AND (? IS NULL OR ? = COALESCE(
+      (SELECT 'admin' FROM pilot_admins a WHERE a.user_id=u.id AND a.active=1),
+      (SELECT m.role FROM pilot_memberships m JOIN pilot_schools s ON s.id=m.school_id
+        WHERE m.user_id=u.id AND m.active=1 AND s.active=1 ORDER BY m.school_id LIMIT 1)
+    ))`, await hash(token), csrfToken, assurance, time, time + SESSION_SECONDS, userId, requestedRole, requestedRole);
   if (!result.meta?.changes) fail(403, "account_unavailable", "Ce compte n’est pas actif.");
   await run(db, "DELETE FROM pilot_sessions WHERE token_hash IN (SELECT token_hash FROM pilot_sessions WHERE expires_at < ? LIMIT 100)", time - 86400);
   return { cookie: sessionCookie(local, token), csrfToken };

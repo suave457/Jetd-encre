@@ -12,3 +12,7 @@
 
 # Preserve sealed security evidence byte for byte on every platform.
 output/ameliorations-2026-09-05/securite-complement/** -text
+
+# Keep the pinned PDF.js distribution and its codec/license hashes reproducible.
+src/features/mediatheque/vendor/pdf*.mjs -text
+public/assets/pdfjs/5.7.284/wasm/** -text

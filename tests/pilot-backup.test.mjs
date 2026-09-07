@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { closeSync, ftruncateSync, mkdtempSync, openSync, readFileSync, readdirSync, rmdirSync, unlinkSync, writeFileSync } from "node:fs";
@@ -21,13 +22,20 @@ function files(t) {
   return { directory, create(name, text) { const path = join(directory, name); writeFileSync(path, text, { flag: "wx" }); return path; } };
 }
 
-function exportFixture({ mutate, omitMigration } = {}) {
-  const store = openPilotDatabase();
+function exportFixture({ mutate, omitMigration, throughMigration } = {}) {
+  let migrations = readdirSync(new URL("../drizzle/", import.meta.url)).filter((name) => /^\d{4}_.+\.sql$/.test(name)).sort();
+  if (throughMigration) migrations = migrations.slice(0, migrations.indexOf(throughMigration) + 1);
+  const historical = throughMigration ? new DatabaseSync(":memory:") : null;
+  const store = historical ? { sqlite: historical, close: () => historical.close() } : openPilotDatabase();
   try {
-    seedLocalPilot(store.sqlite);
-    store.sqlite.prepare("UPDATE pilot_users SET display_name=? WHERE id='pilot-a-student'").run(privateText);
+    if (historical) {
+      for (const name of migrations) historical.exec(readFileSync(new URL(`../drizzle/${name}`, import.meta.url), "utf8"));
+    } else {
+      seedLocalPilot(store.sqlite);
+      store.sqlite.prepare("UPDATE pilot_users SET display_name=? WHERE id='pilot-a-student'").run(privateText);
+    }
     store.sqlite.exec("CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)");
-    for (const name of readdirSync(new URL("../drizzle/", import.meta.url)).filter((name) => name.endsWith(".sql")).sort()) {
+    for (const name of migrations) {
       if (name !== omitMigration) store.sqlite.prepare("INSERT INTO d1_migrations(name) VALUES (?)").run(name);
     }
     mutate?.(store.sqlite);
@@ -59,13 +67,59 @@ test("sauvegarde : export SQL complet restauré, schéma/migrations/FK/intégrit
   const result = verifyPilotBackup(path);
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual(result.checks, { integrity: true, foreignKeys: true, schema: true, migrations: true, temporaryCopyRemoved: true });
-  assert.equal(result.counts.rows.pilot_users, 8);
+  assert.equal(result.counts.rows.pilot_users, 10);
   assert.equal(result.counts.rows.pilot_game_progress, 0);
   assert.equal(result.counts.rows.pilot_game_awards, 0);
   assert.equal(result.counts.restoredMigrations, result.counts.expectedMigrations);
   assert.equal(createHash("sha256").update(readFileSync(path)).digest("hex"), before);
   assert.deepEqual(readdirSync(tmpdir()).filter((name) => name.startsWith("jde-pilot-backup-")), temporaryBefore);
   assert.equal(JSON.stringify(result).includes(privateText), false);
+});
+
+test("sauvegarde : un préfixe historique explicite ne valide pas le schéma actuel", (t) => {
+  const fixture = files(t);
+  const throughMigration = "0004_pilot_mots_fleches.sql";
+  const path = fixture.create("historical.sql", exportFixture({ throughMigration }));
+  const before = createHash("sha256").update(readFileSync(path)).digest("hex");
+  const result = verifyPilotBackup(path, { throughMigration });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.reference, { mode: "explicit-prefix", throughMigration, includesAllLocalMigrations: false });
+  assert.equal(result.counts.expectedMigrations, 5);
+  assert.equal(result.counts.restoredMigrations, 5);
+  const current = verifyPilotBackup(path);
+  assert.equal(current.ok, false);
+  assert.equal(current.reference.mode, "current");
+  assert.equal(current.checks.schema, false);
+  assert.equal(current.checks.migrations, false);
+  assert.equal(createHash("sha256").update(readFileSync(path)).digest("hex"), before);
+  const cliResult = spawnSync(process.execPath, [cli, path, "--through-migration", throughMigration], { encoding: "utf8", timeout: 15000 });
+  assert.equal(cliResult.status, 0, cliResult.stdout + cliResult.stderr);
+  assert.deepEqual(JSON.parse(cliResult.stdout).reference, result.reference);
+  assert.equal(cliResult.stderr, "");
+});
+
+test("sauvegarde : référence historique stricte, trous et migrations excédentaires refusés", (t) => {
+  const fixture = files(t);
+  const throughMigration = "0004_pilot_mots_fleches.sql";
+  const historical = fixture.create("historical.sql", exportFixture({ throughMigration }));
+  for (const options of [null, [], { throughMigration: null }, { throughMigration: undefined }, { throughMigration: "0004" },
+    { throughMigration: "../0004_pilot_mots_fleches.sql" }, { throughMigration: "9999_absent.sql" }, { unexpected: true }]) {
+    const result = verifyPilotBackup(historical, options);
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, "reference_invalid");
+    assert.equal(result.checks.temporaryCopyRemoved, true);
+  }
+  const missing = verifyPilotBackup(fixture.create("hole.sql", exportFixture({ throughMigration, omitMigration: "0003_platform_admin.sql" })), { throughMigration });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.counts.missingMigrations, 1);
+  const extra = verifyPilotBackup(fixture.create("extra-migration.sql", exportFixture({ throughMigration, mutate(db) {
+    db.prepare("INSERT INTO d1_migrations(name) VALUES (?)").run("0005_login_profile.sql");
+  } })), { throughMigration });
+  assert.equal(extra.ok, false);
+  assert.equal(extra.counts.unexpectedMigrations, 1);
+  assert.equal(verifyPilotBackup(fixture.create("latest.sql", exportFixture()), { throughMigration }).ok, false);
+  const activeSql = verifyPilotBackup(fixture.create("historical-active.sql", "DELETE FROM pilot_users;"), { throughMigration });
+  assert.equal(activeSql.error.code, "sql_not_supported");
 });
 
 test("sauvegarde : suppression d'une migration ou d'une table de jeu détectée", (t) => {

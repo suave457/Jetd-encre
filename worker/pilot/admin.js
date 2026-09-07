@@ -1,4 +1,10 @@
+import {handleAdminLibrary} from './admin-library.js';
 import { all, first, fail, now, readInput, reply, requiredText, LIVE_SESSION_SQL, liveValues } from './session.js';
+import { issueManualCode } from './manuals.js';
+import { handleAdminManuals } from './admin-manuals.js';
+import { handleAdminAnalytics } from './adminAnalytics.js';
+import { handleEditorial } from './editorial.js';
+import { handleArticlePublication } from './article-publication.js';
 
 export async function isPlatformAdmin(db, session) {
   return Boolean(await first(db, 'SELECT user_id FROM pilot_admins WHERE user_id=? AND active=1', session.user_id));
@@ -6,8 +12,15 @@ export async function isPlatformAdmin(db, session) {
 export async function handleAdmin(request, env, session, local) {
   const db=env.DB, path=new URL(request.url).pathname;
   if(!await isPlatformAdmin(db,session)) fail(403,'admin_required','Cet espace est réservé aux administrateurs Jet d’Encre.');
+  if(path==='/api/pilot/admin/library'||path.startsWith('/api/pilot/admin/library/'))return handleAdminLibrary(request,env,session,local);
+  const publication=path.match(/^\/api\/pilot\/admin\/editorial\/([a-f0-9-]{36})\/publication$/);
+  if(publication)return handleArticlePublication(request,db,session,publication[1]);
+  if(path==='/api/pilot/admin/editorial'||path.startsWith('/api/pilot/admin/editorial/'))return handleEditorial(request,db,session);
+  if(path==='/api/pilot/admin/analytics')return handleAdminAnalytics(request,env,session);
   const guard=`EXISTS (SELECT 1 FROM pilot_admins WHERE user_id=? AND active=1) AND ${LIVE_SESSION_SQL}`;
   const values=[session.user_id,...liveValues(session)];
+  if(['/api/pilot/admin/manuals','/api/pilot/admin/manual-code-revoke'].includes(path))return handleAdminManuals(request,db,session,guard,values);
+  if(request.method==='POST'&&path==='/api/pilot/admin/manual-codes')return issueManualCode(request,db,session,guard,values,local&&Boolean(env.LOCAL_MANUAL_FILES?.libraryEnabled));
   const statement=(sql,...params)=>db.prepare(sql).bind(...params);
   async function commit(action,target,statements) {
     const result=await db.batch([statements[0],statement(`INSERT INTO pilot_admin_events(id,actor_id,action,target_id,created_at) SELECT ?,?,?,?,? WHERE changes()>0 AND ${guard}`,crypto.randomUUID(),session.user_id,action,target,now(),...values),...statements.slice(1)]);
@@ -22,6 +35,7 @@ export async function handleAdmin(request, env, session, local) {
       FROM pilot_users u JOIN pilot_memberships m ON m.user_id=u.id ORDER BY u.display_name`,now());
     const classes=await all(db,'SELECT id,school_id schoolId,name FROM pilot_classes WHERE active=1 ORDER BY name');
     const events=await all(db,`SELECT e.action,e.target_id targetId,e.created_at createdAt,u.display_name actor FROM pilot_admin_events e JOIN pilot_users u ON u.id=e.actor_id ORDER BY e.created_at DESC,e.rowid DESC LIMIT 30`);
+    if(!await first(db,`SELECT 1 allowed WHERE ${guard}`,...values))fail(403,'admin_access_changed','Votre accès a changé. Reconnectez-vous.');
     return reply({userId:session.user_id,schools,accounts,classes,events});
   }
   if(request.method!=='POST') fail(404,'not_found','Route inexistante.');
@@ -42,18 +56,24 @@ export async function handleAdmin(request, env, session, local) {
   }
   if(path==='/api/pilot/admin/accounts') {
     const name=requiredText(input.name,'Nom',2,120),school=requiredText(input.schoolId,'École',1,100),role=input.role;
-    if(!['enseignant','eleve','parent'].includes(role))fail(422,'invalid_role','Choisissez enseignant, élève ou parent.');
+    if(!['enseignant','eleve','parent','directeur'].includes(role))fail(422,'invalid_role','Choisissez enseignant, élève, parent ou direction.');
+    if(role==='directeur'&&[input.classId,input.childId].some(value=>value!==undefined&&value!==null&&value!==''))fail(422,'invalid_association','Un compte Direction est rattaché à l’établissement, sans classe ni enfant.');
     if(!await first(db,'SELECT id FROM pilot_schools WHERE id=? AND active=1',school))fail(422,'school_unavailable','Choisissez une école active.');
-    const classId=role!=='parent'?requiredText(input.classId,'Classe',1,100):null;
+    const classId=['enseignant','eleve'].includes(role)?requiredText(input.classId,'Classe',1,100):null;
     const childId=role==='parent'?requiredText(input.childId,'Enfant',1,100):null;
     if(classId&&!await first(db,'SELECT id FROM pilot_classes WHERE id=? AND school_id=? AND active=1',classId,school))fail(422,'class_unavailable','Cette classe n’appartient pas à l’école choisie.');
     if(childId&&!await first(db,`SELECT m.user_id FROM pilot_memberships m JOIN pilot_users u ON u.id=m.user_id WHERE m.school_id=? AND m.user_id=? AND m.role='eleve' AND m.active=1 AND u.active=1`,school,childId))fail(422,'child_unavailable','Choisissez un élève actif de cette école.');
     const existing=await first(db,'SELECT id FROM pilot_users WHERE id=?',id);
     if(existing)fail(409,'account_exists','Ce compte existe déjà. Actualisez la liste avant de poursuivre.');
-    const items=[statement(`INSERT INTO pilot_users(id,display_name,created_at) SELECT ?,?,? WHERE ${guard}`,id,name,now(),...values),
-      statement(`INSERT INTO pilot_memberships(school_id,user_id,role) SELECT ?,?,? WHERE ${guard}`,school,id,role,...values)];
-    if(classId)items.push(statement(`INSERT INTO pilot_class_members(school_id,class_id,user_id) SELECT ?,?,? WHERE ${guard}`,school,classId,id,...values));
-    if(childId)items.push(statement(`INSERT INTO pilot_family_links(school_id,parent_id,student_id) SELECT ?,?,? WHERE ${guard}`,school,id,childId,...values));
+    const scopes=[guard,'EXISTS(SELECT 1 FROM pilot_schools WHERE id=? AND active=1)'];
+    const accountValues=[session.user_id,...liveValues(session),school];
+    if(classId){scopes.push('EXISTS(SELECT 1 FROM pilot_classes WHERE id=? AND school_id=? AND active=1)');accountValues.push(classId,school);}
+    if(childId){scopes.push("EXISTS(SELECT 1 FROM pilot_memberships m JOIN pilot_users u ON u.id=m.user_id WHERE m.school_id=? AND m.user_id=? AND m.role='eleve' AND m.active=1 AND u.active=1)");accountValues.push(school,childId);}
+    const accountGuard=scopes.join(' AND ');
+    const items=[statement(`INSERT INTO pilot_users(id,display_name,created_at) SELECT ?,?,? WHERE ${accountGuard}`,id,name,now(),...accountValues),
+      statement(`INSERT INTO pilot_memberships(school_id,user_id,role) SELECT ?,?,? WHERE ${accountGuard}`,school,id,role,...accountValues)];
+    if(classId)items.push(statement(`INSERT INTO pilot_class_members(school_id,class_id,user_id) SELECT ?,?,? WHERE ${accountGuard}`,school,classId,id,...accountValues));
+    if(childId)items.push(statement(`INSERT INTO pilot_family_links(school_id,parent_id,student_id) SELECT ?,?,? WHERE ${accountGuard}`,school,id,childId,...accountValues));
     return commit('account_created',id,items);
   }
   if(path==='/api/pilot/admin/identity') {

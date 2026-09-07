@@ -1,0 +1,15 @@
+/* Preserve the existing Direction/Pen composition; make connected data and labels readable. */
+.director-connected{min-width:0;outline:none}
+.director-source{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;color:#526177;font-size:14px}
+.director-connected .beta-role-kpis span,.director-connected .beta-role-kpis small,.director-connected .beta-role-heading>a,.director-connected .beta-role-class-list strong,.director-connected .beta-role-class-list small,.director-connected .beta-role-class-list i,.director-connected .beta-role-actions article>div>small,.director-connected .beta-role-actions article>div>strong,.director-connected .beta-role-actions p,.director-connected .beta-role-actions footer a,.director-connected .beta-role-next p{font-size:14px;line-height:1.5}
+.director-connected .filter-bar{flex-wrap:wrap;gap:16px}
+.director-connected .filter-bar label{display:grid;gap:6px;font-size:14px;color:var(--navy)}
+.director-connected .filter-bar input,.director-connected .filter-bar select{font:inherit;padding:10px;border:1px solid #bfc9cd;border-radius:8px;background:white;max-width:100%}
+.director-connected .data-table{overflow-x:auto}
+.director-connected .data-table th,.director-connected .data-table td{font-size:14px}
+.director-connected .pen-assignment-columns input[type=checkbox]{width:18px;height:18px;min-width:18px;padding:0}
+.director-connected .pen-assignment-columns section{min-width:0}
+.director-connected .pen-assignment-columns strong,.director-connected .pen-summary-card strong{overflow-wrap:anywhere}
+.director-connected .pen-school-grid dd{margin:6px 0 18px}
+.director-connected details summary{cursor:pointer;font-weight:600}
+@media(max-width:1100px){.director-source{align-items:flex-start;flex-wrap:wrap}}

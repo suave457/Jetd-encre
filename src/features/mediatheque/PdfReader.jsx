@@ -69,7 +69,7 @@ function isCancellation(error) {
   return error?.name === "RenderingCancelledException" || error?.name === "AbortException";
 }
 
-function documentErrorMessage(error) {
+function documentErrorMessage(error, allowFileActions=true) {
   if (error?.name === "PasswordException") {
     return "Ce livre est protégé par un mot de passe et ne peut pas être ouvert ici.";
   }
@@ -79,7 +79,7 @@ function documentErrorMessage(error) {
   if (error?.name === "MissingPDFException" || error?.name === "UnexpectedResponseException") {
     return "Le fichier du livre est introuvable ou momentanément indisponible.";
   }
-  return "Le lecteur PDF n’a pas pu ouvrir ce livre. Tu peux encore l’ouvrir ou le télécharger ci-dessous.";
+  return allowFileActions ? "Le lecteur PDF n’a pas pu ouvrir ce livre. Tu peux encore l’ouvrir ou le télécharger ci-dessous." : "Le lecteur PDF n’a pas pu ouvrir ce document. Réessaie ou retourne aux documents.";
 }
 
 function textFromPageContent(content) {
@@ -107,7 +107,7 @@ function safeLabel(value, fallback) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
-export function PdfReader({ book, onBack, pageRequest, userId = null }) {
+export function PdfReader({ book, onBack, pageRequest, userId = null, backLabel="Retour à la médiathèque", allowFileActions=true, beforeRead, progressive=false, onAccessError }) {
   const transcriptPreference = useTranscriptPreference();
   const headingId = useId();
   const keyboardHintId = useId();
@@ -220,7 +220,7 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
         const pdfjs = await loadPdfJs();
         if (disposed || generation !== documentGenerationRef.current) return;
 
-        ownedLoadingTask = pdfjs.getDocument({ url: source, isEvalSupported: false, enableXfa: false });
+        ownedLoadingTask = pdfjs.getDocument({ url: source, wasmUrl: new URL("/assets/pdfjs/5.7.284/wasm/", window.location.origin).href, isEvalSupported: false, enableXfa: false, ...(progressive?{disableAutoFetch:true,disableStream:true,rangeChunkSize:262144,stopAtErrors:true}:{}) });
         loadingTaskRef.current = ownedLoadingTask;
         const pdfDocument = await ownedLoadingTask.promise;
         if (disposed || generation !== documentGenerationRef.current) {
@@ -253,8 +253,9 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
         if (pdfDocumentRef.current === ownedDocument) pdfDocumentRef.current = null;
         if (ownedDocument) destroyPdfResource(ownedDocument);
         else destroyPdfResource(ownedLoadingTask);
+        if ([401,403,404].includes(Number(error?.status))) onAccessError?.();
         setDocumentState("error");
-        setDocumentError(documentErrorMessage(error));
+        setDocumentError(documentErrorMessage(error, allowFileActions));
         setAnnouncement(`Impossible d’ouvrir ${title}.`);
       }
     }
@@ -308,6 +309,8 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
       if (disposed || generation !== renderGenerationRef.current) return;
 
       try {
+        if(beforeRead)await beforeRead();
+        if(disposed || generation !== renderGenerationRef.current)return;
         page = await pdfDocument.getPage(pageNumber);
         if (disposed || generation !== renderGenerationRef.current) return;
 
@@ -337,7 +340,7 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
         const textPromise = page
           .getTextContent()
           .then(textFromPageContent)
-          .catch(() => null);
+          .catch(error => { if ([401,403,404].includes(Number(error?.status))) onAccessError?.(); return null; });
 
         ownedRenderTask = page.render({
           canvasContext: context,
@@ -371,9 +374,10 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
         }
       } catch (error) {
         if (disposed || generation !== renderGenerationRef.current || isCancellation(error)) return;
+        if ([401,403,404].includes(Number(error?.status))) onAccessError?.();
         setPageState("error");
         setTextState("error");
-        setPageError("Cette page n’a pas pu être affichée. Réessaie ou ouvre le fichier PDF complet.");
+        setPageError(allowFileActions ? "Cette page n’a pas pu être affichée. Réessaie ou ouvre le fichier PDF complet." : "Cette page n’a pas pu être affichée. Réessaie ou retourne aux documents.");
         setAnnouncement(`Erreur pendant l’affichage de la page ${pageNumber}.`);
       } finally {
         if (renderTaskRef.current === ownedRenderTask) renderTaskRef.current = null;
@@ -459,14 +463,14 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
           {typeof onBack === "function" && (
             <button className="pdf-reader__back" type="button" onClick={onBack}>
               <ArrowLeft aria-hidden="true" />
-              Retour à la médiathèque
+              {backLabel}
             </button>
           )}
           <span className="pdf-reader__eyebrow"><BookOpenText aria-hidden="true" /> Liseuse PDF</span>
           <h2 id={headingId}>{title}</h2>
           <p>{metadata}</p>
         </div>
-        {source && (
+        {source && allowFileActions && (
           <div className="pdf-reader__file-actions" aria-label="Actions sur le fichier PDF">
             <a href={source} target="_blank" rel="noreferrer">
               Ouvrir le PDF <ArrowRight aria-hidden="true" />
@@ -606,7 +610,7 @@ export function PdfReader({ book, onBack, pageRequest, userId = null }) {
           {textState === "loading" && <p role="status">Extraction du texte en cours…</p>}
           {textState === "ready" && <p>{pageText}</p>}
           {textState === "empty" && <p>Cette page est une image sans texte extractible. Utilise « Largeur » ou le zoom pour lire les bulles. Une version avec transcription reste nécessaire pour une lecture au lecteur d’écran.</p>}
-          {textState === "error" && <p>Le texte de cette page n’a pas pu être extrait. Le PDF complet reste disponible avec les liens ci-dessus.</p>}
+          {textState === "error" && <p>{allowFileActions ? "Le texte de cette page n’a pas pu être extrait. Le PDF complet reste disponible avec les liens ci-dessus." : "Le texte de cette page n’a pas pu être extrait. La lecture visuelle reste possible avec le zoom."}</p>}
         </details>
       )}
 

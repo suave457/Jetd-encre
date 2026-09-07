@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useRef, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { clearJetDencreLocalData } from "./localDataReset.js";
 import {
   ACTIVATION_CODE_PATTERN,
@@ -37,6 +37,7 @@ export function DemoProvider({ children, storage, storageKey = DEMO_STORAGE_KEY,
   }
 
   const store = storeRef.current;
+  useEffect(()=>{const leave=()=>store.actions.signOut();window.addEventListener('jde:signed-out',leave);return()=>window.removeEventListener('jde:signed-out',leave);},[store]);
   const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const value = useMemo(() => {
     const currentUser = state.users.find((user) => user.id === state.session.userId) || null;

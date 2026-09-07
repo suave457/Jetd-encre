@@ -58,9 +58,13 @@ async function ownRecords(db, c, gridId = null) {
 
 async function ownXp(db, c) {
   const guard = studentAccess(c, c.user.id);
-  const row = await first(db, `SELECT COALESCE(SUM(xp),0) total FROM pilot_game_awards
-    WHERE school_id=? AND student_id=? AND game_id=? AND ${guard.sql}`,
-  c.schoolId, c.user.id, GAME_ID, ...guard.values);
+  const row = await first(db, `SELECT
+    (SELECT COALESCE(SUM(xp),0) FROM pilot_game_awards WHERE school_id=? AND student_id=? AND game_id IN ('mots-fleches','mission-zellige')) +
+    (SELECT COALESCE(SUM(xp),0) FROM pilot_quiz_awards WHERE school_id=? AND student_id=?) +
+    (SELECT COALESCE(SUM(xp),0) FROM pilot_market_awards WHERE school_id=? AND student_id=?) +
+    (SELECT COALESCE(SUM(xp),0) FROM pilot_class_awards WHERE school_id=? AND student_id=?) total
+    WHERE ${guard.sql}`,
+  c.schoolId, c.user.id, c.schoolId, c.user.id, c.schoolId, c.user.id, c.schoolId, c.user.id, ...guard.values);
   return row?.total ?? 0;
 }
 
@@ -146,12 +150,34 @@ async function saveProgress(request, db, c, gridId, complete) {
     awarded: complete && Boolean(result[1]?.meta?.changes) });
 }
 
-async function summary(db, c) {
+export async function readSchoolGameSummary(db, c) {
   const actor = actorGuard(c);
   const relationship = c.role === "parent"
     ? "EXISTS (SELECT 1 FROM pilot_family_links f WHERE f.school_id=m.school_id AND f.student_id=u.id AND f.parent_id=? AND f.active=1)"
     : "u.id=?";
-  const rows = await all(db, `SELECT u.id student_id,u.display_name student_name,p.grid_id,p.hint_count,p.updated_at,a.completed_at,a.xp
+  const rows = await all(db, `SELECT u.id student_id,u.display_name student_name,p.grid_id,p.hint_count,p.updated_at,a.completed_at,a.xp,
+    (SELECT COALESCE(SUM(qa.xp),0) FROM pilot_quiz_awards qa WHERE qa.school_id=m.school_id AND qa.student_id=u.id) quiz_xp,
+    (SELECT COUNT(*) FROM pilot_quiz_attempts qt WHERE qt.school_id=m.school_id AND qt.student_id=u.id) quiz_started_count,
+    (SELECT COUNT(*) FROM pilot_quiz_attempts qt WHERE qt.school_id=m.school_id AND qt.student_id=u.id AND qt.completed_at IS NOT NULL) quiz_completed_count,
+    (SELECT json_object('id',qt.id,'gameId',qt.game_id,'completedAt',qt.completed_at,
+      'questionCount',json_array_length(qt.question_ids_json),
+      'correctCount',(SELECT COUNT(*) FROM json_each(qt.state_json,'$.answers') a WHERE json_extract(a.value,'$.isCorrect')=1),
+      'xpEarned',(SELECT COALESCE(SUM(qa.xp),0) FROM pilot_quiz_awards qa WHERE qa.attempt_id=qt.id AND qa.school_id=m.school_id AND qa.student_id=u.id))
+      FROM pilot_quiz_attempts qt WHERE qt.school_id=m.school_id AND qt.student_id=u.id AND qt.completed_at IS NOT NULL
+      ORDER BY qt.completed_at DESC,qt.id DESC LIMIT 1) latest_quiz,
+    (SELECT COALESCE(SUM(za.xp),0) FROM pilot_game_awards za WHERE za.school_id=m.school_id AND za.student_id=u.id AND za.game_id='mission-zellige') zellige_xp,
+    (SELECT COUNT(*) FROM pilot_game_awards za WHERE za.school_id=m.school_id AND za.student_id=u.id AND za.game_id='mission-zellige') zellige_completed_count,
+    (SELECT json_extract(zp.progress_json,'$.firstCompletion') FROM pilot_game_progress zp JOIN pilot_game_awards za
+      ON za.school_id=zp.school_id AND za.student_id=zp.student_id AND za.game_id=zp.game_id AND za.grid_id=zp.grid_id
+      WHERE zp.school_id=m.school_id AND zp.student_id=u.id AND zp.game_id='mission-zellige'
+      ORDER BY za.completed_at DESC,za.grid_id DESC LIMIT 1) latest_zellige,
+    (SELECT COALESCE(SUM(ca.xp),0) FROM pilot_class_awards ca WHERE ca.school_id=m.school_id AND ca.student_id=u.id) class_xp,
+    (SELECT COUNT(*) FROM pilot_class_attempts ca WHERE ca.school_id=m.school_id AND ca.student_id=u.id AND ca.completed_at IS NOT NULL) class_completed_count,
+    (SELECT COALESCE(SUM(ma.xp),0) FROM pilot_market_awards ma WHERE ma.school_id=m.school_id AND ma.student_id=u.id) market_xp,
+    (SELECT COUNT(*) FROM pilot_market_awards ma WHERE ma.school_id=m.school_id AND ma.student_id=u.id AND ma.reward_type='mastery') market_completed_count,
+    (SELECT json_extract(r.value,'$.firstCompletion') FROM pilot_game_progress mp,json_each(mp.progress_json,'$.runs') r
+      WHERE mp.school_id=m.school_id AND mp.student_id=u.id AND mp.game_id='souk-des-mots' AND mp.grid_id='v1' AND json_type(r.value,'$.firstCompletion')='object'
+      ORDER BY json_extract(r.value,'$.firstCompletion.completedAt') DESC,r.key DESC LIMIT 1) latest_market
     FROM pilot_users u JOIN pilot_memberships m ON m.user_id=u.id
     LEFT JOIN pilot_game_progress p ON p.school_id=m.school_id AND p.student_id=u.id AND p.game_id=?
     LEFT JOIN pilot_game_awards a ON a.school_id=p.school_id AND a.student_id=p.student_id AND a.game_id=p.game_id AND a.grid_id=p.grid_id
@@ -162,7 +188,10 @@ async function summary(db, c) {
   const children = new Map();
   for (const row of rows) {
     if (!children.has(row.student_id)) children.set(row.student_id, { studentId: row.student_id, studentName: row.student_name,
-      xpTotal: 0, completedCount: 0, startedCount: 0, grids: [] });
+      xpTotal: row.quiz_xp+row.zellige_xp+row.market_xp+row.class_xp, classCompletedCount: row.class_completed_count, marketCompletedCount: row.market_completed_count,
+      latestMarket: row.latest_market ? JSON.parse(row.latest_market) : null, zelligeCompletedCount: row.zellige_completed_count,
+      latestZellige: row.latest_zellige ? JSON.parse(row.latest_zellige) : null, quizStartedCount: row.quiz_started_count, quizCompletedCount: row.quiz_completed_count,
+      latestQuiz: row.latest_quiz ? JSON.parse(row.latest_quiz) : null, completedCount: 0, startedCount: 0, grids: [] });
     const child = children.get(row.student_id);
     if (row.grid_id) {
       child.startedCount += 1;
@@ -172,7 +201,7 @@ async function summary(db, c) {
         hintCount: row.hint_count, updatedAt: row.updated_at });
     }
   }
-  return reply({ userId: c.user.id, schoolId: c.schoolId, children: [...children.values()] });
+  return { userId: c.user.id, schoolId: c.schoolId, children: [...children.values()] };
 }
 
 // The caller derives this context from authenticate() and the active membership, never request JSON.
@@ -182,7 +211,7 @@ export async function handleGames(request, env, c, path = new URL(request.url).p
   if (!env.DB) fail(503, "database_unavailable", "Le serveur de données n’est pas disponible.");
   if (request.method !== "GET") checkCsrf(request, c.session);
   await assertAccess(env.DB, c, c.role === "eleve" ? c.user.id : null);
-  if (request.method === "GET" && path === `${ROOT}/summary`) return summary(env.DB, c);
+  if (request.method === "GET" && path === `${ROOT}/summary`) return reply(await readSchoolGameSummary(env.DB, c));
   if (c.role !== "eleve") fail(403, "student_required", "Seul l’élève peut consulter et enregistrer les cases de sa grille.");
   if (request.method === "GET" && path === `${ROOT}/progress`) {
     const grids = (await ownRecords(env.DB, c)).map(viewGrid);

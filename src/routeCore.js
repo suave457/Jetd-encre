@@ -480,7 +480,7 @@ export function getNotFoundHome(routeOrPath, sessionRole = null) {
 
 export function usesSchoolDocumentNavigation(path) {
   const clean=normalizeRoute(path);
-  return clean === '/connexion' || clean === "/pilote" || clean.startsWith("/pilote/") || ['/admin','/admin/accueil','/admin/ecoles-acces'].includes(clean);
+  return clean === '/connexion' || clean === "/pilote" || clean.startsWith("/pilote/") || ['/admin','/admin/accueil','/admin/ecoles-acces','/admin/licences','/admin/analyses','/admin/blog'].includes(clean);
 }
 
 export function parseRoute(input = "/") {
@@ -490,6 +490,7 @@ export function parseRoute(input = "/") {
   if (['/admin','/admin/accueil','/admin/ecoles-acces'].includes(path)) return publicRoute({kind:'pilot-admin',path},path==='/admin/ecoles-acces'?'pilot.admin.access':'pilot.admin.home');
   if (path === "/pilote") return publicRoute({ kind: "pilot", path }, "pilot.entry");
   if (path === "/pilote/jeux/mots-fleches") return publicRoute({ kind: "pilot", path }, "pilot.game.mots-fleches", { game: "mots-fleches" });
+  if (["/pilote/jeux/culture-generale","/pilote/jeux/defi-du-jour"].includes(path)) return publicRoute({ kind: "pilot", path }, "pilot.game.quiz", { game: path.split("/").at(-1) });
   if (path === "/blog") return publicRoute({ kind: "blog-index", path }, "public.blog-index");
   if (Object.hasOwn(PUBLIC_PAGES, path)) return publicRoute({ kind: "public-info", path }, "public.info");
   if (path === "/connexion") {

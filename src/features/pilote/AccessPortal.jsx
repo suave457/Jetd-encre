@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CaretRight, ChalkboardTeacher, ShieldCheck, Student, Users } from '@phosphor-icons/react/ssr';
+import { ArrowLeft, ArrowRight, Buildings, CaretRight, ChalkboardTeacher, Key, ShieldCheck, Student, Users } from '@phosphor-icons/react/ssr';
 import { getResponsiveImageProps } from '../../mediaAssets.js';
 import './access-portal.css';
+import { localRecipePath } from './localRecipePath.js';
 
 const profiles = [
   { id: 'eleve', label: 'Élève', Icon: Student, description: 'Je retrouve mes devoirs, mes jeux et mes progrès.', demo: 'Je découvre mon manuel, mes devoirs et mes jeux.' },
   { id: 'parent', label: 'Parent', Icon: Users, description: 'Je suis les travaux et les progrès de mon enfant.', demo: 'Je découvre le suivi et les ressources pour les familles.' },
   { id: 'enseignant', label: 'Enseignant', Icon: ChalkboardTeacher, description: 'Je prépare les devoirs et j’accompagne mes classes.', demo: 'J’explore les classes et les ressources pédagogiques.' },
-  { id: 'directeur', label: 'Direction', Icon: Buildings, description: 'Espace connecté en préparation.', demo: 'Je découvre le suivi de mon établissement.' },
+  { id: 'directeur', label: 'Direction', Icon: Buildings, description: 'Je consulte les classes, les activations et le suivi de mon établissement.', demo: 'Je découvre le suivi de mon établissement.' },
   { id: 'admin', label: 'Administration', Icon: ShieldCheck, description: 'Je gère les écoles, les comptes et leurs accès.', demo: 'J’explore les contenus, les médias et le pilotage.' },
 ];
 
@@ -28,12 +29,14 @@ export default function AccessPortal() {
         <p>{demo ? 'Explore les espaces avec des profils fictifs.' : 'Choisis ton profil, puis connecte-toi avec ton identifiant.'}</p>
       </div>
       <nav className="role-grid" aria-label={demo ? 'Profils de démonstration' : 'Choisir mon profil'}>
-        {profiles.map(({ id, label, Icon, description, demo: demoDescription }) => <a key={id} className={`role-card role-${id}`} href={demo ? `/connexion/${id}` : id === 'admin' ? '/admin/accueil?connexion=1' : id === 'directeur' ? '/ecoles' : `/pilote?profil=${id}&connexion=1`}>
+        {profiles.map(({ id, label, Icon, description, demo: demoDescription }) => <a key={id} className={`role-card role-${id}`} href={demo ? `/connexion/${id}?mode=demo` : localRecipePath(id) || (id === 'admin' ? '/admin/accueil?connexion=1' : `/pilote?profil=${id}&connexion=1`)}>
           <span className="role-icon"><Icon weight="duotone"/></span>
-          <span><strong>{label}</strong><small>{demo ? demoDescription : description}</small>{id === 'directeur' && !demo && <span className="entry-coming-soon">Découvrir le parcours école</span>}</span>
+          <span><strong>{label}</strong><small>{demo ? demoDescription : description}</small></span>
           <CaretRight weight="bold"/>
         </a>)}
       </nav>
+      <div className="auth-divider"><span>ou</span></div>
+      <a href={demo ? '/activation?mode=demo' : '/activation'} className="button button-gold button-wide"><Key weight="bold"/> Activer un nouveau manuel</a>
       <div className="entry-secondary">
         <p>{demo ? 'Les essais restent sur cet appareil, séparés du compte scolaire.' : 'Ton accès est préparé par Jet d’Encre et remis en privé.'}</p>
         <a className="entry-mode-link" href={demo ? '/connexion' : '/connexion?mode=demo'}>{demo ? 'J’ai un compte scolaire' : 'Explorer la démonstration'}<ArrowRight/></a>

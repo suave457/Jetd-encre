@@ -20,10 +20,51 @@ async function client(db,id){
   }};
 }
 const publish=(teacher,extra={},headers={})=>teacher.call("/assignments",{classId:"pilot-class-a",title:"Mon quartier en quatre phrases",instructions:"Présente un lieu de ton quartier en quatre phrases. Indique sa position et donne ton avis.",dueDate:"2026-10-01",...extra},{"Idempotency-Key":"publication-test-0001",...headers});
+
+test('une session existante est refusée dans tout espace ne correspondant pas à son rôle',async t=>{
+  const {DB,sqlite}=await setup(t);
+  const profiles={admin:'pilot-local-admin',eleve:'pilot-a-student',parent:'pilot-a-parent',enseignant:'pilot-a-teacher'};
+  for(const [actual,userId] of Object.entries(profiles)){
+    const account=await client(DB,userId);
+    for(const expected of [...Object.keys(profiles),'directeur']){
+      const response=await account.call('/session?profil='+expected);
+      if(expected===actual){assert.equal(response.status,200);assert.equal(response.data.user.role,actual);}
+      else{assert.equal(response.status,403,`${actual} via ${expected}`);assert.equal(response.data.error.code,'profile_mismatch');assert.equal(response.data.user,undefined);assert.equal(response.data.csrfToken,undefined);}
+    }
+    assert.equal((await account.call('/session')).data.user.role,actual,'ancien lien compatible et session inchangée');
+    for(const query of ['?profil=','?profil=admin&profil=eleve','?profil=superadmin'])assert.equal((await account.call('/session'+query)).status,400);
+  }
+  assert.equal(sqlite.prepare('SELECT count(*) n FROM pilot_sessions WHERE revoked_at IS NOT NULL').get().n,0);
+});
+
+test('la création atomique de session revérifie le profil avant insertion',async t=>{
+  const {DB,sqlite}=await setup(t);
+  await assert.rejects(issueSession(DB,'pilot-local-admin','oidc',false,'eleve'),error=>error instanceof Response&&error.status===403);
+  sqlite.prepare('UPDATE pilot_memberships SET role=? WHERE user_id=?').run('parent','pilot-a-student');
+  await assert.rejects(issueSession(DB,'pilot-a-student','oidc',false,'eleve'),error=>error instanceof Response&&error.status===403);
+  assert.equal(sqlite.prepare('SELECT count(*) n FROM pilot_sessions').get().n,0);
+});
+
+test('migration du profil choisi : les anciennes transactions et données sont conservées',()=>{
+  const sqlite=new DatabaseSync(':memory:');
+  try{
+    sqlite.exec('PRAGMA foreign_keys=ON');
+    const directory=new URL('../drizzle/',import.meta.url);
+    for(const name of readdirSync(directory).filter(name=>name.endsWith('.sql')&&name<'0005').sort())sqlite.exec(readFileSync(new URL(name,directory),'utf8'));
+    seedLocalPilot(sqlite);
+    sqlite.prepare('INSERT INTO pilot_auth_flows VALUES (?,?,?,?,?)').run('old-state','old-browser','old-verifier','old-nonce',2000000000);
+    const users=sqlite.prepare('SELECT * FROM pilot_users ORDER BY id').all();
+    sqlite.exec(readFileSync(new URL('0005_login_profile.sql',directory),'utf8'));
+    assert.deepEqual(sqlite.prepare('SELECT * FROM pilot_users ORDER BY id').all(),users);
+    assert.equal(sqlite.prepare('SELECT requested_role FROM pilot_auth_flows').get().requested_role,null);
+    assert.equal(sqlite.prepare('SELECT verifier FROM pilot_auth_flows').get().verifier,'old-verifier');
+    assert.deepEqual(sqlite.prepare('PRAGMA foreign_key_check').all(),[]);
+  }finally{sqlite.close();}
+});
 test('administration : droits exclusifs, création, rattachement scolaire et révocation',async t=>{
   const {DB,sqlite}=await setup(t),admin=await client(DB,'pilot-local-admin'),teacher=await client(DB,'pilot-a-teacher');
   assert.equal((await teacher.call('/admin')).status,403);
-  assert.equal((await teacher.call('/session?profil=admin')).data.user.role,'enseignant');
+  assert.equal((await teacher.call('/session?profil=admin')).status,403);
   assert.equal((await teacher.call('/admin?profil=admin')).status,403);
   assert.equal((await teacher.call('/admin/schools',{id:'evil',name:'École interdite'})).status,403);
   assert.equal((await admin.call('/admin/schools',{id:'csrf',name:'Sans protection'},{'X-CSRF-Token':''})).status,403);

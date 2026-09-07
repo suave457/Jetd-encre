@@ -36,6 +36,83 @@
       "when": 1788646938227,
       "tag": "0004_pilot_mots_fleches",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788708168544,
+      "tag": "0005_login_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788711842389,
+      "tag": "0006_student_manual_activation",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788718628139,
+      "tag": "0007_school_quizzes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788718642033,
+      "tag": "0008_student_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788718806821,
+      "tag": "0009_quiz_award_owner",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1788728146925,
+      "tag": "0010_article_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1788736409583,
+      "tag": "0011_mot_juste",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1788742491729,
+      "tag": "0012_souk_des_mots",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1788780644396,
+      "tag": "0013_class_challenges",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1788804439728,
+      "tag": "0014_private_manual_reader",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1788808614814,
+      "tag": "0015_private_library_management",
+      "breakpoints": true
     }
   ]
 }

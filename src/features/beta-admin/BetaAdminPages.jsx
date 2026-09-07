@@ -14,6 +14,8 @@ import {
 } from "../beta-data/betaFixtures.js";
 import { LEARNING_COMPETENCIES } from "../beta-data/learningTaxonomy.js";
 import "./beta-admin.css";
+import DecisionKpi from "./DecisionKpi.jsx";
+import AdminAnalytics from "../pilote/AdminAnalytics.jsx";
 
 const STATUS_OPTIONS = ["Brouillon", "À réviser", "Planifié", "Publié", "Archivé"];
 const FAMILY_LABELS = { levels: "Niveaux AEP", units: "Unités", domains: "Domaines", competencies: "Microcompétences", audiences: "Publics", formats: "Formats" };
@@ -32,15 +34,6 @@ function formatPercent(value) {
 
 function BetaNotice() {
   return <div className="beta-source-note" role="note"><ShieldCheck weight="fill"/><div><strong>Version BETA · données de démonstration</strong><span>Les calculs sont réels sur un jeu fictif, sans données personnelles. Connectez les sources métier avant de prendre une décision opérationnelle.</span></div></div>;
-}
-
-function DecisionKpi({ label, value, detail, definition, period, trend, tone = "green" }) {
-  return <article className={`beta-decision-kpi tone-${tone}`}>
-    <div><span>{label}</span><i>{trend}</i></div>
-    <strong>{value}</strong>
-    <p>{detail}</p>
-    <details><summary>Définition et périmètre</summary><span>{definition}</span><small>{period} · actualisé le 27 août 2026 à 11 h 45</small></details>
-  </article>;
 }
 
 function KpiSet({ snapshot }) {
@@ -91,7 +84,13 @@ export function BetaAdminDashboard({ ui }) {
   </>;
 }
 
-export function BetaAnalytics({ ui }) {
+export function BetaAnalytics({ source = "demo", ...props }) {
+  if (source === "pilot") return <AdminAnalytics {...props}/>;
+  if (source === "demo") return <DemoBetaAnalytics {...props}/>;
+  return <p role="alert">Cette source d’analyse n’est pas disponible.</p>;
+}
+
+function DemoBetaAnalytics({ ui }) {
   const { PageHeader } = ui;
   const { contents, mediaAssets, referenceItems } = useDemoStore();
   const [scope, setScope] = useState("school");

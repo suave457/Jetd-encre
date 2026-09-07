@@ -44,6 +44,8 @@ export const LOCAL_PROFILES=Object.freeze([
   {id:"pilot-b-teacher",name:"Amine · enseignant",role:"enseignant",schoolId:"pilot-school-b",schoolName:"École Oliviers · fictive"},
   {id:"pilot-b-student",name:"Nora · élève",role:"eleve",schoolId:"pilot-school-b",schoolName:"École Oliviers · fictive"},
   {id:"pilot-b-parent",name:"Imane · parent de Nora",role:"parent",schoolId:"pilot-school-b",schoolName:"École Oliviers · fictive"},
+  {id:"pilot-a-director",name:"Samira · direction fictive",role:"directeur",schoolId:"pilot-school-a",schoolName:"École Atlas · fictive"},
+  {id:"pilot-b-director",name:"Karim · direction fictive",role:"directeur",schoolId:"pilot-school-b",schoolName:"École Oliviers · fictive"},
 ]);
 export function seedLocalPilot(sqlite) {
   sqlite.exec("BEGIN");
@@ -57,7 +59,7 @@ export function seedLocalPilot(sqlite) {
       sqlite.prepare("INSERT OR IGNORE INTO pilot_users(id,display_name,created_at) VALUES (?,?,?)").run(p.id,p.name,Math.floor(Date.now()/1000));
       if(p.role==='admin'){sqlite.prepare('INSERT OR IGNORE INTO pilot_admins(user_id) VALUES (?)').run(p.id);continue;}
       sqlite.prepare("INSERT OR IGNORE INTO pilot_memberships(school_id,user_id,role) VALUES (?,?,?)").run(p.schoolId,p.id,p.role);
-      if(p.role!=="parent")sqlite.prepare("INSERT OR IGNORE INTO pilot_class_members(school_id,class_id,user_id) VALUES (?,?,?)").run(p.schoolId,"pilot-class-"+(p.schoolId.endsWith("a")?"a":"b"),p.id);
+      if(["enseignant","eleve"].includes(p.role))sqlite.prepare("INSERT OR IGNORE INTO pilot_class_members(school_id,class_id,user_id) VALUES (?,?,?)").run(p.schoolId,"pilot-class-"+(p.schoolId.endsWith("a")?"a":"b"),p.id);
     }
     for(const s of ["a","b"])sqlite.prepare("INSERT OR IGNORE INTO pilot_family_links(school_id,parent_id,student_id) VALUES (?,?,?)").run("pilot-school-"+s,`pilot-${s}-parent`,`pilot-${s}-student`);
     sqlite.exec("COMMIT");

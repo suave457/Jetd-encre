@@ -17,3 +17,8 @@ qa/
 wrangler.test.local.jsonc
 # Captures du PDF personnel : recette locale uniquement.
 audit-lancement-2026-09-04/implementation-captures/pdf-*.jpg
+
+# Browser recipe state and private-document QA remain on this computer.
+.playwright-cli/
+output/playwright/manual-20260907/
+output/playwright/manual-tests-20260907.log
