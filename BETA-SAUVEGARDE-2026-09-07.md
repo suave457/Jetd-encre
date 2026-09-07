@@ -34,7 +34,9 @@ L’import PDF local nécessite aussi Poppler (`pdfinfo`) ; le chemin peut être
 
 ## Limites de livraison
 
-Les tests locaux du lot précédent comptent 727 réussites. Cela ne remplace pas la validation des connexions et des droits dans l’environnement réellement hébergé.
+Contrôle de cette sauvegarde : reconstruction Windows dans un checkout indépendant du commit applicatif `6b5d38380a7846d055228a6a2317be5890a38696`, installation hors ligne avec verrou figé, compilation, **727 tests réussis sur 727** et contrôle Drizzle réussi. Poppler était explicitement disponible pour le test réel du PDF public de huit pages. Le checkout reste propre, sans base privée ni configuration secrète ; aucun PDF privé n’est présent dans les ressources compilées. Cela ne remplace pas la validation des connexions et des droits dans l’environnement réellement hébergé.
+
+Pour cette sauvegarde uniquement, le commit documentaire de tête porte `[skip ci]` afin de ne pas lancer les exécutions GitHub Actions hébergées alors que le budget doit rester nul. La définition des tests automatiques est conservée intacte. Les contrôles ci-dessus ont été exécutés localement ; aucun succès de tests GitHub n’est revendiqué. [Mécanisme documenté par GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/skip-workflow-runs).
 
 - La lecture/importation privée distante n’est pas encore raccordée.
 - La conformité du formulaire hébergé à Pen, le domaine et les informations légales/support restent à valider.
